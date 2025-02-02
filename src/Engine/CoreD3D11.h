@@ -191,6 +191,6 @@ struct PipelineStateDescriptor final
 	RasterizerState     rasterizerState;
 	BlendState          blendState;
 	DepthStencilState   depthStencilState;
-	SurfaceShaderHandle shader;
-	VertexFormatHandle  vertexFormat;
+	//SurfaceShaderHandle shader;
+	//VertexFormatHandle  vertexFormat;
 };
