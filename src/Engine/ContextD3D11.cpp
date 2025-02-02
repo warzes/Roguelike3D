@@ -9,11 +9,11 @@
 #endif
 #pragma comment(lib, "d3dcompiler.lib")
 //=============================================================================
-//extern "C"
-//{
-//	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-//	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-//}
+extern "C"
+{
+	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
 //=============================================================================
 ContextD3D11::~ContextD3D11()
 {
@@ -94,12 +94,15 @@ bool ContextD3D11::Resize(uint32_t width, uint32_t height)
 //=============================================================================
 void ContextD3D11::BeginFrame()
 {
+
+}
+//=============================================================================
+void ContextD3D11::SetMainFrameBuffer() const
+{
 	m_d3dContext->ClearRenderTargetView(m_renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
 	m_d3dContext->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	m_d3dContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
-
-	D3D11_VIEWPORT viewport = { 0.0f, 0.0f, static_cast<float>(m_backBufferWidth), static_cast<float>(m_backBufferHeight), 0.f, 1.f };
 	m_d3dContext->RSSetViewports(1, &m_viewport);
 }
 //=============================================================================

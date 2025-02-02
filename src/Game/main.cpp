@@ -213,27 +213,28 @@ int main()
 		}
 
 		rhi.BeginFrame();
+		{
+			rhi.GetContext().SetMainFrameBuffer();
 
-		deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		deviceContext->IASetInputLayout(inputLayout);
-		deviceContext->IASetVertexBuffers(0, 3, buffers, strides, offsets);
-		deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+			deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			deviceContext->IASetInputLayout(inputLayout);
+			deviceContext->IASetVertexBuffers(0, 3, buffers, strides, offsets);
+			deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-		deviceContext->VSSetShader(vertexShader, nullptr, 0);
-		deviceContext->VSSetConstantBuffers(0, 1, &constantBuffer);
+			deviceContext->VSSetShader(vertexShader, nullptr, 0);
+			deviceContext->VSSetConstantBuffers(0, 1, &constantBuffer);
 
-		deviceContext->RSSetState(rasterizerState);
+			deviceContext->RSSetState(rasterizerState);
 
-		deviceContext->PSSetShader(pixelShader, nullptr, 0);
-		deviceContext->PSSetShaderResources(0, 1, &textureView);
-		deviceContext->PSSetSamplers(0, 1, &samplerState);
+			deviceContext->PSSetShader(pixelShader, nullptr, 0);
+			deviceContext->PSSetShaderResources(0, 1, &textureView);
+			deviceContext->PSSetSamplers(0, 1, &samplerState);
 
-		deviceContext->OMSetDepthStencilState(depthStencilState, 0);
-		deviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+			deviceContext->OMSetDepthStencilState(depthStencilState, 0);
+			deviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
-		deviceContext->DrawIndexedInstanced(ARRAYSIZE(IndexData), 24, 0, 0, 0);
-
-
+			deviceContext->DrawIndexedInstanced(ARRAYSIZE(IndexData), 24, 0, 0, 0);
+		}
 		rhi.EndFrame();
 	}
 

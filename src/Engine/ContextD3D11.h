@@ -25,6 +25,8 @@ public:
 	void BeginFrame();
 	void EndFrame();
 
+	void SetMainFrameBuffer() const;
+
 	auto GetD3DAdapter() const { return m_adapter; }
 
 	auto GetD3DDevice() const { return m_d3dDevice; }
