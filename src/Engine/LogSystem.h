@@ -10,6 +10,7 @@ class LogSystem final
 public:
 	~LogSystem();
 
+	[[nodiscard]]
 	bool Create(const LogSystemCreateInfo& createInfo);
 	void Destroy();
 

@@ -1,7 +1,12 @@
 ﻿#pragma once
 
 #pragma warning(push, 3)
-//#pragma warning(disable : 4265)
+#pragma warning(disable : 4061)
+#pragma warning(disable : 4365)
+#pragma warning(disable : 4668)
+#pragma warning(disable : 4820)
+#pragma warning(disable : 5039)
+#pragma warning(disable : 5219)
 
 #define _USE_MATH_DEFINES
 
@@ -21,7 +26,7 @@
 #define OEMRESOURCE
 #define NOATOM
 #define NOCLIPBOARD
-//#define NOCTLMGR
+#define NOCTLMGR
 #define NODRAWTEXT
 #define NOKERNEL
 #define NONLS
@@ -48,13 +53,22 @@
 #define NOKEYSTATES
 #define NOCOLOR
 #define NOMB
-#define NOWINOFFSETS
+//#define NOWINOFFSETS
 #define NOCRYPT
 #define NOIME
 
-//#include <winsdkver.h>
-//#define _WIN32_WINNT 0x0A00 // Windows 10
-//#include <sdkddkver.h>
-//#include <Windows.h>
+#include <winsdkver.h>
+#define _WIN32_WINNT 0x0A00 // Windows 10
+#include <sdkddkver.h>
+#include <Windows.h>
+
+#include <wrl/client.h>
+
+#include <d3d11_4.h>
+#include <dxgi1_2.h>
+
+#include <DirectXMath.h>
+#include <DirectXColors.h>
+
 
 #pragma warning(pop)

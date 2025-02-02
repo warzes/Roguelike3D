@@ -94,18 +94,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="HighResolutionTimer.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="LogSystem.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="WindowSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseHeader.h" />
+    <ClInclude Include="HighResolutionTimer.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="LogSystem.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="WindowSystem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -9,6 +9,12 @@
     <ClCompile Include="LogSystem.cpp">
       <Filter>Debug</Filter>
     </ClCompile>
+    <ClCompile Include="HighResolutionTimer.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowSystem.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -21,6 +27,12 @@
     <ClInclude Include="LogSystem.h">
       <Filter>Debug</Filter>
     </ClInclude>
+    <ClInclude Include="HighResolutionTimer.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowSystem.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Base">
@@ -28,6 +40,9 @@
     </Filter>
     <Filter Include="Debug">
       <UniqueIdentifier>{71609866-d24f-48ba-a370-fbb7064f7ddb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{d7d1cac4-2b82-4d6a-b207-c64fbc7040d4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
