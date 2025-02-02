@@ -27,6 +27,19 @@ enum class SwapChainFormat : uint8_t
 	BT2020_G2084_10BIT
 };
 
+enum class TexelsFormat : uint8_t 
+{
+	R_U8,
+	RG_U8,
+	RGB_U8,
+	RGBA_U8,
+
+	Depth_U16,
+	DepthStencil_U16,
+	Depth_U24,
+	DepthStencil_U24,
+};
+
 //=============================================================================
 // core utils
 //=============================================================================

@@ -24,6 +24,9 @@
     <ClCompile Include="CoreD3D11.cpp">
       <Filter>RHI\DX11</Filter>
     </ClCompile>
+    <ClCompile Include="ResourcesD3D11.cpp">
+      <Filter>RHI\DX11</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -49,6 +52,9 @@
       <Filter>RHI\DX11</Filter>
     </ClInclude>
     <ClInclude Include="CoreD3D11.h">
+      <Filter>RHI\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourcesD3D11.h">
       <Filter>RHI\DX11</Filter>
     </ClInclude>
   </ItemGroup>
