@@ -15,6 +15,15 @@
     <ClCompile Include="WindowSystem.cpp">
       <Filter>Platform</Filter>
     </ClCompile>
+    <ClCompile Include="RHISystem.cpp">
+      <Filter>RHI</Filter>
+    </ClCompile>
+    <ClCompile Include="ContextD3D11.cpp">
+      <Filter>RHI\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="CoreD3D11.cpp">
+      <Filter>RHI\DX11</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -33,6 +42,15 @@
     <ClInclude Include="WindowSystem.h">
       <Filter>Platform</Filter>
     </ClInclude>
+    <ClInclude Include="RHISystem.h">
+      <Filter>RHI</Filter>
+    </ClInclude>
+    <ClInclude Include="ContextD3D11.h">
+      <Filter>RHI\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="CoreD3D11.h">
+      <Filter>RHI\DX11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Base">
@@ -43,6 +61,12 @@
     </Filter>
     <Filter Include="Platform">
       <UniqueIdentifier>{d7d1cac4-2b82-4d6a-b207-c64fbc7040d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RHI">
+      <UniqueIdentifier>{05f31a59-936f-4384-8e7f-0172c0ad74e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RHI\DX11">
+      <UniqueIdentifier>{9c556a11-3c7e-4f82-9309-39d6f5367b2e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

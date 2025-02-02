@@ -30,11 +30,24 @@ int main()
 	WindowSystem window;
 	window.Create(windowCI);
 
+	RHISystemCreateInfo rhiCI;
+	rhiCI.context.hwnd = window.GetHWND();
+	rhiCI.context.width = window.GetWidth();
+	rhiCI.context.height = window.GetHeight();
+	RHISystem rhi;
+	rhi.Create(rhiCI);
+
 	while (!window.IsShouldClose())
 	{
 		window.PollEvent();
+		rhi.Resize(window.GetWidth(), window.GetHeight());
+
+		rhi.BeginFrame();
+
+		rhi.EndFrame();
 	}
 
+	rhi.Destroy();
 	window.Destroy();
 	log.Destroy();
 }

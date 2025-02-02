@@ -2,21 +2,12 @@
 
 struct WindowSystemCreateInfo final
 {
-public:
 	std::wstring_view title{ L"Game" };
 	uint32_t          width{ 1600 };
 	uint32_t          height{ 900 };
 	bool              maximize{ false };
 	bool              resize{ true };
 	bool              fullScreen{ false };
-};
-
-struct WindowData final
-{
-	HINSTANCE handleInstance{ nullptr };
-	HWND      hwnd{ nullptr };
-	uint32_t  width{ 1600 };
-	uint32_t  height{ 900 };
 };
 
 class WindowSystem final

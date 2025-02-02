@@ -7,3 +7,5 @@
 
 #include <Engine/HighResolutionTimer.h>
 #include <Engine/WindowSystem.h>
+
+#include <Engine/RHISystem.h>

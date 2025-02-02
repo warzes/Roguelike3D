@@ -93,10 +93,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ContextD3D11.cpp" />
+    <ClCompile Include="CoreD3D11.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="HighResolutionTimer.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="LogSystem.cpp" />
+    <ClCompile Include="RHISystem.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -105,9 +108,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseHeader.h" />
+    <ClInclude Include="ContextD3D11.h" />
+    <ClInclude Include="CoreD3D11.h" />
     <ClInclude Include="HighResolutionTimer.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="LogSystem.h" />
+    <ClInclude Include="RHISystem.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="WindowSystem.h" />
   </ItemGroup>
