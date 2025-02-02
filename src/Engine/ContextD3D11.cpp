@@ -3,11 +3,17 @@
 #include "Log.h"
 //=============================================================================
 #pragma comment(lib, "d3d11.lib")
-//#pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxgi.lib")
 #if defined(_DEBUG)
 #	pragma comment(lib, "dxguid.lib")
 #endif
+#pragma comment(lib, "d3dcompiler.lib")
+//=============================================================================
+//extern "C"
+//{
+//	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+//	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+//}
 //=============================================================================
 ContextD3D11::~ContextD3D11()
 {
@@ -16,8 +22,7 @@ ContextD3D11::~ContextD3D11()
 //=============================================================================
 bool ContextD3D11::Create(const ContextD3D11CreateInfo& createInfo)
 {
-	m_backBufferWidth = std::max(createInfo.width, 1u);
-	m_backBufferHeight = std::max(createInfo.height, 1u);
+	setBackBufferSize(createInfo.width, createInfo.height);
 	m_vsync = createInfo.vsync;
 
 	if (!selectAdapter())                  return false;
@@ -51,10 +56,7 @@ void ContextD3D11::Destroy()
 //=============================================================================
 bool ContextD3D11::Resize(uint32_t width, uint32_t height)
 {
-	if (m_backBufferWidth == width && m_backBufferHeight == height) return true;
-
-	m_backBufferWidth = std::max(width, 1u);
-	m_backBufferHeight = std::max(height, 1u);
+	if (!setBackBufferSize(width, height)) return true;
 
 	if (m_d3dContext)
 	{
@@ -80,6 +82,7 @@ bool ContextD3D11::Resize(uint32_t width, uint32_t height)
 			Fatal("IDXGISwapChain1::ResizeBuffers() failed: " + HrToString(result));
 			return false;
 		}
+		setColorSpace1();
 	}
 
 	if (!createRenderTargetView()) return false;
@@ -97,7 +100,7 @@ void ContextD3D11::BeginFrame()
 	m_d3dContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 
 	D3D11_VIEWPORT viewport = { 0.0f, 0.0f, static_cast<float>(m_backBufferWidth), static_cast<float>(m_backBufferHeight), 0.f, 1.f };
-	m_d3dContext->RSSetViewports(1, &viewport);
+	m_d3dContext->RSSetViewports(1, &m_viewport);
 }
 //=============================================================================
 void ContextD3D11::EndFrame()
@@ -109,6 +112,17 @@ void ContextD3D11::EndFrame()
 	{
 		Fatal("IDXGISwapChain1::Present failed: " + HrToString(result));
 	}
+}
+//=============================================================================
+bool ContextD3D11::setBackBufferSize(uint32_t width, uint32_t height)
+{
+	if (m_backBufferWidth == width && m_backBufferHeight == height) return false;
+
+	m_backBufferWidth = std::max(width, 1u);
+	m_backBufferHeight = std::max(height, 1u);
+	m_viewport = { 0.0f, 0.0f, static_cast<float>(m_backBufferWidth), static_cast<float>(m_backBufferHeight), 0.f, 1.f };
+
+	return true;
 }
 //=============================================================================
 bool ContextD3D11::selectAdapter()
@@ -146,6 +160,14 @@ bool ContextD3D11::selectAdapter()
 		Fatal("DXGIAdapter As DXGIAdapter4 failed: " + HrToString(result));
 		return false;
 	}
+
+	DXGI_ADAPTER_DESC1 desc;
+	m_adapter->GetDesc1(&desc);
+	char ascii[128];
+	size_t numCharsConverted = 0;
+	wcstombs_s(&numCharsConverted, ascii, desc.Description, _countof(desc.Description));
+	const std::string AdapterDevice(ascii);
+	Print("Select GPU: " + AdapterDevice);
 
 	return true;
 }
@@ -221,14 +243,31 @@ bool ContextD3D11::createSwapChain(HWND hwnd)
 	m_supportAllowTearing = false;
 	if (!m_vsync)
 	{
-		Microsoft::WRL::ComPtr<IDXGIFactory6> dxgiFactory6;
-		if (SUCCEEDED(dxgiFactory.As(&dxgiFactory6)))
+		Microsoft::WRL::ComPtr<IDXGIFactory5> dxgiFactory5;
+		if (SUCCEEDED(dxgiFactory.As(&dxgiFactory5)))
 		{
 			BOOL allowTearing = FALSE;
-			if (SUCCEEDED(dxgiFactory6->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
-				m_supportAllowTearing = (allowTearing == TRUE);
+			result = dxgiFactory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+			m_supportAllowTearing = (SUCCEEDED(result) && allowTearing) ? true : false;
 		}
 	}
+
+	constexpr std::array<DXGI_FORMAT, 4> cSwapChainFormat = {
+		DXGI_FORMAT_R16G16B16A16_FLOAT, // BT709_G10_16BIT
+		DXGI_FORMAT_R8G8B8A8_UNORM,     // BT709_G22_8BIT
+		DXGI_FORMAT_R10G10B10A2_UNORM,  // BT709_G22_10BIT
+		DXGI_FORMAT_R10G10B10A2_UNORM,  // BT2020_G2084_10BIT
+	};
+
+	constexpr std::array<DXGI_COLOR_SPACE_TYPE, 4> cColorSpace = {
+		DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709,    // BT709_G10_16BIT
+		DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709,    // BT709_G22_8BIT
+		DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709,    // BT709_G22_10BIT
+		DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, // BT2020_G2084_10BIT
+	};
+
+	m_backBufferFormat = cSwapChainFormat[(uint32_t)m_swapChainFormat];
+	m_colorSpace = cColorSpace[(uint32_t)m_swapChainFormat];
 
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 	swapChainDesc.Width = m_backBufferWidth;
@@ -245,7 +284,8 @@ bool ContextD3D11::createSwapChain(HWND hwnd)
 	DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsSwapChainDesc = {};
 	fsSwapChainDesc.Windowed = TRUE;
 
-	result = dxgiFactory->CreateSwapChainForHwnd(m_d3dDevice.Get(), hwnd, &swapChainDesc, &fsSwapChainDesc, nullptr, m_swapChain.ReleaseAndGetAddressOf());
+	Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain;
+	result = dxgiFactory->CreateSwapChainForHwnd(m_d3dDevice.Get(), hwnd, &swapChainDesc, &fsSwapChainDesc, nullptr, swapChain.ReleaseAndGetAddressOf());
 	if (FAILED(result))
 	{
 		Fatal("IDXGIFactory2::CreateSwapChainForHwnd failed: " + HrToString(result));
@@ -257,6 +297,22 @@ bool ContextD3D11::createSwapChain(HWND hwnd)
 	{
 		Fatal("IDXGIFactory2::MakeWindowAssociation failed: " + HrToString(result));
 		return false;
+	}
+
+	if (FAILED(swapChain.As(&m_swapChain)))
+	{
+		Fatal("IDXGISwapChain1 as IDXGISwapChain4 failed");
+		return false;
+	}
+
+	setColorSpace1();
+
+	// Background color
+	{
+		DXGI_RGBA color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		result = m_swapChain->SetBackgroundColor(&color);
+		if (FAILED(result))
+			Warning("IDXGISwapChain1::SetBackgroundColor()  failed!");
 	}
 
 	return true;
@@ -296,5 +352,19 @@ bool ContextD3D11::createRenderTargetView()
 	}
 
 	return true;
+}
+//=============================================================================
+void ContextD3D11::setColorSpace1()
+{
+	uint32_t colorSpaceSupport = 0;
+	HRESULT result = m_swapChain->CheckColorSpaceSupport(m_colorSpace, &colorSpaceSupport);
+
+	if (!(colorSpaceSupport & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT))
+		result = E_FAIL;
+	if (SUCCEEDED(result))
+		result = m_swapChain->SetColorSpace1(m_colorSpace);
+
+	if (FAILED(result))
+		Warning("IDXGISwapChain3::SetColorSpace1()  failed!");
 }
 //=============================================================================

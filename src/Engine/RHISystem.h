@@ -21,6 +21,8 @@ public:
 	void BeginFrame();
 	void EndFrame();
 
+	const ContextD3D11& GetContext() const { return m_context; }
+
 private:
 	ContextD3D11 m_context;
 };

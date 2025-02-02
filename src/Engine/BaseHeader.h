@@ -12,6 +12,7 @@
 
 #include <cassert>
 #include <string>
+#include <array>
 
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
@@ -66,6 +67,7 @@
 
 #include <d3d11_4.h>
 #include <dxgi1_6.h>
+#include <d3dcompiler.h>
 #if defined(_DEBUG)
 #	include <dxgidebug.h>
 #endif
