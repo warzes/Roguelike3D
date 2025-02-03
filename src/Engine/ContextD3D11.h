@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "ResourcesD3D11.h"
+#include "AdvanceResourcesD3D11.h"
 
 struct ContextD3D11CreateInfo final
 {

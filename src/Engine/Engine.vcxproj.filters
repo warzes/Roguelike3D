@@ -27,6 +27,9 @@
     <ClCompile Include="ResourcesD3D11.cpp">
       <Filter>RHI\DX11</Filter>
     </ClCompile>
+    <ClCompile Include="AdvanceResourcesD3D11.cpp">
+      <Filter>RHI\DX11</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -57,6 +60,9 @@
     <ClInclude Include="ResourcesD3D11.h">
       <Filter>RHI\DX11</Filter>
     </ClInclude>
+    <ClInclude Include="AdvanceResourcesD3D11.h">
+      <Filter>RHI\DX11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Base">
@@ -73,6 +79,9 @@
     </Filter>
     <Filter Include="RHI\DX11">
       <UniqueIdentifier>{9c556a11-3c7e-4f82-9309-39d6f5367b2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{1e0d78ef-bbfe-4324-a7da-6b6ba128e4f2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
