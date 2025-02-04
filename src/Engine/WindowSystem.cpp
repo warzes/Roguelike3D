@@ -8,6 +8,8 @@ namespace
 	WindowSystem* thisWindowSystem{ nullptr };
 }
 //=============================================================================
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+//=============================================================================
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
 	if (message == WM_DESTROY)
@@ -15,6 +17,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		PostQuitMessage(0);
 		return 0;
 	}
+	
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
+		return true;
 
 	if (thisWindowSystem)
 	{

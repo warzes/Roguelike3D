@@ -1,3 +1,0 @@
-﻿void fnMy3rdparty()
-{
-}

@@ -11,6 +11,7 @@
 #define _USE_MATH_DEFINES
 
 #include <cassert>
+#include <optional>
 #include <string>
 #include <array>
 
@@ -74,5 +75,13 @@
 
 #include <DirectXMath.h>
 #include <DirectXColors.h>
+
+#include <stb/stb_image.h>
+
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_win32.h>
+#include <imgui/imgui_impl_dx11.h>
+
+
 
 #pragma warning(pop)

@@ -22,9 +22,13 @@ public:
 	void Destroy();
 
 	bool Resize(uint32_t width, uint32_t height);
-
 	void BeginFrame();
 	void EndFrame();
+
+	std::optional<Texture2D> LoadTexture2D(std::string_view filePath, bool srgbTexture = true);
+
+
+
 
 	void SetMainFrameBuffer() const;
 

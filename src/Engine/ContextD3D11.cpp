@@ -97,15 +97,6 @@ void ContextD3D11::BeginFrame()
 
 }
 //=============================================================================
-void ContextD3D11::SetMainFrameBuffer() const
-{
-	m_d3dContext->ClearRenderTargetView(m_renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
-	m_d3dContext->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-	m_d3dContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
-	m_d3dContext->RSSetViewports(1, &m_viewport);
-}
-//=============================================================================
 void ContextD3D11::EndFrame()
 {
 	const UINT syncInterval = m_vsync ? 1 : 0;
@@ -115,6 +106,35 @@ void ContextD3D11::EndFrame()
 	{
 		Fatal("IDXGISwapChain1::Present failed: " + HrToString(result));
 	}
+}
+//=============================================================================
+std::optional<Texture2D> ContextD3D11::LoadTexture2D(std::string_view filePath, bool srgbTexture)
+{
+	Texture2D texture2D;
+
+	int w, h, c;
+	unsigned char* texture = stbi_load(filePath.data(), &w, &h, &c, 4);
+	if (!texture)
+	{
+		Warning("Failed to load texture with path : '" + std::string(filePath) + "'. Using default texture instead");
+		return std::nullopt;
+	}
+	texture2D.width = w;
+	texture2D.height = h;
+	
+	формат текстуры
+		radiumenine
+
+	return Texture2D();
+}
+//=============================================================================
+void ContextD3D11::SetMainFrameBuffer() const
+{
+	m_d3dContext->ClearRenderTargetView(m_renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
+	m_d3dContext->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	m_d3dContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+	m_d3dContext->RSSetViewports(1, &m_viewport);
 }
 //=============================================================================
 bool ContextD3D11::setBackBufferSize(uint32_t width, uint32_t height)
