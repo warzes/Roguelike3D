@@ -108,24 +108,78 @@ void ContextD3D11::EndFrame()
 	}
 }
 //=============================================================================
-std::optional<Texture2D> ContextD3D11::LoadTexture2D(std::string_view filePath, bool srgbTexture)
+std::optional<Texture2D> ContextD3D11::CreateTexture2D(const D3D11_TEXTURE2D_DESC& textureDesc, const D3D11_SUBRESOURCE_DATA& memoryData)
 {
 	Texture2D texture2D;
+	texture2D.width = textureDesc.Width;
+	texture2D.height = textureDesc.Height;
 
+	HRESULT result = m_d3dDevice->CreateTexture2D(&textureDesc, &memoryData, &texture2D.texture2D);
+	if (FAILED(result))
+	{
+		Fatal("ID3D11Device::CreateTexture2D() failed: " + HrToString(result));
+		return std::nullopt;
+	}
+
+	// Create texture view
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc = {};
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Texture2D.MipLevels = textureDesc.MipLevels;
+	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+
+	result = m_d3dDevice->CreateShaderResourceView(texture2D.texture2D.Get(), &shaderResourceViewDesc, &texture2D.shaderResourceView);
+	if (FAILED(result))
+	{
+		Fatal("ID3D11Device::CreateShaderResourceView() failed: " + HrToString(result));
+		return std::nullopt;
+	}
+
+	m_d3dContext->GenerateMips(texture2D.shaderResourceView.Get());
+
+	return texture2D;
+}
+//=============================================================================
+std::optional<Texture2D> ContextD3D11::LoadTexture2D(std::string_view filePath, bool srgbTexture)
+{
 	int w, h, c;
 	unsigned char* texture = stbi_load(filePath.data(), &w, &h, &c, 4);
-	if (!texture)
+	if (!texture || w < 0 || h < 0)
 	{
 		Warning("Failed to load texture with path : '" + std::string(filePath) + "'. Using default texture instead");
 		return std::nullopt;
 	}
-	texture2D.width = w;
-	texture2D.height = h;
-	
-	формат текстуры
-		radiumenine
 
-	return Texture2D();
+	int textureBytesPerRow = 4 * w;
+
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = w;
+	textureDesc.Height = h;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	if (srgbTexture)
+	{
+		textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	}
+	else
+	{
+		textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	}
+
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+	D3D11_SUBRESOURCE_DATA textureSubresourceData = {};
+	textureSubresourceData.pSysMem = std::move(texture);
+	textureSubresourceData.SysMemPitch = textureBytesPerRow;
+	textureSubresourceData.SysMemSlicePitch = 0;
+
+	auto textureRet = CreateTexture2D(textureDesc, textureSubresourceData);
+	stbi_image_free(texture);
+
+	return textureRet;
 }
 //=============================================================================
 void ContextD3D11::SetMainFrameBuffer() const
@@ -135,6 +189,11 @@ void ContextD3D11::SetMainFrameBuffer() const
 
 	m_d3dContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 	m_d3dContext->RSSetViewports(1, &m_viewport);
+}
+//=============================================================================
+void ContextD3D11::Bind(const Texture2D& texture, uint32_t slot)
+{
+	m_d3dContext->PSSetShaderResources(slot, 1, texture.shaderResourceView.GetAddressOf());
 }
 //=============================================================================
 bool ContextD3D11::setBackBufferSize(uint32_t width, uint32_t height)

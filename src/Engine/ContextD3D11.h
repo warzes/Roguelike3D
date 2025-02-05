@@ -25,12 +25,12 @@ public:
 	void BeginFrame();
 	void EndFrame();
 
+	std::optional<Texture2D> CreateTexture2D(const D3D11_TEXTURE2D_DESC& textureDesc, const D3D11_SUBRESOURCE_DATA& memoryData);
 	std::optional<Texture2D> LoadTexture2D(std::string_view filePath, bool srgbTexture = true);
 
-
-
-
 	void SetMainFrameBuffer() const;
+
+	void Bind(const Texture2D& texture, uint32_t slot);
 
 	auto GetD3DAdapter() const { return m_adapter; }
 

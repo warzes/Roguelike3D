@@ -209,11 +209,8 @@ int main()
 	textureData.pSysMem = TextureData;
 	textureData.SysMemPitch = 2 * sizeof(UINT); // texture is 2 pixels wide, 4 bytes per pixel
 
-	ID3D11Texture2D* texture;
-	device->CreateTexture2D(&textureDesc, &textureData, &texture);
-
-	ID3D11ShaderResourceView* textureView;
-	device->CreateShaderResourceView(texture, nullptr, &textureView);
+	auto textureRet = rhi.GetContext().CreateTexture2D(textureDesc, textureData);
+	Texture2D texture = textureRet.value();
 
 	ID3D11Buffer* buffers[] = { vertexBuffer, instanceRotationBuffer, instanceColorBuffer };
 	

@@ -9,7 +9,6 @@ struct Texture2D final
 	//Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> unorderedAccessView;
 	uint32_t                                          width{ 0 };
 	uint32_t                                          height{ 0 };
-
 	uint32_t                                          mipCount{ 0 };
 	TexelsFormat                                      format{ TexelsFormat::RGBA_U8 };
 };
