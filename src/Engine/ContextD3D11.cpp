@@ -108,7 +108,17 @@ void ContextD3D11::EndFrame()
 	}
 }
 //=============================================================================
-std::optional<Texture2D> ContextD3D11::CreateTexture2D(const D3D11_TEXTURE2D_DESC& textureDesc, const D3D11_SUBRESOURCE_DATA& memoryData)
+std::optional<Sampler> ContextD3D11::CreateSampler(const TextureSamplerCreateInfo& createInfo)
+{
+	return std::optional<Sampler>();
+}
+//=============================================================================
+std::optional<Texture2D> ContextD3D11::CreateTexture2D(const Texture2DCreateInfo& createInfo)
+{
+	return std::optional<Texture2D>();
+}
+//=============================================================================
+std::optional<Texture2D> ContextD3D11::CreateTexture2D(const D3D11_TEXTURE2D_DESC& textureDesc, const D3D11_SUBRESOURCE_DATA& memoryData, bool generateMips)
 {
 	Texture2D texture2D;
 	texture2D.width = textureDesc.Width;
@@ -135,7 +145,8 @@ std::optional<Texture2D> ContextD3D11::CreateTexture2D(const D3D11_TEXTURE2D_DES
 		return std::nullopt;
 	}
 
-	m_d3dContext->GenerateMips(texture2D.shaderResourceView.Get());
+	if (generateMips)
+		m_d3dContext->GenerateMips(texture2D.shaderResourceView.Get());
 
 	return texture2D;
 }
@@ -176,7 +187,7 @@ std::optional<Texture2D> ContextD3D11::LoadTexture2D(std::string_view filePath, 
 	textureSubresourceData.SysMemPitch = textureBytesPerRow;
 	textureSubresourceData.SysMemSlicePitch = 0;
 
-	auto textureRet = CreateTexture2D(textureDesc, textureSubresourceData);
+	auto textureRet = CreateTexture2D(textureDesc, textureSubresourceData, true);
 	stbi_image_free(texture);
 
 	return textureRet;

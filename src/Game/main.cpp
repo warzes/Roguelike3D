@@ -310,7 +310,7 @@ int main()
 			deviceContext->RSSetState(rasterizerState);
 
 			deviceContext->PSSetShader(pixelShader, nullptr, 0);
-			deviceContext->PSSetShaderResources(0, 1, &textureView);
+			rhi.GetContext().Bind(texture, 0);
 			deviceContext->PSSetSamplers(0, 1, &samplerState);
 
 			deviceContext->OMSetDepthStencilState(depthStencilState, 0);

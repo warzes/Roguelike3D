@@ -29,15 +29,36 @@ enum class SwapChainFormat : uint8_t
 
 enum class TexelsFormat : uint8_t 
 {
-	R_U8,
-	RG_U8,
-	RGB_U8,
-	RGBA_U8,
+	R_U8,     // An 8 bits per pixel red channel texture format.
+	R_U16,    // A 16 bits per pixel red channel texture format.
+	RG_U8,    // An 8 bits per pixel red and green channel texture format.
+	RG_U16,   // A 16 bits per pixel red and green channel texture format.
+	RGB_U8,   // An 8 bits per pixel red, green, and blue channel texture format.
+	RGBA_U8,  // An 8 bits per pixel red, green, blue, and alpha channel texture format.
+	RGBA_U16, // A 16 bits per pixel red, green, blue, and alpha channel texture format.
 
 	Depth_U16,
 	DepthStencil_U16,
 	Depth_U24,
-	DepthStencil_U24,
+	DepthStencil_U24, // A format to be used with the depth and stencil buffers where the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
+};
+
+enum class TextureSamplerFilter : uint8_t
+{
+	MinMagLinear,
+	MinMagNearest,
+	MinLinearMagNearest,
+	MinNearestMagLinear,
+	MinTrilinearMagLinear,
+	MinTrilinearMagNearest
+};
+
+enum class TextureSamplerWrap : uint8_t
+{
+	Repeat,
+	Mirror,
+	Clamp,
+	BorderColor
 };
 
 //=============================================================================

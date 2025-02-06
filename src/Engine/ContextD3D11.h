@@ -3,6 +3,13 @@
 #include "ResourcesD3D11.h"
 #include "AdvanceResourcesD3D11.h"
 
+CuteEngine
+минимальный си подобный интерфейс.для идей sigrlinn и nikola
+
+
+ContextD3D11 - сделать объектом без методов
+а методы перенести в RHISystem
+
 struct ContextD3D11CreateInfo final
 {
 	HWND     hwnd{ nullptr };
@@ -25,7 +32,10 @@ public:
 	void BeginFrame();
 	void EndFrame();
 
-	std::optional<Texture2D> CreateTexture2D(const D3D11_TEXTURE2D_DESC& textureDesc, const D3D11_SUBRESOURCE_DATA& memoryData);
+	std::optional<Sampler> CreateSampler(const TextureSamplerCreateInfo& createInfo);
+
+	std::optional<Texture2D> CreateTexture2D(const Texture2DCreateInfo& createInfo);
+	std::optional<Texture2D> CreateTexture2D(const D3D11_TEXTURE2D_DESC& textureDesc, const D3D11_SUBRESOURCE_DATA& memoryData, bool generateMips = false);
 	std::optional<Texture2D> LoadTexture2D(std::string_view filePath, bool srgbTexture = true);
 
 	void SetMainFrameBuffer() const;
