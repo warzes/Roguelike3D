@@ -3,13 +3,6 @@
 #include "ResourcesD3D11.h"
 #include "AdvanceResourcesD3D11.h"
 
-CuteEngine
-минимальный си подобный интерфейс.для идей sigrlinn и nikola
-
-
-ContextD3D11 - сделать объектом без методов
-а методы перенести в RHISystem
-
 struct ContextD3D11CreateInfo final
 {
 	HWND     hwnd{ nullptr };
