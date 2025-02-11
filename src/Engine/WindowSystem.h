@@ -36,7 +36,7 @@ public:
 private:
 	void windowSizeChanged(uint32_t width, uint32_t height);
 
-	friend LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM) noexcept;
+	friend LRESULT CALLBACK WindowProc2(HWND, UINT, WPARAM, LPARAM) noexcept;
 
 	HINSTANCE    m_handleInstance{ nullptr };
 	HWND         m_hwnd{ nullptr };

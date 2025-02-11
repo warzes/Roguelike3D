@@ -25,19 +25,28 @@
     <ClInclude Include="GameApp.h">
       <Filter>Game</Filter>
     </ClInclude>
+    <ClInclude Include="CutePrivate\CuteEngine_Header.h">
+      <Filter>CuteEngine\CutePrivate</Filter>
+    </ClInclude>
+    <ClInclude Include="CutePrivate\CuteEngine_Window.h">
+      <Filter>CuteEngine\CutePrivate</Filter>
+    </ClInclude>
+    <ClInclude Include="CutePrivate\CuteEngine_RHI.h">
+      <Filter>CuteEngine\CutePrivate</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CuteEngine">
       <UniqueIdentifier>{727f98d0-9011-4b3c-a1fb-afd7b313ae8b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="CuteEngine\private">
-      <UniqueIdentifier>{2ea2f467-4fea-44b4-b793-42fa7005cdb0}</UniqueIdentifier>
     </Filter>
     <Filter Include="CuteEngine\AdvanceModule">
       <UniqueIdentifier>{c1749433-a116-477b-beca-4e043340e4ba}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game">
       <UniqueIdentifier>{49f7c305-7791-46b9-aebe-9939155e9229}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CuteEngine\CutePrivate">
+      <UniqueIdentifier>{2ea2f467-4fea-44b4-b793-42fa7005cdb0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

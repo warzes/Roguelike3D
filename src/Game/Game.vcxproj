@@ -114,6 +114,9 @@
   <ItemGroup>
     <ClInclude Include="CuteEngine.h" />
     <ClInclude Include="CuteEngineMath.h" />
+    <ClInclude Include="CutePrivate\CuteEngine_Header.h" />
+    <ClInclude Include="CutePrivate\CuteEngine_RHI.h" />
+    <ClInclude Include="CutePrivate\CuteEngine_Window.h" />
     <ClInclude Include="GameApp.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

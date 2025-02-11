@@ -10,7 +10,7 @@ namespace
 //=============================================================================
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 //=============================================================================
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
+LRESULT CALLBACK WindowProc2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
 	if (message == WM_DESTROY)
 	{
@@ -136,7 +136,7 @@ bool WindowSystem::Create(const WindowSystemCreateInfo& createInfo)
 
 	WNDCLASSEX windowClassInfo{ .cbSize = sizeof(WNDCLASSEX) };
 	windowClassInfo.style = CS_HREDRAW | CS_VREDRAW;
-	windowClassInfo.lpfnWndProc = WindowProc;
+	windowClassInfo.lpfnWndProc = WindowProc2;
 	windowClassInfo.hInstance = m_handleInstance;
 	windowClassInfo.hIcon = LoadIconW(m_handleInstance, L"IDI_ICON");
 	windowClassInfo.hIconSm = LoadIconW(m_handleInstance, L"IDI_ICON");

@@ -9,11 +9,11 @@
 #endif
 #pragma comment(lib, "d3dcompiler.lib")
 //=============================================================================
-extern "C"
-{
-	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-}
+//extern "C"
+//{
+//	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+//	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+//}
 //=============================================================================
 ContextD3D11::~ContextD3D11()
 {
