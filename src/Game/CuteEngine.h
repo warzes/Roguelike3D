@@ -279,9 +279,18 @@ public:
 
 	// Window
 	void SetWindowTitle(std::wstring_view title);
+	void RegisterDropCallback(void (*callback)(char const*, uint32_t, void*), void* data);
+	void UnregisterDropCallback();
+
 	[[nodiscard]] uint32_t GetWindowWidth() const;
 	[[nodiscard]] uint32_t GetWindowHeight() const;
 	[[nodiscard]] float GetWindowAspect() const;
+
+	// Input
+	bool IsKeyDown(uint32_t keyCode) const;
+	bool IsKeyPressed(uint32_t keyCode) const;
+	bool IsKeyReleased(uint32_t keyCode) const;
+
 
 private:
 	bool init();
@@ -296,3 +305,8 @@ private:
 };
 
 #pragma endregion
+//=============================================================================
+#ifdef CUTE_IMPLEMENTATION_DEFINE
+#	include "CuteEngine.cpp"
+#endif
+//=============================================================================

@@ -21,11 +21,8 @@ namespace engineData
 	double lastTime = 0.0;
 	double currentTime = 0.0;
 	double deltaTime = 0.0;
-	double accumulator = 0.0;
+	double fixedAccumulator = 0.0;
 	double invFrequency = 0.0;
-	int frameCount = 0;
-	double fpsTimer = 0.0;
-	int fps = 0;
 }
 //=============================================================================
 void Fatal(const std::string& error)
@@ -45,14 +42,14 @@ void CuteEngineApp::Run()
 
 			PollEvent();
 
+			update();
+
 			// Фиксированные обновления
-			while (engineData::accumulator >= FIXED_TIME_STEP)
+			while (engineData::fixedAccumulator >= FIXED_TIME_STEP)
 			{
 				fixedUpdate();
-				engineData::accumulator -= FIXED_TIME_STEP;
+				engineData::fixedAccumulator -= FIXED_TIME_STEP;
 			}
-
-			update();
 
 			frame();
 		}
@@ -67,18 +64,31 @@ void CuteEngineApp::Exit()
 //=============================================================================
 bool CuteEngineApp::init()
 {
-	engineData::deltaTime = 0.0;
-	engineData::accumulator = 0.0;
-	engineData::invFrequency = 0.0;
-	engineData::frameCount = 0;
-	engineData::fpsTimer = 0.0;
-	engineData::fps = 0;
-
 	auto createInfo = GetCreateInfo();
 	auto& windowCI = createInfo.window;
 
-	if (!InitWindow(windowCI.width, windowCI.height, windowCI.title,
-		windowCI.resizable, windowCI.fullScreen, windowCI.maximize))
+	LARGE_INTEGER frequency;
+	if (!QueryPerformanceFrequency(&frequency))
+	{
+		Fatal("High-resolution performance counter not supported!");
+		return false;
+	}
+	if (frequency.QuadPart == 0)
+	{
+		Fatal("Performance frequency is zero!");
+		return false;
+	}
+	engineData::invFrequency     = 1.0 / static_cast<double>(frequency.QuadPart);
+	engineData::lastTime         = engineData::currentTime = getCurrentTime();
+	engineData::deltaTime        = 0.0;
+	engineData::fixedAccumulator = 0.0;
+
+	CreateWindowFlags windowFlags = 0;
+	if (!windowCI.resizable) windowFlags |= NoResizeWindow;
+	if (windowCI.fullScreen) windowFlags |= FullscreenWindow;
+	if (windowCI.maximize)   windowFlags |= MaximizeWindow;
+
+	if (!InitWindow(windowCI.width, windowCI.height, windowCI.title, windowFlags))
 		return false;
 
 	if (!OnInit())
@@ -86,12 +96,6 @@ bool CuteEngineApp::init()
 		Fatal("OnInit() return false");
 		return false;
 	}
-
-	// Получение текущего времени
-	LARGE_INTEGER frequency;
-	QueryPerformanceFrequency(&frequency);
-	engineData::invFrequency = 1.0 / frequency.QuadPart;
-	engineData::lastTime = engineData::currentTime = getCurrentTime();
 
 	thisCuteEngineApp = this;
 	engineData::shouldClose = false;
@@ -109,14 +113,14 @@ void CuteEngineApp::close()
 //=============================================================================
 bool CuteEngineApp::isShouldClose() const
 {
-	return engineData::shouldClose || windowData::requestClose;
+	return engineData::shouldClose || windowData::isCloseRequested;
 }
 //=============================================================================
 double CuteEngineApp::getCurrentTime()
 {
 	LARGE_INTEGER currentTimeLi;
 	QueryPerformanceCounter(&currentTimeLi);
-	double currentTime = currentTimeLi.QuadPart * engineData::invFrequency;
+	const double currentTime = static_cast<double>(currentTimeLi.QuadPart) * engineData::invFrequency;
 	return currentTime;
 }
 //=============================================================================
@@ -129,8 +133,7 @@ void CuteEngineApp::computeTimer()
 	engineData::deltaTime = engineData::currentTime - engineData::lastTime;
 	engineData::lastTime = engineData::currentTime;
 	// Аккумулирование времени
-	engineData::accumulator += engineData::deltaTime;
-	engineData::fpsTimer += engineData::deltaTime;
+	engineData::fixedAccumulator += engineData::deltaTime;
 }
 //=============================================================================
 void CuteEngineApp::fixedUpdate()

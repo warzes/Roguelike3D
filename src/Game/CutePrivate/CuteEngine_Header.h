@@ -69,6 +69,10 @@
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_win32.h>
+#include <imgui/imgui_impl_dx11.h>
+
 #if defined(_MSC_VER)
 #	pragma warning(pop)
 #endif

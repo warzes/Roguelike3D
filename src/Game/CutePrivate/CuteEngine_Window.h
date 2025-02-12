@@ -13,13 +13,28 @@ namespace windowData
 	HINSTANCE handleInstance{ nullptr };
 	HWND      hwnd{ nullptr };
 	MSG       msg{};
-	bool      requestClose{ true };
+	bool      isCloseRequested{ true };
 	bool      isSizeMove{ false };
 	bool      isMinimized{ false };
+	bool      isMaximized{ false };
 	bool      fullScreen{ false };
+
+	void (*dropCallback)(char const*, uint32_t, void*) = nullptr;
+	void*     callbackData = nullptr;
+
+	bool      isKeyDown[VK_OEM_CLEAR] = {};
+	bool      isPreviousKeyDown[VK_OEM_CLEAR] = {};
 }
+enum CreateWindowFlag
+{
+	MaximizeWindow = 1 << 0,
+	NoResizeWindow = 1 << 1,
+	FullscreenWindow = 1 << 2,
+	AcceptDrop = 1 << 3
+};
+typedef uint32_t CreateWindowFlags;
 //=============================================================================
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 //=============================================================================
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
@@ -29,11 +44,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		return 0;
 	}
 
-	//if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
-	//	return true;
+	gfx
 
 	if (thisCuteEngineApp) [[likely]]
 	{
+
+		if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
+			return true;
+
 		switch (message)
 		{
 		case WM_DESTROY:
@@ -131,10 +149,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 	return DefWindowProc(hwnd, message, wParam, lParam);
 }
 //=============================================================================
-bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, bool resizable, bool maximize, bool fullScreen)
+bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, CreateWindowFlags flags)
 {
-	windowData::requestClose = true;
-	windowData::fullScreen = fullScreen;
+	windowData::isCloseRequested = true;
+	windowData::fullScreen = (flags & FullscreenWindow) != 0;
 	windowData::handleInstance = GetModuleHandle(nullptr);
 
 	WNDCLASSEX windowClassInfo{ .cbSize = sizeof(WNDCLASSEX) };
@@ -152,19 +170,22 @@ bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, bool r
 		return false;
 	}
 
-	const int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+	const DWORD windowStyle = WS_OVERLAPPEDWINDOW & ~((flags & NoResizeWindow) != 0 ? WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX : 0);
+
+	const int screenWidth  = GetSystemMetrics(SM_CXSCREEN);
 	const int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-	const int windowLeft = screenWidth / 2 - (int)width / 2;
-	const int windowTop = screenHeight / 2 - (int)height / 2;
+	const int windowLeft   = screenWidth / 2 - (int)width / 2;
+	const int windowTop    = screenHeight / 2 - (int)height / 2;
 
 	RECT windowRect = { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
-	AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+	AdjustWindowRect(&windowRect, windowStyle, FALSE);
 	LONG windowWidth = windowRect.right - windowRect.left;
 	LONG windowHeight = windowRect.bottom - windowRect.top;
 
-	windowData::hwnd = CreateWindowEx(0,
+	windowData::hwnd = CreateWindowEx(
+		(flags & AcceptDrop) != 0 ? WS_EX_ACCEPTFILES : 0,
 		windowData::windowClassName, title.data(),
-		WS_OVERLAPPEDWINDOW,
+		windowStyle,
 		windowLeft, windowTop, windowWidth, windowHeight,
 		nullptr, nullptr, windowData::handleInstance, nullptr);
 	if (!windowData::hwnd)
@@ -173,7 +194,36 @@ bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, bool r
 		return false;
 	}
 
-	ShowWindow(windowData::hwnd, maximize ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+	if (windowData::fullScreen)
+	{
+		WINDOWPLACEMENT g_wpPrev;
+		memset(&g_wpPrev, 0, sizeof(g_wpPrev));
+		g_wpPrev.length = sizeof(g_wpPrev);
+		DWORD dwStyle = GetWindowLong(windowData::hwnd, GWL_STYLE);
+
+		if ((dwStyle & WS_OVERLAPPEDWINDOW) != 0)
+		{
+			MONITORINFO mi;
+			memset(&mi, 0, sizeof(mi));
+			mi.cbSize = sizeof(mi);
+			if (GetWindowPlacement(windowData::hwnd, &g_wpPrev) && GetMonitorInfo(MonitorFromWindow(windowData::hwnd, MONITOR_DEFAULTTOPRIMARY), &mi))
+			{
+				SetWindowLong(windowData::hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+				SetWindowPos(windowData::hwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top,
+					mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top,
+					SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+			}
+		}
+		else
+		{
+			SetWindowLong(windowData::hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
+			SetWindowPlacement(windowData::hwnd, &g_wpPrev);
+			SetWindowPos(windowData::hwnd, nullptr, 0, 0, 0, 0,
+				SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+		}
+	}
+
+	ShowWindow(windowData::hwnd, (flags & MaximizeWindow) != 0 ? SW_SHOWMAXIMIZED : SW_SHOWDEFAULT);
 
 	GetClientRect(windowData::hwnd, &windowRect);
 	windowData::width = static_cast<uint32_t>(windowRect.right - windowRect.left);
@@ -183,7 +233,8 @@ bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, bool r
 
 	windowData::isSizeMove = false;
 	windowData::isMinimized = false;
-	windowData::requestClose = false;
+	windowData::isMaximized = (flags & MaximizeWindow) != 0;
+	windowData::isCloseRequested = false;
 	return true;
 }
 //=============================================================================
@@ -191,13 +242,18 @@ void EndWindow()
 {
 	if (windowData::hwnd) DestroyWindow(windowData::hwnd);
 	windowData::hwnd = nullptr;
+
+	if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().BackendPlatformUserData != nullptr)
+		ImGui_ImplWin32_Shutdown();
+
 	if (windowData::handleInstance) UnregisterClass(windowData::windowClassName, windowData::handleInstance);
 	windowData::handleInstance = nullptr;
-	windowData::requestClose = true;
+	windowData::isCloseRequested = true;
 }
 //=============================================================================
 void PollEvent()
 {
+	memcpy(windowData::isPreviousKeyDown, windowData::isKeyDown, sizeof(windowData::isKeyDown)); // TODO: оптимизировать
 	while (PeekMessage(&windowData::msg, nullptr, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&windowData::msg);
@@ -205,7 +261,7 @@ void PollEvent()
 
 		if (windowData::msg.message == WM_QUIT)
 		{
-			windowData::requestClose = true;
+			windowData::isCloseRequested = true;
 			break;
 		}
 	}
@@ -217,6 +273,18 @@ void CuteEngineApp::SetWindowTitle(std::wstring_view title)
 	{
 		Fatal("Failed to set window title.");
 	}
+}
+//=============================================================================
+void CuteEngineApp::RegisterDropCallback(void(*callback)(char const*, uint32_t, void*), void* data)
+{
+	windowData::dropCallback = callback;
+	windowData::callbackData = data;
+}
+//=============================================================================
+void CuteEngineApp::UnregisterDropCallback()
+{
+	windowData::dropCallback = nullptr;
+	windowData::callbackData = nullptr;
 }
 //=============================================================================
 uint32_t CuteEngineApp::GetWindowWidth() const
@@ -232,5 +300,20 @@ uint32_t CuteEngineApp::GetWindowHeight() const
 float CuteEngineApp::GetWindowAspect() const
 {
 	return static_cast<float>(GetWindowWidth()) / static_cast<float>(GetWindowHeight());
+}
+//=============================================================================
+bool CuteEngineApp::IsKeyDown(uint32_t keyCode) const
+{
+	return (keyCode < ARRAYSIZE(windowData::isKeyDown) ? windowData::isKeyDown[keyCode] : false);
+}
+//=============================================================================
+bool CuteEngineApp::IsKeyPressed(uint32_t keyCode) const
+{
+	return (keyCode < ARRAYSIZE(windowData::isKeyDown) ? windowData::isKeyDown[keyCode] && !windowData::isPreviousKeyDown[keyCode] : false);
+}
+//=============================================================================
+bool CuteEngineApp::IsKeyReleased(uint32_t keyCode) const
+{
+	return (keyCode < ARRAYSIZE(windowData::isKeyDown) ? !windowData::isKeyDown[keyCode] && windowData::isPreviousKeyDown[keyCode] : false);
 }
 //=============================================================================

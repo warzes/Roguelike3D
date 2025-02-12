@@ -3858,6 +3858,9 @@ void ImFont::AddGlyph(const ImFontConfig* cfg, ImWchar codepoint, float x0, floa
         // Snap to pixel
         if (cfg->PixelSnapH)
             advance_x = IM_ROUND(advance_x);
+
+        // Bake extra spacing
+        advance_x += cfg->GlyphExtraAdvanceX;
     }
 
     int glyph_idx = Glyphs.Size;
@@ -3900,7 +3903,7 @@ void ImFont::AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst)
 }
 
 // Find glyph, return fallback if missing
-const ImFontGlyph* ImFont::FindGlyph(ImWchar c)
+ImFontGlyph* ImFont::FindGlyph(ImWchar c)
 {
     if (c >= (size_t)IndexLookup.Size)
         return FallbackGlyph;
@@ -3910,7 +3913,7 @@ const ImFontGlyph* ImFont::FindGlyph(ImWchar c)
     return &Glyphs.Data[i];
 }
 
-const ImFontGlyph* ImFont::FindGlyphNoFallback(ImWchar c)
+ImFontGlyph* ImFont::FindGlyphNoFallback(ImWchar c)
 {
     if (c >= (size_t)IndexLookup.Size)
         return NULL;
