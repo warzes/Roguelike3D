@@ -220,7 +220,7 @@ struct CuteEngineCreateInfo final
 		uint32_t          width{ 1600 };
 		uint32_t          height{ 900 };
 		std::wstring_view title{ L"Game" };
-		bool              resizable{ false };
+		bool              resizable{ true };
 		bool              maximize{ false };
 		bool              fullScreen{ false };
 	} window;

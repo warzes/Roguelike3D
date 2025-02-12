@@ -42,6 +42,12 @@ void CuteEngineApp::Run()
 
 			PollEvent();
 
+			if (windowData::isResized)
+			{
+				OnWindowResize(windowData::width, windowData::height);
+				windowData::isResized = false;
+			}
+
 			update();
 
 			// Фиксированные обновления

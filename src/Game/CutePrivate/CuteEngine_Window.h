@@ -14,7 +14,7 @@ namespace windowData
 	HWND      hwnd{ nullptr };
 	MSG       msg{};
 	bool      isCloseRequested{ true };
-	bool      isSizeMove{ false };
+	bool      isResized{ false };
 	bool      isMinimized{ false };
 	bool      isMaximized{ false };
 	bool      fullScreen{ false };
@@ -36,6 +36,29 @@ typedef uint32_t CreateWindowFlags;
 //=============================================================================
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 //=============================================================================
+void resetKeyBindings()
+{
+	for (uint32_t i = 0; i < ARRAYSIZE(windowData::isKeyDown); ++i)
+		windowData::isKeyDown[i] = false;
+}
+//=============================================================================
+void updateKeyBinding(uint32_t message, uint32_t keyCode)
+{
+	bool is_down;
+	switch (message)
+	{
+	case WM_KEYUP: case WM_SYSKEYUP:
+		is_down = false;
+		break;
+	case WM_KEYDOWN: case WM_SYSKEYDOWN:
+		is_down = true;
+		break;
+	default:
+		return;
+	}
+	windowData::isKeyDown[keyCode] = is_down;
+}
+//=============================================================================
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
 	if (message == WM_DESTROY) [[unlikely]]
@@ -44,14 +67,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		return 0;
 	}
 
-	gfx
-
 	if (thisCuteEngineApp) [[likely]]
 	{
-
-		if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
-			return true;
-
 		switch (message)
 		{
 		case WM_DESTROY:
@@ -68,34 +85,42 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			}
 			break;
 
-		case WM_ENTERSIZEMOVE:
-			//thisWindowSystem->m_isSizeMove = true;
-			break;
-		case WM_EXITSIZEMOVE:
-			//thisWindowSystem->m_isSizeMove = false;
-			{
-				RECT rc;
-				GetClientRect(hwnd, &rc);
-				//thisWindowSystem->windowSizeChanged(rc.right - rc.left, rc.bottom - rc.top);
-			}
+		case WM_KILLFOCUS:
+			resetKeyBindings();
 			break;
 
-		case WM_SIZE:
-			if (wParam == SIZE_MINIMIZED)
+		case WM_DROPFILES:
+		{
+			HDROP hdrop = (HDROP)wParam;
+			if (windowData::dropCallback != nullptr)
 			{
-				//if (!thisWindowSystem->m_isMinimized)
+				char file_name[MAX_PATH];
+				// Get the number of files dropped onto window
+				uint32_t const file_count = DragQueryFileA(hdrop, 0xFFFFFFFFu, file_name, MAX_PATH);
+				for (uint32_t i = 0; i < file_count; i++)
 				{
-				//	thisWindowSystem->m_isMinimized = true;
+					// Get i'th filename
+					DragQueryFileA(hdrop, i, file_name, MAX_PATH);
+
+					// Pass to callback function
+					(*windowData::dropCallback)(file_name, i, windowData::callbackData);
 				}
 			}
-			//else if (thisWindowSystem->m_isMinimized)
+			DragFinish(hdrop);
+		}
+		break;
+
+		case WM_SIZE:
+			windowData::isMinimized = IsIconic(hwnd);
+			windowData::isMaximized = IsZoomed(hwnd);
+
+			if (wParam != SIZE_MINIMIZED)
 			{
-			//	thisWindowSystem->m_isMinimized = false;
+				windowData::isResized = true;
+				windowData::width = static_cast<uint32_t>(LOWORD(lParam));
+				windowData::height = static_cast<uint32_t>(HIWORD(lParam));
 			}
-			//else if (!thisWindowSystem->m_isSizeMove)
-			{
-			//	thisWindowSystem->windowSizeChanged(static_cast<uint32_t>(LOWORD(lParam)), static_cast<uint32_t>(HIWORD(lParam)));
-			}
+
 			break;
 
 		case WM_GETMINMAXINFO:
@@ -114,36 +139,60 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// A menu is active and the user presses a key that does not correspond to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
 			return MAKELRESULT(0, 1/*MNC_CLOSE*/);
 
-		case WM_SYSKEYDOWN:
-			if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
+		case WM_CHAR:
+		case WM_SETCURSOR:
+		case WM_DEVICECHANGE:
+		case WM_KEYUP: case WM_SYSKEYUP:
+		case WM_KEYDOWN: case WM_SYSKEYDOWN:
+		case WM_LBUTTONUP: case WM_RBUTTONUP:
+		case WM_MBUTTONUP: case WM_XBUTTONUP:
+		case WM_MOUSEWHEEL: case WM_MOUSEHWHEEL:
+		case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
+		case WM_RBUTTONDOWN: case WM_RBUTTONDBLCLK:
+		case WM_MBUTTONDOWN: case WM_MBUTTONDBLCLK:
+		case WM_XBUTTONDOWN: case WM_XBUTTONDBLCLK:
+			if (wParam < ARRAYSIZE(windowData::isKeyDown))
+				updateKeyBinding(message, (uint32_t)wParam);
+
+			if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().BackendPlatformUserData != nullptr)
 			{
-				// Implements the classic ALT+ENTER fullscreen toggle
-				/*if (thisWindowSystem->m_fullScreen)
-				{
-					SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-					SetWindowLongPtr(hwnd, GWL_EXSTYLE, 0);
-
-					int width = thisWindowSystem->m_widthInWindowMode;
-					int height = thisWindowSystem->m_heightInWindowMode;
-
-					ShowWindow(hwnd, SW_SHOWNORMAL);
-					SetWindowPos(hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-				}
-				else
-				{
-					thisWindowSystem->m_widthInWindowMode = thisWindowSystem->m_width;
-					thisWindowSystem->m_heightInWindowMode = thisWindowSystem->m_height;
-					SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP);
-					SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-
-					SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-
-					ShowWindow(hwnd, SW_SHOWMAXIMIZED);
-				}
-
-				thisWindowSystem->m_fullScreen = !thisWindowSystem->m_fullScreen;*/
+				if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
+					return true;
 			}
+				
+
 			break;
+
+		//case WM_SYSKEYDOWN:
+		//	if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
+		//	{
+		//		// Implements the classic ALT+ENTER fullscreen toggle
+		//		/*if (thisWindowSystem->m_fullScreen)
+		//		{
+		//			SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+		//			SetWindowLongPtr(hwnd, GWL_EXSTYLE, 0);
+
+		//			int width = thisWindowSystem->m_widthInWindowMode;
+		//			int height = thisWindowSystem->m_heightInWindowMode;
+
+		//			ShowWindow(hwnd, SW_SHOWNORMAL);
+		//			SetWindowPos(hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+		//		}
+		//		else
+		//		{
+		//			thisWindowSystem->m_widthInWindowMode = thisWindowSystem->m_width;
+		//			thisWindowSystem->m_heightInWindowMode = thisWindowSystem->m_height;
+		//			SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP);
+		//			SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOPMOST);
+
+		//			SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+		//			ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+		//		}
+
+		//		thisWindowSystem->m_fullScreen = !thisWindowSystem->m_fullScreen;*/
+		//	}
+		//	break;
 		}
 	}
 	return DefWindowProc(hwnd, message, wParam, lParam);
@@ -231,7 +280,8 @@ bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, Create
 	windowData::widthInWindowMode = windowData::width;
 	windowData::heightInWindowMode = windowData::height;
 
-	windowData::isSizeMove = false;
+	resetKeyBindings();
+	windowData::isResized = false;
 	windowData::isMinimized = false;
 	windowData::isMaximized = (flags & MaximizeWindow) != 0;
 	windowData::isCloseRequested = false;
