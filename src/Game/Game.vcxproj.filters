@@ -34,6 +34,9 @@
     <ClInclude Include="CutePrivate\CuteEngine_RHI.h">
       <Filter>CuteEngine\CutePrivate</Filter>
     </ClInclude>
+    <ClInclude Include="CutePrivate\CuteEngine_RHIResurces.h">
+      <Filter>CuteEngine\CutePrivate</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CuteEngine">

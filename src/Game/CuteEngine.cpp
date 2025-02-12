@@ -6,6 +6,7 @@
 #include "CutePrivate/CuteEngine_Header.h"
 #include "CutePrivate/CuteEngine_Window.h"
 #include "CutePrivate/CuteEngine_RHI.h"
+#include "CutePrivate/CuteEngine_RHIResurces.h"
 #if defined(_MSC_VER)
 #	pragma warning(pop)
 #endif
@@ -44,6 +45,9 @@ void CuteEngineApp::Run()
 
 			if (windowData::isResized)
 			{
+				if (!ResizeRHI(windowData::width, windowData::height)) 
+					break;
+
 				OnWindowResize(windowData::width, windowData::height);
 				windowData::isResized = false;
 			}
@@ -72,6 +76,7 @@ bool CuteEngineApp::init()
 {
 	auto createInfo = GetCreateInfo();
 	auto& windowCI = createInfo.window;
+	auto& rhiCI = createInfo.rhi;
 
 	LARGE_INTEGER frequency;
 	if (!QueryPerformanceFrequency(&frequency))
@@ -97,6 +102,12 @@ bool CuteEngineApp::init()
 	if (!InitWindow(windowCI.width, windowCI.height, windowCI.title, windowFlags))
 		return false;
 
+	CreateRHIFlags rhiFlags = 0;
+	if (rhiCI.vsync) rhiFlags |= rhi_vsync;
+
+	if (!InitRHI(rhiFlags))
+		return false;
+
 	if (!OnInit())
 	{
 		Fatal("OnInit() return false");
@@ -112,6 +123,7 @@ void CuteEngineApp::close()
 {
 	OnClose();
 
+	CloseRHI();
 	EndWindow();
 	thisCuteEngineApp = nullptr;
 	engineData::shouldClose = true;
@@ -155,5 +167,6 @@ void CuteEngineApp::update()
 void CuteEngineApp::frame()
 {
 	OnFrame();
+	PresentRHI();
 }
 //=============================================================================

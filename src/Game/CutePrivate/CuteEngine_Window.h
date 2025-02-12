@@ -25,6 +25,7 @@ namespace windowData
 	bool      isKeyDown[VK_OEM_CLEAR] = {};
 	bool      isPreviousKeyDown[VK_OEM_CLEAR] = {};
 }
+//=============================================================================
 enum CreateWindowFlag
 {
 	MaximizeWindow = 1 << 0,
