@@ -48,6 +48,8 @@ constexpr const auto CuteEngineVersion = "0.0.1";
 //=============================================================================
 #pragma region [ Base ]
 
+void Fatal(const std::string& error);
+
 #pragma endregion
 //=============================================================================
 #pragma region [ Input ]
@@ -225,7 +227,7 @@ struct CuteEngineCreateInfo final
 
 	struct RHI
 	{
-
+		bool              vsync{ false };
 	} rhi;
 };
 
@@ -238,7 +240,7 @@ public:
 	virtual bool OnInit() { return true; }
 	virtual bool OnClose() { return true; }
 
-	virtual void OnUpdate([[maybe_unused]] float deltaTime) {}
+	virtual void OnUpdate([[maybe_unused]] double deltaTime) {}
 	virtual void OnFixedUpdate() {}
 	virtual void OnFrame() {}
 
@@ -271,27 +273,26 @@ public:
 class CuteEngineApp : protected ICuteEngineApp
 {
 public:
-	struct Result final
-	{
-		explicit operator bool() const { return success; }
-		bool success{ false };
-		const char* errorText = "";
-	};
-
-	~CuteEngineApp() override;
-
-	Result Init();
-	void Close();
-
-	[[nodiscard]] bool IsShouldClose() const;
-	void Frame();
+	void Run();
 
 	void Exit();
 
 	// Window
-	uint32_t GetWindowWidth() const;
-	uint32_t GetWindowHeight() const;
-	float GetWindowAspect() const;
+	void SetWindowTitle(std::wstring_view title);
+	[[nodiscard]] uint32_t GetWindowWidth() const;
+	[[nodiscard]] uint32_t GetWindowHeight() const;
+	[[nodiscard]] float GetWindowAspect() const;
+
+private:
+	bool init();
+	void close();
+	bool isShouldClose() const;
+
+	double getCurrentTime();
+	void computeTimer();
+	void fixedUpdate();
+	void update();
+	void frame();
 };
 
 #pragma endregion

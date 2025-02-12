@@ -35,18 +35,6 @@ int main(
 	//	std::cout << foo.error();
 	//}
 	GameApp app;
-
-	auto result = app.Init();
-	if (!result)
-	{
-		puts(result.errorText);
-		return 0;
-	}
-
-	while (!app.IsShouldClose())
-	{
-		app.Frame();
-	}
-	app.Close();
+	app.Run();
 }
 //=============================================================================

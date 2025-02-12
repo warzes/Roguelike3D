@@ -28,10 +28,10 @@ void Error(const std::string& msg)
 	assert(thisLogSystem);
 	thisLogSystem->Error(msg);
 }
-//=============================================================================
-void Fatal(const std::string& msg)
-{
-	assert(thisLogSystem);
-	thisLogSystem->Fatal(msg);
-}
+////=============================================================================
+//void Fatal(const std::string& msg)
+//{
+//	assert(thisLogSystem);
+//	thisLogSystem->Fatal(msg);
+//}
 //=============================================================================

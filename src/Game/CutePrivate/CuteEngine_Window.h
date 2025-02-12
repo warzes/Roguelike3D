@@ -1,7 +1,7 @@
 ﻿#pragma once
-
+//=============================================================================
 extern CuteEngineApp* thisCuteEngineApp;
-
+//=============================================================================
 namespace windowData
 {
 	constexpr const auto windowClassName = L"Cute Window Class";
@@ -18,25 +18,9 @@ namespace windowData
 	bool      isMinimized{ false };
 	bool      fullScreen{ false };
 }
-
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept;
-
-CuteEngineApp::Result InitWindow(
-	uint32_t width, uint32_t height,
-	std::wstring_view title, 
-	bool resizable, bool maximize, bool fullScreen);
-
-void CloseWindow();
-
-void PollEvent();
-
-
 //=============================================================================
-// IMPL
-//=============================================================================
-
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
+//=============================================================================
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
 	if (message == WM_DESTROY) [[unlikely]]
@@ -146,26 +130,27 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 	}
 	return DefWindowProc(hwnd, message, wParam, lParam);
 }
-
-CuteEngineApp::Result InitWindow(uint32_t width, uint32_t height, std::wstring_view title, bool resizable, bool maximize, bool fullScreen)
+//=============================================================================
+bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, bool resizable, bool maximize, bool fullScreen)
 {
-	CuteEngineApp::Result result;
-
 	windowData::requestClose = true;
 	windowData::fullScreen = fullScreen;
 	windowData::handleInstance = GetModuleHandle(nullptr);
 
 	WNDCLASSEX windowClassInfo{ .cbSize = sizeof(WNDCLASSEX) };
-	windowClassInfo.style = CS_HREDRAW | CS_VREDRAW;
-	windowClassInfo.lpfnWndProc = WindowProc;
-	windowClassInfo.hInstance = windowData::handleInstance;
-	windowClassInfo.hIcon = LoadIconW(windowData::handleInstance, L"IDI_ICON");
-	windowClassInfo.hIconSm = LoadIconW(windowData::handleInstance, L"IDI_ICON");
-	windowClassInfo.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	windowClassInfo.style         = CS_HREDRAW | CS_VREDRAW;
+	windowClassInfo.lpfnWndProc   = WindowProc;
+	windowClassInfo.hInstance     = windowData::handleInstance;
+	windowClassInfo.hIcon         = LoadIcon(windowData::handleInstance, L"IDI_ICON");
+	windowClassInfo.hIconSm       = LoadIcon(windowData::handleInstance, L"IDI_ICON");
+	windowClassInfo.hCursor       = LoadCursor(nullptr, IDC_ARROW);
 	windowClassInfo.hbrBackground = reinterpret_cast<HBRUSH>(5/*COLOR_WINDOW*/ + 1);
 	windowClassInfo.lpszClassName = windowData::windowClassName;
 	if (!RegisterClassEx(&windowClassInfo))
-		return { false, "Window class registration failed!" };
+	{
+		Fatal("Failed to register window class.");
+		return false;
+	}
 
 	const int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	const int screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -183,7 +168,10 @@ CuteEngineApp::Result InitWindow(uint32_t width, uint32_t height, std::wstring_v
 		windowLeft, windowTop, windowWidth, windowHeight,
 		nullptr, nullptr, windowData::handleInstance, nullptr);
 	if (!windowData::hwnd)
-		return { false, "Window creation failed!" };
+	{
+		Fatal("Failed to create window.");
+		return false;
+	}
 
 	ShowWindow(windowData::hwnd, maximize ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
 
@@ -193,14 +181,13 @@ CuteEngineApp::Result InitWindow(uint32_t width, uint32_t height, std::wstring_v
 	windowData::widthInWindowMode = windowData::width;
 	windowData::heightInWindowMode = windowData::height;
 
-	windowData::requestClose = false;
 	windowData::isSizeMove = false;
 	windowData::isMinimized = false;
 	windowData::requestClose = false;
-	return { true };
+	return true;
 }
-
-void CloseWindow()
+//=============================================================================
+void EndWindow()
 {
 	if (windowData::hwnd) DestroyWindow(windowData::hwnd);
 	windowData::hwnd = nullptr;
@@ -208,7 +195,7 @@ void CloseWindow()
 	windowData::handleInstance = nullptr;
 	windowData::requestClose = true;
 }
-
+//=============================================================================
 void PollEvent()
 {
 	while (PeekMessage(&windowData::msg, nullptr, 0, 0, PM_REMOVE))
@@ -223,3 +210,27 @@ void PollEvent()
 		}
 	}
 }
+//=============================================================================
+void CuteEngineApp::SetWindowTitle(std::wstring_view title)
+{
+	if (!SetWindowTextW(windowData::hwnd, title.data()))
+	{
+		Fatal("Failed to set window title.");
+	}
+}
+//=============================================================================
+uint32_t CuteEngineApp::GetWindowWidth() const
+{
+	return windowData::width;
+}
+//=============================================================================
+uint32_t CuteEngineApp::GetWindowHeight() const
+{
+	return windowData::height;
+}
+//=============================================================================
+float CuteEngineApp::GetWindowAspect() const
+{
+	return static_cast<float>(GetWindowWidth()) / static_cast<float>(GetWindowHeight());
+}
+//=============================================================================
