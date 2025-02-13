@@ -186,6 +186,7 @@ void CuteEngineApp::close()
 	{
 		ImGui_ImplDX11_Shutdown();
 		ImGui_ImplWin32_Shutdown();
+		ImGui::DestroyContext();
 	}
 
 	CloseRHI();
