@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "HighResolutionTimer.h"
+#include <Windows.h>
 //=============================================================================
 #define WINDOWS_CLOCK 0
 #define HIGH_RESOLUTION_CLOCK 1

@@ -22,8 +22,6 @@ namespace rhiData
 	ComPtr<ID3D11Device5>          d3dDevice;
 	ComPtr<ID3D11DeviceContext4>   d3dContext;
 
-	SwapChainFormat                swapChainFormat{ SwapChainFormat::BT709_G22_8BIT };
-
 	ComPtr<IDXGISwapChain4>        swapChain;
 	DXGI_FORMAT                    backBufferFormat{ };
 	DXGI_COLOR_SPACE_TYPE          colorSpace{};
@@ -271,6 +269,24 @@ bool createSwapChain(HWND hwnd)
 		}
 	}
 
+	// Color space:
+	//  - BT.709 - LDR https://en.wikipedia.org/wiki/Rec._709
+	//  - BT.2020 - HDR https://en.wikipedia.org/wiki/Rec._2020
+	// Transfer function:
+	//  - G10 - linear (gamma 1.0)
+	//  - G22 - sRGB (gamma ~2.2)
+	//  - G2084 - SMPTE ST.2084 (Perceptual Quantization)
+	// Bits per channel:
+	//  - 8, 10, 16 (float)
+	enum class SwapChainFormat : uint8_t
+	{
+		BT709_G10_16BIT,
+		BT709_G22_8BIT,
+		BT709_G22_10BIT,
+		BT2020_G2084_10BIT
+	};
+	SwapChainFormat swapChainFormat{ SwapChainFormat::BT709_G22_8BIT };
+
 	constexpr DXGI_FORMAT cSwapChainFormat[] = {
 		DXGI_FORMAT_R16G16B16A16_FLOAT, // BT709_G10_16BIT
 		DXGI_FORMAT_R8G8B8A8_UNORM,     // BT709_G22_8BIT
@@ -345,7 +361,7 @@ bool createRenderTargetView()
 		return false;
 	}
 
-	result = d3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, renderTargetView.ReleaseAndGetAddressOf());
+	result = d3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, rhiData::renderTargetView.ReleaseAndGetAddressOf());
 	if (FAILED(result))
 	{
 		DX_ERR("ID3D11Device5::CreateRenderTargetView failed: ", result);

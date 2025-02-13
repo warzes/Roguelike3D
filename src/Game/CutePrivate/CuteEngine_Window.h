@@ -293,10 +293,6 @@ void EndWindow()
 {
 	if (windowData::hwnd) DestroyWindow(windowData::hwnd);
 	windowData::hwnd = nullptr;
-
-	if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().BackendPlatformUserData != nullptr)
-		ImGui_ImplWin32_Shutdown();
-
 	if (windowData::handleInstance) UnregisterClass(windowData::windowClassName, windowData::handleInstance);
 	windowData::handleInstance = nullptr;
 	windowData::isCloseRequested = true;
