@@ -55,6 +55,9 @@
     <ClInclude Include="Log.h">
       <Filter>CuteOther</Filter>
     </ClInclude>
+    <ClInclude Include="CutePrivate\CuteEngine_RHICore.h">
+      <Filter>CuteEngine\CutePrivate</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CuteEngine">

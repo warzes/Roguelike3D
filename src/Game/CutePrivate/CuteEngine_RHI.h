@@ -14,29 +14,6 @@ extern "C"
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 //=============================================================================
-enum CreateRHIFlag
-{
-	rhi_vsync = 1 << 0,
-};
-typedef uint32_t CreateRHIFlags;
-
-// Color space:
-//  - BT.709 - LDR https://en.wikipedia.org/wiki/Rec._709
-//  - BT.2020 - HDR https://en.wikipedia.org/wiki/Rec._2020
-// Transfer function:
-//  - G10 - linear (gamma 1.0)
-//  - G22 - sRGB (gamma ~2.2)
-//  - G2084 - SMPTE ST.2084 (Perceptual Quantization)
-// Bits per channel:
-//  - 8, 10, 16 (float)
-enum class SwapChainFormat : uint8_t
-{
-	BT709_G10_16BIT,
-	BT709_G22_8BIT,
-	BT709_G22_10BIT,
-	BT2020_G2084_10BIT
-};
-//=============================================================================
 namespace rhiData
 {
 	using Microsoft::WRL::ComPtr;
@@ -61,11 +38,6 @@ namespace rhiData
 	bool                           vsync{ false };
 	bool                           supportAllowTearing{ false };
 } // namespace rhiData
-//=============================================================================
-std::string HRToString(HRESULT hr)
-{
-	return ""; // TODO:
-}
 //=============================================================================
 bool setBackBufferSize(uint32_t width, uint32_t height);
 bool selectAdapter();
@@ -119,7 +91,7 @@ void PresentRHI()
 	HRESULT result = swapChain->Present(syncInterval, presentFlags);
 	if (FAILED(result))
 	{
-		Fatal("IDXGISwapChain1::Present failed: " + HRToString(result));
+		DX_ERR("IDXGISwapChain1::Present failed: ", result);
 	}
 }
 //=============================================================================
@@ -143,14 +115,14 @@ bool ResizeRHI(uint32_t width, uint32_t height)
 		HRESULT result = swapChain->GetDesc(&swapChainDesc);
 		if (FAILED(result))
 		{
-			Fatal("IDXGISwapChain1::GetDesc() failed: " + HRToString(result));
+			DX_ERR("IDXGISwapChain1::GetDesc() failed: ", result);
 			return false;
 		}
 
 		result = swapChain->ResizeBuffers(backBufferCount, backBufferWidth, backBufferHeight, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags);
 		if (FAILED(result))
 		{
-			Fatal("IDXGISwapChain1::ResizeBuffers() failed: " + HRToString(result));
+			DX_ERR("IDXGISwapChain1::ResizeBuffers() failed: ", result);
 			return false;
 		}
 		setColorSpace1();
@@ -187,14 +159,14 @@ bool selectAdapter()
 	HRESULT result = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&DXGIFactory));
 	if (FAILED(result))
 	{
-		Fatal("CreateDXGIFactory2() failed: " + HRToString(result));
+		DX_ERR("CreateDXGIFactory2() failed: ", result);
 		return false;
 	}
 	ComPtr<IDXGIFactory6> DXGIFactory6;
 	result = DXGIFactory.As(&DXGIFactory6);
 	if (FAILED(result))
 	{
-		Fatal("IDXGIFactory As IDXGIFactory6 failed: " + HRToString(result));
+		DX_ERR("IDXGIFactory As IDXGIFactory6 failed: ", result);
 		return false;
 	}
 
@@ -202,13 +174,13 @@ bool selectAdapter()
 	result = DXGIFactory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&DXGIAdapter));
 	if (FAILED(result))
 	{
-		Fatal("IDXGIFactory6::EnumAdapterByGpuPreference() failed: " + HRToString(result));
+		DX_ERR("IDXGIFactory6::EnumAdapterByGpuPreference() failed: ", result);
 		return false;
 	}
 	result = DXGIAdapter.As(&adapter);
 	if (FAILED(result))
 	{
-		Fatal("DXGIAdapter As DXGIAdapter4 failed: " + HRToString(result));
+		DX_ERR("DXGIAdapter As DXGIAdapter4 failed: ", result);
 		return false;
 	}
 
@@ -235,7 +207,7 @@ bool createDevice()
 	HRESULT result = D3D11CreateDevice(adapter.Get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr, creationFlags, featureLevels, static_cast<UINT>(std::size(featureLevels)), D3D11_SDK_VERSION, device.ReleaseAndGetAddressOf(), nullptr, context.ReleaseAndGetAddressOf());
 	if (FAILED(result))
 	{
-		Fatal("D3D11CreateDevice failed: " + HRToString(result));
+		DX_ERR("D3D11CreateDevice failed: ", result);
 		return false;
 	}
 
@@ -283,7 +255,7 @@ bool createSwapChain(HWND hwnd)
 	HRESULT result = adapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
 	if (FAILED(result))
 	{
-		Fatal("IDXGIAdapter::GetParent failed: " + HRToString(result));
+		DX_ERR("IDXGIAdapter::GetParent failed: ", result);
 		return false;
 	}
 
@@ -335,14 +307,14 @@ bool createSwapChain(HWND hwnd)
 	result = dxgiFactory->CreateSwapChainForHwnd(d3dDevice.Get(), hwnd, &swapChainDesc, &fsSwapChainDesc, nullptr, swapChain1.ReleaseAndGetAddressOf());
 	if (FAILED(result))
 	{
-		Fatal("IDXGIFactory2::CreateSwapChainForHwnd failed: " + HRToString(result));
+		DX_ERR("IDXGIFactory2::CreateSwapChainForHwnd failed: ", result);
 		return false;
 	}
 
 	result = dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 	if (FAILED(result))
 	{
-		Fatal("IDXGIFactory2::MakeWindowAssociation failed: " + HRToString(result));
+		DX_ERR("IDXGIFactory2::MakeWindowAssociation failed: ", result);
 		return false;
 	}
 
@@ -369,14 +341,14 @@ bool createRenderTargetView()
 	HRESULT result = swapChain->GetBuffer(0, IID_PPV_ARGS(backBuffer.GetAddressOf()));
 	if (FAILED(result))
 	{
-		Fatal("IDXGISwapChain1::GetBuffer failed: " + HRToString(result));
+		DX_ERR("IDXGISwapChain1::GetBuffer failed: ", result);
 		return false;
 	}
 
 	result = d3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, renderTargetView.ReleaseAndGetAddressOf());
 	if (FAILED(result))
 	{
-		Fatal("ID3D11Device5::CreateRenderTargetView failed: " + HRToString(result));
+		DX_ERR("ID3D11Device5::CreateRenderTargetView failed: ", result);
 		return false;
 	}
 
@@ -385,14 +357,14 @@ bool createRenderTargetView()
 	result = d3dDevice->CreateTexture2D(&depthStencilDesc, nullptr, depthStencil.GetAddressOf());
 	if (FAILED(result))
 	{
-		Fatal("ID3D11Device5::CreateTexture2D failed: " + HRToString(result));
+		DX_ERR("ID3D11Device5::CreateTexture2D failed: ", result);
 		return false;
 	}
 
 	result = d3dDevice->CreateDepthStencilView(depthStencil.Get(), nullptr, depthStencilView.ReleaseAndGetAddressOf());
 	if (FAILED(result))
 	{
-		Fatal("ID3D11Device5::CreateDepthStencilView failed: " + HRToString(result));
+		DX_ERR("ID3D11Device5::CreateDepthStencilView failed: ", result);
 		return false;
 	}
 

@@ -5,8 +5,9 @@
 #include "CuteEngine.h"
 #include "CutePrivate/CuteEngine_Header.h"
 #include "CutePrivate/CuteEngine_Window.h"
-#include "CutePrivate/CuteEngine_RHI.h"
+#include "CutePrivate/CuteEngine_RHICore.h"
 #include "CutePrivate/CuteEngine_RHIResurces.h"
+#include "CutePrivate/CuteEngine_RHI.h"
 #if defined(_MSC_VER)
 #	pragma warning(pop)
 #endif
