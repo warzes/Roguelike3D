@@ -9,6 +9,8 @@
 
 #include <iostream>
 
+https://milty.nl/grad_guide/basic_implementation/d3d11/factory_adapter.html
+
 //struct Tesss
 //{
 //	Tesss() { std::cout << "Tessss"; }
