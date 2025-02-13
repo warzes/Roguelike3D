@@ -25,6 +25,8 @@
     <ClCompile Include="stb\stb.cpp">
       <Filter>stb</Filter>
     </ClCompile>
+    <ClCompile Include="tinyexr.cc" />
+    <ClCompile Include="miniz.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
@@ -71,5 +73,7 @@
     <ClInclude Include="stb\stb_truetype.h">
       <Filter>stb</Filter>
     </ClInclude>
+    <ClInclude Include="tinyexr.h" />
+    <ClInclude Include="miniz.h" />
   </ItemGroup>
 </Project>

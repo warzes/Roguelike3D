@@ -13,6 +13,15 @@
     <ClCompile Include="GameApp.cpp">
       <Filter>Game</Filter>
     </ClCompile>
+    <ClCompile Include="CuteUtility.cpp">
+      <Filter>CuteOther</Filter>
+    </ClCompile>
+    <ClCompile Include="Image.cpp">
+      <Filter>CuteOther</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>CuteOther</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -37,6 +46,15 @@
     <ClInclude Include="CutePrivate\CuteEngine_RHIResurces.h">
       <Filter>CuteEngine\CutePrivate</Filter>
     </ClInclude>
+    <ClInclude Include="CuteUtility.h">
+      <Filter>CuteOther</Filter>
+    </ClInclude>
+    <ClInclude Include="Image.h">
+      <Filter>CuteOther</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>CuteOther</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CuteEngine">
@@ -50,6 +68,9 @@
     </Filter>
     <Filter Include="CuteEngine\CutePrivate">
       <UniqueIdentifier>{2ea2f467-4fea-44b4-b793-42fa7005cdb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CuteOther">
+      <UniqueIdentifier>{440bc530-3e42-440d-92d1-8b505bbedd57}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

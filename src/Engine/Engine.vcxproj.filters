@@ -3,9 +3,6 @@
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="Log.cpp">
-      <Filter>Debug</Filter>
-    </ClCompile>
     <ClCompile Include="LogSystem.cpp">
       <Filter>Debug</Filter>
     </ClCompile>
