@@ -9,23 +9,21 @@
 
 #include <iostream>
 
-https://milty.nl/grad_guide/basic_implementation/d3d11/factory_adapter.html
+struct Tesss
+{
+	Tesss() { std::cout << "Tessss"; }
+	Tesss(const Tesss&) { std::cout << "Tessss(&)"; }
+	Tesss(Tesss&&) { std::cout << "Tessss(&&)"; }
+	~Tesss() { std::cout << "~Tessss"; }
+};
 
-//struct Tesss
-//{
-//	Tesss() { std::cout << "Tessss"; }
-//	Tesss(const Tesss&) { std::cout << "Tessss(&)"; }
-//	Tesss(Tesss&&) { std::cout << "Tessss(&&)"; }
-//	~Tesss() { std::cout << "~Tessss"; }
-//};
-//
-//
-//std::expected<Tesss, std::string> Foo()
-//{
-//	//return {};
-//
-//	return std::unexpected("dfd");
-//}
+
+std::expected<Tesss, std::string> Foo()
+{
+	//return {};
+
+	return std::unexpected("dfd");
+}
 
 int main(
 	[[maybe_unused]] int   argc,

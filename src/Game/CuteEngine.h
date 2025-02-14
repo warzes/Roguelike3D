@@ -21,6 +21,7 @@ Version 0.0.1
 - Главный класс приложения CuteEngineApp
 - Создание и управление окном
 - Инициализация и управление контекстом Direct3D11
+- Основные ресурсы Direct3D11: ShaderProgram
 */
 
 #pragma endregion
@@ -42,6 +43,7 @@ constexpr const auto CuteEngineVersion = "0.0.1";
 #include <cstdint>
 #include <optional>
 #include <expected>
+#include <memory>
 #include <string_view>
 #include <string>
 #include <vector>
@@ -50,6 +52,8 @@ constexpr const auto CuteEngineVersion = "0.0.1";
 //=============================================================================
 #pragma region [ Base ]
 
+void Print(const std::string& message);
+void Print(const std::wstring& message);
 void Fatal(const std::string& error);
 
 #pragma endregion
@@ -215,7 +219,51 @@ namespace Input
 //=============================================================================
 #pragma region [ RHI Core ]
 
-constexpr const int RenderTargetSlotCount = 8;
+constexpr const int      RenderTargetSlotCount = 8;
+constexpr const uint32_t AppendAlignedElement = 0xffffffff;
+
+enum class DataFormat : uint8_t
+{
+	R1,
+	R8,
+	R16,
+	R16F,
+	R32I,
+	R32U,
+	R32F,
+	RG8,
+	RG16,
+	RG16F,
+	RG32I,
+	RG32U,
+	RG32F,
+	RGB32I,
+	RGB32U,
+	RGB32F,
+	RGBA8,
+	RGBA16,
+	RGBA16F,
+	RGBA32I,
+	RGBA32U,
+	RGBA32F,
+	R11G11B10F
+};
+
+struct InputLayoutDescriptor final
+{
+	std::string semanticName{};
+	uint32_t    semanticIndex{ 0 };
+	DataFormat  format;
+	uint32_t    slot{ 0 };
+	uint64_t    offset{ 0 };
+	bool        perInstanceData{ false };
+	uint32_t    instanceDataStepRate{ 0 };
+};
+
+
+
+
+
 
 enum class TexelsFormat : uint8_t
 {
@@ -413,15 +461,25 @@ struct PipelineState final
 //=============================================================================
 #pragma region [ RHI Resources ]
 
-struct ShaderCreateInfo final
+struct ShaderLoadInfo final
 {
+	std::wstring file{};       // example: L"gpu.hlsl"
+	std::string  entryPoint{}; // example: "vsMain"
+	std::string  target{};     // vs_5_0
 };
-struct Shader;
+struct ShaderProgramLoadInfo final
+{
+	ShaderLoadInfo                     vertexShader{};
+	std::vector<InputLayoutDescriptor> inputLayout{};
+	ShaderLoadInfo                     pixelShader{};
+};
 
 struct ShaderProgramCreateInfo final
 {
 };
+
 struct ShaderProgram;
+using ShaderProgramPtr = std::shared_ptr<ShaderProgram>;
 
 struct VertexBufferCreateInfo final
 {
@@ -492,7 +550,7 @@ public:
 
 	virtual CuteEngineCreateInfo GetCreateInfo() { return {}; }
 	virtual bool OnInit() { return true; }
-	virtual bool OnClose() { return true; }
+	virtual void OnClose() {}
 
 	virtual void OnUpdate([[maybe_unused]] double deltaTime) {}
 	virtual void OnFixedUpdate() {}
@@ -544,6 +602,22 @@ public:
 	bool IsKeyDown(uint32_t keyCode) const;
 	bool IsKeyPressed(uint32_t keyCode) const;
 	bool IsKeyReleased(uint32_t keyCode) const;
+
+	// RHI Core
+	void SetMainFrame();
+	void Temp();
+
+	// RHI Resources Create
+	std::expected<ShaderProgramPtr, std::string> LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
+
+	// RHI Resources Delete
+	void DeleteRHIResource(ShaderProgramPtr& resource);
+
+	// RHI Resources Mod
+
+	// RHI Resources Bind
+	void BindShaderProgram(ShaderProgramPtr resource);
+
 
 
 private:

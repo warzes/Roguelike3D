@@ -3,19 +3,18 @@
 #	pragma warning(disable : 4820)
 #endif
 //=============================================================================
-//#if defined(_DEBUG)
-//#	ifndef DBG_NEW
-//#		define DBG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
-//#		define new DBG_NEW
-//#	endif
-//#endif  // _DEBUG
-//=============================================================================
 #include "CuteEngine.h"
 #include "CutePrivate/CuteEngine_Header.h"
+#if defined(_DEBUG)
+#	ifndef DBG_NEW
+#		define DBG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
+#		define new DBG_NEW
+#	endif
+#endif  // _DEBUG
 #include "CutePrivate/CuteEngine_Window.h"
 #include "CutePrivate/CuteEngine_RHICore.h"
-#include "CutePrivate/CuteEngine_RHIResurces.h"
 #include "CutePrivate/CuteEngine_RHI.h"
+#include "CutePrivate/CuteEngine_RHIResources.h"
 #if defined(_MSC_VER)
 #	pragma warning(pop)
 #endif
@@ -33,6 +32,18 @@ namespace engineData
 	double deltaTime = 0.0;
 	double fixedAccumulator = 0.0;
 	double invFrequency = 0.0;
+}
+//=============================================================================
+void Print(const std::string& message)
+{
+	// TODO: пользовательская функция
+	puts(message.c_str());
+}
+//=============================================================================
+void Print(const std::wstring& message)
+{
+	// TODO: пользовательская функция
+	_putws(message.c_str());
 }
 //=============================================================================
 void Fatal(const std::string& error)

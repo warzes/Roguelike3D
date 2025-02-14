@@ -8,6 +8,8 @@
 #	pragma warning(disable : 5039)
 #endif
 
+#include <cassert>
+
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

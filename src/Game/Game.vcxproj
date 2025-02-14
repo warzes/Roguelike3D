@@ -120,7 +120,7 @@
     <ClInclude Include="CutePrivate\CuteEngine_Header.h" />
     <ClInclude Include="CutePrivate\CuteEngine_RHI.h" />
     <ClInclude Include="CutePrivate\CuteEngine_RHICore.h" />
-    <ClInclude Include="CutePrivate\CuteEngine_RHIResurces.h" />
+    <ClInclude Include="CutePrivate\CuteEngine_RHIResources.h" />
     <ClInclude Include="CutePrivate\CuteEngine_Window.h" />
     <ClInclude Include="CuteUtility.h" />
     <ClInclude Include="GameApp.h" />

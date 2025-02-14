@@ -400,3 +400,19 @@ void setColorSpace1()
 		swapChain->SetColorSpace1(colorSpace);
 }
 //=============================================================================
+void CuteEngineApp::SetMainFrame()
+{
+	// TODO: сделать возможность устанавливать цвет очистки. В виде optional и в случае нуля очистка вообще не выполняется
+
+	rhiData::d3dContext->ClearRenderTargetView(rhiData::renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
+	rhiData::d3dContext->ClearDepthStencilView(rhiData::depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	rhiData::d3dContext->OMSetRenderTargets(1, rhiData::renderTargetView.GetAddressOf(), rhiData::depthStencilView.Get());
+	rhiData::d3dContext->RSSetViewports(1, &rhiData::viewport);
+}
+//=============================================================================
+void CuteEngineApp::Temp()
+{
+	rhiData::d3dContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	rhiData::d3dContext->Draw(3, 0);
+}
+//=============================================================================

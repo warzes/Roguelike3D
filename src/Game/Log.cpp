@@ -1,11 +1,6 @@
 ﻿#include "stdafx.h"
 #include "Log.h"
 //=============================================================================
-void Print(const std::string& msg)
-{
-	puts(msg.data());
-}
-//=============================================================================
 void Warning(const std::string& msg)
 {
 	Print("[WARNING]: " + msg);
