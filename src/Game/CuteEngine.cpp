@@ -34,6 +34,13 @@ namespace engineData
 	double invFrequency = 0.0;
 }
 //=============================================================================
+bool init(const CuteEngineCreateInfo& createInfo);
+bool initImGui();
+void close();
+bool isShouldClose();
+double getCurrentTime();
+void computeTimer();
+//=============================================================================
 void Print(const std::string& message)
 {
 	// TODO: пользовательская функция
@@ -55,35 +62,77 @@ void Fatal(const std::string& error)
 //=============================================================================
 void CuteEngineApp::Run()
 {
-	if (init())
+	if (init(GetCreateInfo()))
 	{
-		while (!isShouldClose())
+		if (OnInit())
 		{
-			computeTimer();
+			thisCuteEngineApp = this;
 
-			PollEvent();
-
-			if (windowData::isResized)
+			while (!isShouldClose())
 			{
-				if (!ResizeRHI(windowData::width, windowData::height)) 
-					break;
+				computeTimer();
+				PollEvent();
 
-				OnWindowResize(windowData::width, windowData::height);
-				windowData::isResized = false;
+				// Resize
+				if (windowData::isResized)
+				{
+					if (!ResizeRHI(windowData::width, windowData::height))
+						break;
+
+					OnWindowResize(windowData::width, windowData::height);
+					windowData::isResized = false;
+				}
+
+				// Update
+				{
+					// Start the Dear ImGui frame
+					ImGui_ImplDX11_NewFrame();
+					ImGui_ImplWin32_NewFrame();
+					ImGui::NewFrame();
+
+					OnUpdate(engineData::deltaTime);
+				}
+
+				// Fixed Update
+				while (engineData::fixedAccumulator >= FIXED_TIME_STEP)
+				{
+					OnFixedUpdate();
+					engineData::fixedAccumulator -= FIXED_TIME_STEP;
+				}
+
+				// Frame
+				{
+					bool show_demo_window = true;
+					if (show_demo_window)
+						ImGui::ShowDemoWindow(&show_demo_window);
+
+					ImGui::Begin("Hello, world!");
+					ImGui::Text("This is some useful text.");
+					ImGui::SameLine();
+					ImGui::Text("2This is some useful text.");
+					ImGui::End();
+
+					ImGui::Render();
+
+					rhiData::d3dContext->ClearRenderTargetView(rhiData::renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
+					rhiData::d3dContext->ClearDepthStencilView(rhiData::depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+					rhiData::d3dContext->OMSetRenderTargets(1, rhiData::renderTargetView.GetAddressOf(), rhiData::depthStencilView.Get());
+					rhiData::d3dContext->RSSetViewports(1, &rhiData::viewport);
+
+					OnFrame();
+
+					ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+					PresentRHI();
+				}
 			}
-
-			update();
-
-			// Фиксированные обновления
-			while (engineData::fixedAccumulator >= FIXED_TIME_STEP)
-			{
-				fixedUpdate();
-				engineData::fixedAccumulator -= FIXED_TIME_STEP;
-			}
-
-			frame();
+		}
+		else
+		{
+			Fatal("OnInit() return false");
 		}
 	}
+	OnClose();
 	close();
 }
 //=============================================================================
@@ -92,9 +141,8 @@ void CuteEngineApp::Exit()
 	engineData::shouldClose = true;
 }
 //=============================================================================
-bool CuteEngineApp::init()
+bool init(const CuteEngineCreateInfo& createInfo)
 {
-	auto createInfo = GetCreateInfo();
 	auto& windowCI = createInfo.window;
 	auto& rhiCI = createInfo.rhi;
 
@@ -140,19 +188,11 @@ bool CuteEngineApp::init()
 		return false;
 	}
 
-
-	if (!OnInit())
-	{
-		Fatal("OnInit() return false");
-		return false;
-	}
-
-	thisCuteEngineApp = this;
 	engineData::shouldClose = false;
 	return true;
 }
 //=============================================================================
-bool CuteEngineApp::initImGui()
+bool initImGui()
 {
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -189,10 +229,8 @@ bool CuteEngineApp::initImGui()
 	return true;
 }
 //=============================================================================
-void CuteEngineApp::close()
+void close()
 {
-	OnClose();
-
 	if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().BackendPlatformUserData != nullptr)
 	{
 		ImGui_ImplDX11_Shutdown();
@@ -206,12 +244,12 @@ void CuteEngineApp::close()
 	engineData::shouldClose = true;
 }
 //=============================================================================
-bool CuteEngineApp::isShouldClose() const
+bool isShouldClose()
 {
 	return engineData::shouldClose || windowData::isCloseRequested;
 }
 //=============================================================================
-double CuteEngineApp::getCurrentTime()
+double getCurrentTime()
 {
 	LARGE_INTEGER currentTimeLi;
 	QueryPerformanceCounter(&currentTimeLi);
@@ -219,7 +257,7 @@ double CuteEngineApp::getCurrentTime()
 	return currentTime;
 }
 //=============================================================================
-void CuteEngineApp::computeTimer()
+void computeTimer()
 {
 	// Получение текущего времени
 	engineData::currentTime = getCurrentTime();
@@ -229,46 +267,5 @@ void CuteEngineApp::computeTimer()
 	engineData::lastTime = engineData::currentTime;
 	// Аккумулирование времени
 	engineData::fixedAccumulator += engineData::deltaTime;
-}
-//=============================================================================
-void CuteEngineApp::fixedUpdate()
-{
-	OnFixedUpdate();
-}
-//=============================================================================
-void CuteEngineApp::update()
-{
-	// Start the Dear ImGui frame
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
-	OnUpdate(engineData::deltaTime);
-}
-//=============================================================================
-void CuteEngineApp::frame()
-{
-	bool show_demo_window = true;
-	if (show_demo_window)
-		ImGui::ShowDemoWindow(&show_demo_window);
-
-	ImGui::Begin("Hello, world!");
-	ImGui::Text("This is some useful text.");
-	ImGui::SameLine();
-	ImGui::Text("2This is some useful text.");
-	ImGui::End();
-
-	ImGui::Render();
-
-	rhiData::d3dContext->ClearRenderTargetView(rhiData::renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
-	rhiData::d3dContext->ClearDepthStencilView(rhiData::depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-	rhiData::d3dContext->OMSetRenderTargets(1, rhiData::renderTargetView.GetAddressOf(), rhiData::depthStencilView.Get());
-	rhiData::d3dContext->RSSetViewports(1, &rhiData::viewport);
-
-	OnFrame();
-
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-	PresentRHI();
 }
 //=============================================================================
