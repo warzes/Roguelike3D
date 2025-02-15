@@ -18,7 +18,6 @@ namespace rhiData
 {
 	using Microsoft::WRL::ComPtr;
 
-	ComPtr<IDXGIAdapter4>          adapter;
 	ComPtr<ID3D11Device5>          d3dDevice;
 	ComPtr<ID3D11DeviceContext4>   d3dContext;
 
@@ -38,9 +37,9 @@ namespace rhiData
 } // namespace rhiData
 //=============================================================================
 bool setBackBufferSize(uint32_t width, uint32_t height);
-bool selectAdapter();
-bool createDevice();
-bool createSwapChain(HWND hwnd);
+bool selectAdapter(Microsoft::WRL::ComPtr<IDXGIFactory6>& DXGIFactory, Microsoft::WRL::ComPtr<IDXGIAdapter4>& DXGIAdapter);
+bool createDevice(Microsoft::WRL::ComPtr<IDXGIAdapter4> DXGIAdapter);
+bool createSwapChain(HWND hwnd, Microsoft::WRL::ComPtr<IDXGIFactory6> DXGIFactory);
 bool createRenderTargetView();
 void setColorSpace1();
 //=============================================================================
@@ -49,10 +48,13 @@ bool InitRHI(CreateRHIFlags flags)
 	setBackBufferSize(windowData::width, windowData::height);
 	rhiData::vsync = (flags & rhi_vsync) != 0;
 
-	if (!selectAdapter())                   return false;
-	if (!createDevice())                    return false;
-	if (!createSwapChain(windowData::hwnd)) return false;
-	if (!createRenderTargetView())          return false;
+	Microsoft::WRL::ComPtr<IDXGIFactory6> DXGIFactory;
+	Microsoft::WRL::ComPtr<IDXGIAdapter4> DXGIAdapter;
+
+	if (!selectAdapter(DXGIFactory, DXGIAdapter))        return false;
+	if (!createDevice(DXGIAdapter))                      return false;
+	if (!createSwapChain(windowData::hwnd, DXGIFactory)) return false;
+	if (!createRenderTargetView())                       return false;
 
 	return true;
 }
@@ -69,7 +71,6 @@ void CloseRHI()
 	swapChain.Reset();
 	d3dContext.Reset();
 	d3dDevice.Reset();
-	adapter.Reset();
 
 #if defined(_DEBUG)
 	ComPtr<IDXGIDebug1> debug;
@@ -144,23 +145,20 @@ bool setBackBufferSize(uint32_t width, uint32_t height)
 	return true;
 }
 //=============================================================================
-bool selectAdapter()
+bool selectAdapter(Microsoft::WRL::ComPtr<IDXGIFactory6>& DXGIFactory6, Microsoft::WRL::ComPtr<IDXGIAdapter4>& DXGIAdapter4)
 {
-	using namespace rhiData;
-
 	UINT dxgiFactoryFlags = 0;
 #ifdef _DEBUG
 	dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
 
-	ComPtr<IDXGIFactory2> DXGIFactory;
+	Microsoft::WRL::ComPtr<IDXGIFactory2> DXGIFactory;
 	HRESULT result = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&DXGIFactory));
 	if (FAILED(result))
 	{
 		DX_ERR("CreateDXGIFactory2() failed: ", result);
 		return false;
 	}
-	ComPtr<IDXGIFactory6> DXGIFactory6;
 	result = DXGIFactory.As(&DXGIFactory6);
 	if (FAILED(result))
 	{
@@ -168,14 +166,14 @@ bool selectAdapter()
 		return false;
 	}
 
-	ComPtr<IDXGIAdapter> DXGIAdapter;
+	Microsoft::WRL::ComPtr<IDXGIAdapter> DXGIAdapter;
 	result = DXGIFactory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&DXGIAdapter));
 	if (FAILED(result))
 	{
 		DX_ERR("IDXGIFactory6::EnumAdapterByGpuPreference() failed: ", result);
 		return false;
 	}
-	result = DXGIAdapter.As(&adapter);
+	result = DXGIAdapter.As(&DXGIAdapter4);
 	if (FAILED(result))
 	{
 		DX_ERR("DXGIAdapter As DXGIAdapter4 failed: ", result);
@@ -185,11 +183,11 @@ bool selectAdapter()
 	return true;
 }
 //=============================================================================
-bool createDevice()
+bool createDevice(Microsoft::WRL::ComPtr<IDXGIAdapter4> DXGIAdapter)
 {
 	using namespace rhiData;
 
-	UINT creationFlags = 0;
+	UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #ifdef _DEBUG
 	creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
@@ -202,7 +200,7 @@ bool createDevice()
 
 	Microsoft::WRL::ComPtr<ID3D11Device> device;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
-	HRESULT result = D3D11CreateDevice(adapter.Get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr, creationFlags, featureLevels, static_cast<UINT>(std::size(featureLevels)), D3D11_SDK_VERSION, device.ReleaseAndGetAddressOf(), nullptr, context.ReleaseAndGetAddressOf());
+	HRESULT result = D3D11CreateDevice(DXGIAdapter.Get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr, creationFlags, featureLevels, static_cast<UINT>(std::size(featureLevels)), D3D11_SDK_VERSION, &device, nullptr, &context);
 	if (FAILED(result))
 	{
 		DX_ERR("D3D11CreateDevice failed: ", result);
@@ -245,28 +243,16 @@ bool createDevice()
 	return true;
 }
 //=============================================================================
-bool createSwapChain(HWND hwnd)
+bool createSwapChain(HWND hwnd, Microsoft::WRL::ComPtr<IDXGIFactory6> DXGIFactory)
 {
 	using namespace rhiData;
-
-	ComPtr<IDXGIFactory2> dxgiFactory;
-	HRESULT result = adapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
-	if (FAILED(result))
-	{
-		DX_ERR("IDXGIAdapter::GetParent failed: ", result);
-		return false;
-	}
 
 	supportAllowTearing = false;
 	if (!vsync)
 	{
-		ComPtr<IDXGIFactory5> dxgiFactory5;
-		if (SUCCEEDED(dxgiFactory.As(&dxgiFactory5)))
-		{
-			BOOL allowTearing = FALSE;
-			result = dxgiFactory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
-			supportAllowTearing = (SUCCEEDED(result) && allowTearing) ? true : false;
-		}
+		BOOL allowTearing = FALSE;
+		HRESULT result = DXGIFactory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+		supportAllowTearing = (SUCCEEDED(result) && allowTearing) ? true : false;
 	}
 
 	// Color space:
@@ -305,29 +291,29 @@ bool createSwapChain(HWND hwnd)
 	colorSpace = cColorSpace[(uint32_t)swapChainFormat];
 
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-	swapChainDesc.Width = backBufferWidth;
-	swapChainDesc.Height = backBufferHeight;
-	swapChainDesc.Format = backBufferFormat;
-	swapChainDesc.SampleDesc = { 1, 0 };
+	swapChainDesc.Width       = backBufferWidth;
+	swapChainDesc.Height      = backBufferHeight;
+	swapChainDesc.Format      = backBufferFormat;
+	swapChainDesc.SampleDesc  = { 1, 0 };
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.BufferCount = backBufferCount;
-	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-	swapChainDesc.Flags = supportAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+	swapChainDesc.Scaling     = DXGI_SCALING_STRETCH;
+	swapChainDesc.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapChainDesc.AlphaMode   = DXGI_ALPHA_MODE_IGNORE;
+	swapChainDesc.Flags       = supportAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsSwapChainDesc = {};
 	fsSwapChainDesc.Windowed = TRUE;
 
 	ComPtr<IDXGISwapChain1> swapChain1;
-	result = dxgiFactory->CreateSwapChainForHwnd(d3dDevice.Get(), hwnd, &swapChainDesc, &fsSwapChainDesc, nullptr, swapChain1.ReleaseAndGetAddressOf());
+	HRESULT result = DXGIFactory->CreateSwapChainForHwnd(d3dDevice.Get(), hwnd, &swapChainDesc, &fsSwapChainDesc, nullptr, &swapChain1);
 	if (FAILED(result))
 	{
 		DX_ERR("IDXGIFactory2::CreateSwapChainForHwnd failed: ", result);
 		return false;
 	}
 
-	result = dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
+	result = DXGIFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 	if (FAILED(result))
 	{
 		DX_ERR("IDXGIFactory2::MakeWindowAssociation failed: ", result);
@@ -351,33 +337,31 @@ bool createSwapChain(HWND hwnd)
 //=============================================================================
 bool createRenderTargetView()
 {
-	using namespace rhiData;
-
-	ComPtr<ID3D11Texture2D> backBuffer;
-	HRESULT result = swapChain->GetBuffer(0, IID_PPV_ARGS(backBuffer.GetAddressOf()));
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
+	HRESULT result = rhiData::swapChain->GetBuffer(0, IID_PPV_ARGS(backBuffer.GetAddressOf()));
 	if (FAILED(result))
 	{
 		DX_ERR("IDXGISwapChain1::GetBuffer failed: ", result);
 		return false;
 	}
 
-	result = d3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, rhiData::renderTargetView.ReleaseAndGetAddressOf());
+	result = rhiData::d3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, rhiData::renderTargetView.ReleaseAndGetAddressOf());
 	if (FAILED(result))
 	{
 		DX_ERR("ID3D11Device5::CreateRenderTargetView failed: ", result);
 		return false;
 	}
 
-	const CD3D11_TEXTURE2D_DESC depthStencilDesc(depthBufferFormat, backBufferWidth, backBufferHeight, 1, 1, D3D11_BIND_DEPTH_STENCIL);
+	const CD3D11_TEXTURE2D_DESC depthStencilDesc(rhiData::depthBufferFormat, rhiData::backBufferWidth, rhiData::backBufferHeight, 1, 1, D3D11_BIND_DEPTH_STENCIL);
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencil;
-	result = d3dDevice->CreateTexture2D(&depthStencilDesc, nullptr, depthStencil.GetAddressOf());
+	result = rhiData::d3dDevice->CreateTexture2D(&depthStencilDesc, nullptr, depthStencil.GetAddressOf());
 	if (FAILED(result))
 	{
 		DX_ERR("ID3D11Device5::CreateTexture2D failed: ", result);
 		return false;
 	}
 
-	result = d3dDevice->CreateDepthStencilView(depthStencil.Get(), nullptr, depthStencilView.ReleaseAndGetAddressOf());
+	result = rhiData::d3dDevice->CreateDepthStencilView(depthStencil.Get(), nullptr, &rhiData::depthStencilView);
 	if (FAILED(result))
 	{
 		DX_ERR("ID3D11Device5::CreateDepthStencilView failed: ", result);
@@ -389,15 +373,13 @@ bool createRenderTargetView()
 //=============================================================================
 void setColorSpace1()
 {
-	using namespace rhiData;
-
 	uint32_t colorSpaceSupport = 0;
-	HRESULT result = swapChain->CheckColorSpaceSupport(colorSpace, &colorSpaceSupport);
+	HRESULT result = rhiData::swapChain->CheckColorSpaceSupport(rhiData::colorSpace, &colorSpaceSupport);
 
 	if (!(colorSpaceSupport & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT))
 		result = E_FAIL;
 	if (SUCCEEDED(result))
-		swapChain->SetColorSpace1(colorSpace);
+		rhiData::swapChain->SetColorSpace1(rhiData::colorSpace);
 }
 //=============================================================================
 void CuteEngineApp::SetMainFrame()

@@ -9,4 +9,5 @@ public:
 
 private:
 	ShaderProgramPtr m_shaderProgram{ nullptr };
+	PipelineStatePtr m_pipelineState{ nullptr };
 };

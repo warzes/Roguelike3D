@@ -242,6 +242,32 @@ struct InputLayoutDescriptor final
 	uint32_t    instanceDataStepRate{ 0 };
 };
 
+enum class FillMode : uint8_t
+{
+	Solid,
+	Wireframe,
+};
+
+enum class CullMode : uint8_t
+{
+	Back,
+	Front,
+	None,
+};
+
+enum class CounterDirection : size_t
+{
+	CW,
+	CCW,
+};
+
+struct RasterizerStateDescriptor final
+{
+	FillMode         fillMode = FillMode::Solid;
+	CullMode         cullMode = CullMode::Back;
+	CounterDirection counterDirection = CounterDirection::CCW;
+};
+
 //enum class TexelsFormat : uint8_t
 //{
 //	R_U8,     // An 8 bits per pixel red channel texture format.
@@ -274,31 +300,6 @@ struct InputLayoutDescriptor final
 //	Mirror,
 //	Clamp,
 //	BorderColor
-//};
-//
-//enum class FillMode : uint8_t
-//{
-//	Solid,
-//	Wireframe,
-//
-//	Count
-//};
-//
-//enum class CullMode : uint8_t
-//{
-//	Back,
-//	Front,
-//	None,
-//
-//	Count
-//};
-//
-//enum class CounterDirection : size_t
-//{
-//	CW,
-//	CCW,
-//
-//	Count
 //};
 //
 //enum class ColorWriteMask : uint8_t
@@ -373,14 +374,7 @@ struct InputLayoutDescriptor final
 //
 //	Count
 //};
-//
-//struct RasterizerState final
-//{
-//	FillMode         fillMode = FillMode::Solid;
-//	CullMode         cullMode = CullMode::Back;
-//	CounterDirection counterDirection = CounterDirection::CCW;
-//};
-//
+
 //struct BlendDesc final
 //{
 //	bool           blendEnabled = false;
@@ -423,15 +417,6 @@ struct InputLayoutDescriptor final
 //	uint8_t        stencilWriteMask;
 //	StencilDesc    frontFaceStencilDesc;
 //	StencilDesc    backFaceStencilDesc;
-//};
-//
-//struct PipelineState final
-//{
-//	RasterizerState     rasterizerState;
-//	BlendState          blendState;
-//	DepthStencilState   depthStencilState;
-//	//SurfaceShaderHandle shader;
-//	//VertexFormatHandle  vertexFormat;
 //};
 
 #pragma endregion
@@ -497,6 +482,17 @@ struct TextureArrayCreateInfo final
 {
 };
 struct TextureArray;
+
+struct PipelineStateCreateInfo final
+{
+	RasterizerStateDescriptor rasterizerState;
+	//	BlendState          blendState;
+	//	DepthStencilState   depthStencilState;
+	//	//SurfaceShaderHandle shader;
+	//	//VertexFormatHandle  vertexFormat;
+};
+struct PipelineState;
+using PipelineStatePtr = std::shared_ptr<PipelineState>;
 
 #pragma endregion
 //=============================================================================
@@ -587,13 +583,18 @@ public:
 	// RHI Resources Create
 	std::expected<ShaderProgramPtr, std::string> LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
 
+	std::expected<PipelineStatePtr, std::string> CreatePipelineState(const PipelineStateCreateInfo& createInfo);
+
+
 	// RHI Resources Delete
 	void DeleteRHIResource(ShaderProgramPtr& resource);
+	void DeleteRHIResource(PipelineStatePtr& resource);
 
 	// RHI Resources Mod
 
 	// RHI Resources Bind
 	void BindShaderProgram(ShaderProgramPtr resource);
+	void BindPipelineState(PipelineStatePtr resource);
 };
 
 #pragma endregion

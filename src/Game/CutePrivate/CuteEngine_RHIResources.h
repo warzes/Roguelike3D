@@ -7,6 +7,10 @@ struct ShaderProgram final
 	Microsoft::WRL::ComPtr<ID3D11PixelShader>  pixelShader;
 };
 
+struct PipelineState final
+{
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState2> rasterizerState;
+};
 //=============================================================================
 std::expected<ShaderProgramPtr, std::string> CuteEngineApp::LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo)
 {
@@ -76,6 +80,27 @@ std::expected<ShaderProgramPtr, std::string> CuteEngineApp::LoadShaderProgram(co
 	}
 
 	return program;
+}
+//=============================================================================
+std::expected<PipelineStatePtr, std::string> CuteEngineApp::CreatePipelineState(const PipelineStateCreateInfo& createInfo)
+{
+	const D3D11_FILL_MODE MapFillMode[] = {
+		D3D11_FILL_SOLID,
+		D3D11_FILL_WIREFRAME
+	};
+	static D3D11_CULL_MODE MapCullMode[] = {
+		D3D11_CULL_BACK,
+		D3D11_CULL_FRONT,
+		D3D11_CULL_NONE
+	};
+
+	PipelineStatePtr pipelineState = std::make_shared<PipelineState>();
+
+
+
+	D3D11_RASTERIZER_DESC2 rasterizerDesc{};
+	rasterizerDesc.FillMode = ;
+	rasterizerDesc.CullMode = ;
 }
 //=============================================================================
 void CuteEngineApp::DeleteRHIResource(ShaderProgramPtr& resource)
