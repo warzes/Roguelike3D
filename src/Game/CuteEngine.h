@@ -231,15 +231,34 @@ enum class DataFormat : uint8_t
 	R11G11B10F
 };
 
-struct InputLayoutDescriptor final
+enum class ComparisonFunc : uint8_t
 {
-	std::string semanticName{};
-	uint32_t    semanticIndex{ 0 };
-	DataFormat  format;
-	uint32_t    slot{ 0 };
-	uint64_t    offset{ 0 };
-	bool        perInstanceData{ false };
-	uint32_t    instanceDataStepRate{ 0 };
+	Always,
+	Never,
+	Less,
+	LessEqual,
+	Greater,
+	GreaterEqual,
+	Equal,
+	NotEqual,
+};
+typedef ComparisonFunc DepthFunc;
+typedef ComparisonFunc StencilFunc;
+typedef ComparisonFunc SamplerFunc;
+
+enum class DepthWriteMask : uint8_t
+{
+	Zero,
+	All,
+};
+
+enum class StencilOp : uint8_t
+{
+	Keep,
+	Zero,
+	Replace,
+	Increment,
+	Decrement,
 };
 
 enum class FillMode : uint8_t
@@ -261,6 +280,59 @@ enum class CounterDirection : size_t
 	CCW,
 };
 
+enum class TextureFilter : size_t
+{
+	MinMagMip_Point,
+	MinMag_Point_Mip_Linear,
+	Min_Point_Mag_Linear_Mip_Point,
+	Min_Point_MagMip_Linear,
+	Min_Linear_MagMip_Point,
+	Min_Linear_Mag_Point_Mip_Linear,
+	MinMag_Linear_Mip_Point,
+	MinMagMip_Linear,
+	Anisotropic,
+};
+
+enum class AddressMode : uint8_t // ??? TextureSamplerWrap
+{
+	Wrap,
+	Mirror,
+	Clamp,
+	Border,
+};
+
+enum BufferUsage : uint8_t
+{
+	Default,
+	Immutable,
+	Dynamic,
+	Staging
+};
+
+enum CPUAccessFlags : uint8_t
+{
+	None,
+	Write,
+	Read
+};
+
+enum class MapType : uint8_t
+{
+	Read,
+	Write,
+};
+
+struct InputLayoutDescriptor final
+{
+	std::string semanticName{};
+	uint32_t    semanticIndex{ 0 };
+	DataFormat  format;
+	uint32_t    slot{ 0 };
+	uint64_t    offset{ 0 };
+	bool        perInstanceData{ false };
+	uint32_t    instanceDataStepRate{ 0 };
+};
+
 struct RasterizerStateDescriptor final
 {
 	FillMode         fillMode = FillMode::Solid;
@@ -268,39 +340,45 @@ struct RasterizerStateDescriptor final
 	CounterDirection counterDirection = CounterDirection::CCW;
 };
 
-//enum class TexelsFormat : uint8_t
-//{
-//	R_U8,     // An 8 bits per pixel red channel texture format.
-//	R_U16,    // A 16 bits per pixel red channel texture format.
-//	RG_U8,    // An 8 bits per pixel red and green channel texture format.
-//	RG_U16,   // A 16 bits per pixel red and green channel texture format.
-//	RGB_U8,   // An 8 bits per pixel red, green, and blue channel texture format.
-//	RGBA_U8,  // An 8 bits per pixel red, green, blue, and alpha channel texture format.
-//	RGBA_U16, // A 16 bits per pixel red, green, blue, and alpha channel texture format.
-//
-//	Depth_U16,
-//	DepthStencil_U16,
-//	Depth_U24,
-//	DepthStencil_U24, // A format to be used with the depth and stencil buffers where the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
-//};
-//
-//enum class TextureSamplerFilter : uint8_t
-//{
-//	MinMagLinear,
-//	MinMagNearest,
-//	MinLinearMagNearest,
-//	MinNearestMagLinear,
-//	MinTrilinearMagLinear,
-//	MinTrilinearMagNearest
-//};
-//
-//enum class TextureSamplerWrap : uint8_t
-//{
-//	Repeat,
-//	Mirror,
-//	Clamp,
-//	BorderColor
-//};
+struct StencilDesc final
+{
+	StencilFunc stencilFunc = StencilFunc::Always;
+	StencilOp   failOp = StencilOp::Keep;
+	StencilOp   depthFailOp = StencilOp::Keep;
+	StencilOp   passOp = StencilOp::Keep;
+};
+
+struct DepthStencilStateDescriptor final
+{
+	bool           depthEnabled = true;
+	DepthWriteMask writeMask = DepthWriteMask::All;
+	DepthFunc      depthFunc = DepthFunc::Less;
+
+	bool           stencilEnabled = false;
+	uint32_t       stencilRef{ 0 };
+	uint8_t        stencilReadMask{ 0xff };
+	uint8_t        stencilWriteMask{ 0xff };
+	StencilDesc    frontFaceStencilDesc{};
+	StencilDesc    backFaceStencilDesc{};
+};
+
+enum class TexelsFormat : uint8_t
+{
+	R_U8,     // An 8 bits per pixel red channel texture format.
+	R_U16,    // A 16 bits per pixel red channel texture format.
+	RG_U8,    // An 8 bits per pixel red and green channel texture format.
+	RG_U16,   // A 16 bits per pixel red and green channel texture format.
+	RGB_U8,   // An 8 bits per pixel red, green, and blue channel texture format.
+	RGBA_U8,  // An 8 bits per pixel red, green, blue, and alpha channel texture format.
+	RGBA_U16, // A 16 bits per pixel red, green, blue, and alpha channel texture format.
+
+	Depth_U16,
+	DepthStencil_U16,
+	Depth_U24,
+	DepthStencil_U24, // A format to be used with the depth and stencil buffers where the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
+};
+
+
 //
 //enum class ColorWriteMask : uint8_t
 //{
@@ -338,42 +416,6 @@ struct RasterizerStateDescriptor final
 //
 //	Count
 //};
-//
-//enum class DepthWriteMask : uint8_t
-//{
-//	Zero,
-//	All,
-//
-//	Count
-//};
-//
-//enum class ComparisonFunc : size_t
-//{
-//	Always,
-//	Never,
-//	Less,
-//	LessEqual,
-//	Greater,
-//	GreaterEqual,
-//	Equal,
-//	NotEqual,
-//
-//	Count
-//};
-//typedef ComparisonFunc DepthFunc;
-//typedef ComparisonFunc StencilFunc;
-//typedef ComparisonFunc SamplerFunc;
-//
-//enum class StencilOp : size_t
-//{
-//	Keep,
-//	Zero,
-//	Replace,
-//	Increment,
-//	Decrement,
-//
-//	Count
-//};
 
 //struct BlendDesc final
 //{
@@ -396,28 +438,6 @@ struct RasterizerStateDescriptor final
 //
 //	bool      alphaToCoverageEnabled = false;
 //};
-//
-//struct StencilDesc final
-//{
-//	StencilFunc stencilFunc = StencilFunc::Always;
-//	StencilOp   failOp = StencilOp::Keep;
-//	StencilOp   depthFailOp = StencilOp::Keep;
-//	StencilOp   passOp = StencilOp::Keep;
-//};
-//
-//struct DepthStencilState final
-//{
-//	bool           depthEnabled = true;
-//	DepthWriteMask writeMask = DepthWriteMask::All;
-//	DepthFunc      depthFunc = DepthFunc::Less;
-//
-//	bool           stencilEnabled = false;
-//	uint32_t       stencilRef;
-//	uint8_t        stencilReadMask; // not implemented
-//	uint8_t        stencilWriteMask;
-//	StencilDesc    frontFaceStencilDesc;
-//	StencilDesc    backFaceStencilDesc;
-//};
 
 #pragma endregion
 //=============================================================================
@@ -435,7 +455,6 @@ struct ShaderProgramLoadInfo final
 	std::vector<InputLayoutDescriptor> inputLayout{};
 	ShaderLoadInfo                     pixelShader{};
 };
-
 struct ShaderProgramCreateInfo final
 {
 };
@@ -443,20 +462,31 @@ struct ShaderProgramCreateInfo final
 struct ShaderProgram;
 using ShaderProgramPtr = std::shared_ptr<ShaderProgram>;
 
-struct VertexBufferCreateInfo final
+struct BufferCreateInfo
 {
+	BufferUsage    usage{ BufferUsage::Default };
+	CPUAccessFlags cpuAccessFlags{ CPUAccessFlags::None };
+	void*          memoryData{ nullptr };
+	size_t         size{ 0 };
+};
+
+struct VertexBufferCreateInfo final : public BufferCreateInfo
+{
+
 };
 struct VertexBuffer;
+using VertexBufferPtr = std::shared_ptr<VertexBuffer>;
 
-struct IndexBufferCreateInfo final
+struct IndexBufferCreateInfo final : public BufferCreateInfo
 {
+
 };
 struct IndexBuffer;
+using IndexBufferPtr = std::shared_ptr<IndexBuffer>;
 
-struct ConstantBufferCreateInfo final
-{
-};
+using ConstantBufferCreateInfo = BufferCreateInfo;
 struct ConstantBuffer;
+using ConstantBufferPtr = std::shared_ptr<ConstantBuffer>;
 
 struct Texture1DCreateInfo final
 {
@@ -465,13 +495,15 @@ struct Texture1D;
 
 struct Texture2DCreateInfo final
 {
-	//uint32_t      width{ 0 };
-	//uint32_t      height{ 0 };
-	//uint32_t      mipCount{ 1 };
-	//TexelsFormat  format{ TexelsFormat::RGBA_U8 };
-	//void* data{ nullptr };
+	uint32_t     width{ 0 };
+	uint32_t     height{ 0 };
+	uint32_t     mipCount{ 1 };
+	//TexelsFormat format{ TexelsFormat::RGBA_U8 }; // TODO: также учесть SRGB
+	void*        memoryData{ nullptr };
+	size_t       size{ 0 };
 };
 struct Texture2D;
+using Texture2DPtr = std::shared_ptr<Texture2D>;
 
 struct Texture3DCreateInfo final
 {
@@ -485,14 +517,30 @@ struct TextureArray;
 
 struct PipelineStateCreateInfo final
 {
-	RasterizerStateDescriptor rasterizerState;
+	RasterizerStateDescriptor   rasterizerState;
 	//	BlendState          blendState;
-	//	DepthStencilState   depthStencilState;
+	DepthStencilStateDescriptor depthStencilState;
 	//	//SurfaceShaderHandle shader;
 	//	//VertexFormatHandle  vertexFormat;
 };
 struct PipelineState;
 using PipelineStatePtr = std::shared_ptr<PipelineState>;
+
+struct SamplerStateCreateInfo final
+{
+	TextureFilter  filter = TextureFilter::MinMagMip_Linear;
+	AddressMode    addressU = AddressMode::Clamp;
+	AddressMode    addressV = AddressMode::Clamp;
+	AddressMode    addressW = AddressMode::Clamp;
+	float          lodBias = 0.0F;
+	uint32_t       maxAnisotropy = 1;
+	ComparisonFunc comparisonFunc = ComparisonFunc::Never;
+	uint32_t       borderColor = 0xFFFFFFFF;
+	float          minLod = -FLT_MAX;
+	float          maxLod = FLT_MAX;
+};
+struct SamplerState;
+using SamplerStatePtr = std::shared_ptr<SamplerState>;
 
 #pragma endregion
 //=============================================================================
@@ -578,23 +626,40 @@ public:
 
 	// RHI Core
 	void SetMainFrame();
-	void Temp();
+	void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, uint32_t baseVertexLocation = 0, uint32_t startInstanceLocation = 0);
 
 	// RHI Resources Create
-	std::expected<ShaderProgramPtr, std::string> LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
-
-	std::expected<PipelineStatePtr, std::string> CreatePipelineState(const PipelineStateCreateInfo& createInfo);
+	std::expected<ShaderProgramPtr, std::string>  LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
+	std::expected<PipelineStatePtr, std::string>  CreatePipelineState(const PipelineStateCreateInfo& createInfo);
+	std::expected<SamplerStatePtr, std::string>   CreateSamplerState(const SamplerStateCreateInfo& createInfo);
+	std::expected<ConstantBufferPtr, std::string> CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo);
+	std::expected<VertexBufferPtr, std::string>   CreateVertexBuffer(const VertexBufferCreateInfo& createInfo);
+	std::expected<IndexBufferPtr, std::string>    CreateIndexBuffer(const IndexBufferCreateInfo& createInfo);
+	std::expected<Texture2DPtr, std::string>      CreateTexture2D(const Texture2DCreateInfo& createInfo);
 
 
 	// RHI Resources Delete
 	void DeleteRHIResource(ShaderProgramPtr& resource);
 	void DeleteRHIResource(PipelineStatePtr& resource);
+	void DeleteRHIResource(SamplerStatePtr& resource);
+	void DeleteRHIResource(ConstantBufferPtr& resource);
+	void DeleteRHIResource(VertexBufferPtr& resource);
+	void DeleteRHIResource(IndexBufferPtr& resource);
+	void DeleteRHIResource(Texture2DPtr& resource);
 
 	// RHI Resources Mod
+	void* Map(ConstantBufferPtr buffer, MapType type);
+	void UnMap(ConstantBufferPtr buffer);
 
 	// RHI Resources Bind
 	void BindShaderProgram(ShaderProgramPtr resource);
 	void BindPipelineState(PipelineStatePtr resource);
+	void BindSamplerState(SamplerStatePtr resource, uint32_t slot);
+	void BindConstantBuffer(ConstantBufferPtr resource, uint32_t slot);
+	void BindVertexBuffer(VertexBufferPtr resource);
+	void BindVertexBuffers(const std::vector<VertexBufferPtr>& resources, const std::vector<uint32_t>& strides, const std::vector<uint32_t>& offsets);
+	void BindIndexBuffer(IndexBufferPtr resource);
+	void BindTexture2D(Texture2DPtr resource, uint32_t slot);
 };
 
 #pragma endregion

@@ -392,9 +392,9 @@ void CuteEngineApp::SetMainFrame()
 	rhiData::d3dContext->RSSetViewports(1, &rhiData::viewport);
 }
 //=============================================================================
-void CuteEngineApp::Temp()
+void CuteEngineApp::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
 {
 	rhiData::d3dContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	rhiData::d3dContext->Draw(3, 0);
+	rhiData::d3dContext->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
 }
 //=============================================================================

@@ -51,3 +51,123 @@ inline DXGI_FORMAT ConvertToD3D11(DataFormat format)
 	}
 }
 //=============================================================================
+inline D3D11_FILL_MODE ConvertToD3D11(FillMode fillMode)
+{
+	switch (fillMode)
+	{
+	case FillMode::Solid:     return D3D11_FILL_SOLID;
+	case FillMode::Wireframe: return D3D11_FILL_WIREFRAME;
+	}
+}
+//=============================================================================
+inline D3D11_CULL_MODE ConvertToD3D11(CullMode cullMode)
+{
+	switch (cullMode)
+	{
+	case CullMode::Back:  return D3D11_CULL_BACK;
+	case CullMode::Front: return D3D11_CULL_FRONT;
+	case CullMode::None:  return D3D11_CULL_NONE;
+	}
+}
+//=============================================================================
+inline D3D11_FILTER ConvertToD3D11(TextureFilter filter)
+{
+	switch (filter)
+	{
+	case TextureFilter::MinMagMip_Point:                 return D3D11_FILTER_MIN_MAG_MIP_POINT;
+	case TextureFilter::MinMag_Point_Mip_Linear:         return D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+	case TextureFilter::Min_Point_Mag_Linear_Mip_Point:  return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+	case TextureFilter::Min_Point_MagMip_Linear:         return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+	case TextureFilter::Min_Linear_MagMip_Point:         return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+	case TextureFilter::Min_Linear_Mag_Point_Mip_Linear: return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+	case TextureFilter::MinMag_Linear_Mip_Point:         return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	case TextureFilter::MinMagMip_Linear:                return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	case TextureFilter::Anisotropic:                     return D3D11_FILTER_ANISOTROPIC;
+	default: return D3D11_FILTER_MIN_MAG_MIP_POINT;
+	}
+}
+//=============================================================================
+D3D11_TEXTURE_ADDRESS_MODE ConvertToD3D11(AddressMode mode)
+{
+	switch (mode)
+	{
+	case AddressMode::Wrap:   return D3D11_TEXTURE_ADDRESS_WRAP;
+	case AddressMode::Mirror: return D3D11_TEXTURE_ADDRESS_MIRROR;
+	case AddressMode::Clamp:  return D3D11_TEXTURE_ADDRESS_CLAMP;
+	case AddressMode::Border: return D3D11_TEXTURE_ADDRESS_BORDER;
+	default: return D3D11_TEXTURE_ADDRESS_WRAP;
+	}
+}
+//=============================================================================
+D3D11_COMPARISON_FUNC ConvertToD3D11(ComparisonFunc func)
+{
+	switch (func)
+	{
+	case ComparisonFunc::Always:       return D3D11_COMPARISON_ALWAYS;
+	case ComparisonFunc::Never:        return D3D11_COMPARISON_NEVER;
+	case ComparisonFunc::Less:         return D3D11_COMPARISON_LESS;
+	case ComparisonFunc::LessEqual:    return D3D11_COMPARISON_LESS_EQUAL;
+	case ComparisonFunc::Greater:      return D3D11_COMPARISON_GREATER;
+	case ComparisonFunc::GreaterEqual: return D3D11_COMPARISON_GREATER_EQUAL;
+	case ComparisonFunc::Equal:        return D3D11_COMPARISON_EQUAL;
+	case ComparisonFunc::NotEqual:     return D3D11_COMPARISON_NOT_EQUAL;
+	default:                           return D3D11_COMPARISON_ALWAYS;
+	}
+}
+//=============================================================================
+D3D11_DEPTH_WRITE_MASK ConvertToD3D11(DepthWriteMask mask)
+{
+	switch (mask)
+	{
+	case DepthWriteMask::Zero: return D3D11_DEPTH_WRITE_MASK_ZERO;
+	case DepthWriteMask::All:  return D3D11_DEPTH_WRITE_MASK_ALL;
+	default:                   return D3D11_DEPTH_WRITE_MASK_ZERO;
+	}
+}
+//=============================================================================
+D3D11_STENCIL_OP ConvertToD3D11(StencilOp op)
+{
+	switch (op)
+	{
+	case StencilOp::Keep:      return D3D11_STENCIL_OP_KEEP;
+	case StencilOp::Zero:      return D3D11_STENCIL_OP_ZERO;
+	case StencilOp::Replace:   return D3D11_STENCIL_OP_REPLACE;
+	case StencilOp::Increment: return D3D11_STENCIL_OP_INCR;
+	case StencilOp::Decrement: return D3D11_STENCIL_OP_DECR;
+	default:                   return D3D11_STENCIL_OP_KEEP;
+	}
+}
+//=============================================================================
+D3D11_USAGE ConvertToD3D11(BufferUsage usage)
+{
+	switch (usage)
+	{
+	case BufferUsage::Default:   return D3D11_USAGE_DEFAULT;
+	case BufferUsage::Immutable: return D3D11_USAGE_IMMUTABLE;
+	case BufferUsage::Dynamic:   return D3D11_USAGE_DYNAMIC;
+	case BufferUsage::Staging:   return D3D11_USAGE_STAGING;
+	default:                     return D3D11_USAGE_DEFAULT;
+	}
+}
+//=============================================================================
+UINT ConvertToD3D11(CPUAccessFlags flags)
+{
+	switch (flags)
+	{
+	case CPUAccessFlags::None:  return 0;
+	case CPUAccessFlags::Write: return D3D11_CPU_ACCESS_WRITE;
+	case CPUAccessFlags::Read:  return D3D11_CPU_ACCESS_READ;
+	default:                    return 0;
+	}
+}
+//=============================================================================
+D3D11_MAP ConvertToD3D11(MapType type)
+{
+	switch (type)
+	{
+	case MapType::Read:  return D3D11_MAP_READ;
+	case MapType::Write: return D3D11_MAP_WRITE_DISCARD;
+	default:             return D3D11_MAP_READ; // Значение по умолчанию
+	}
+}
+//=============================================================================
