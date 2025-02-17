@@ -177,12 +177,12 @@ bool GameApp::OnInit()
 	float n = 1.0f;              // near
 	float f = 9.0f;              // far
 
+	constants = { 2 * n / w, 0, 0, 0, 0, 2 * n / h, 0, 0, 0, 0, f / (f - n), 1, 0, 0, n * f / (n - f), 0 }; // projection matrix
+
 	constants.lightVector = { 1.0f, -1.0f,  1.0f };
 	constants.rotate = { 0.0f,  0.0f,  0.0f };
 	constants.scale = { 1.0f,  1.0f,  1.0f };
 	constants.translate = { 0.0f,  0.0f,  4.0f };
-
-	constants = { 2 * n / w, 0, 0, 0, 0, 2 * n / h, 0, 0, 0, 0, f / (f - n), 1, 0, 0, n * f / (n - f), 0 }; // projection matrix
 	return true;
 }
 //=============================================================================
