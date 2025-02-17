@@ -280,6 +280,39 @@ enum class CounterDirection : size_t
 	CCW,
 };
 
+enum class BlendFactor : uint8_t
+{
+	Zero,
+	One,
+	SrcAlpha,
+	DstAlpha,
+	OneMinusSrcAlpha,
+	OneMinusDstAlpha,
+	SrcColor,
+	DstColor,
+	OneMinusSrcColor,
+	OneMinusDstColor,
+};
+
+enum class BlendOp : uint8_t
+{
+	Add,
+	Subtract,
+	RevSubtract,
+	Min,
+	Max,
+};
+
+enum class ColorWriteMask : uint8_t
+{
+	Red   = (1u << 0),
+	Green = (1u << 1),
+	Blue  = (1u << 2),
+	Alpha = (1u << 3),
+
+	All   = Red | Green | Blue | Alpha
+};
+
 enum class TextureFilter : size_t
 {
 	MinMagMip_Point,
@@ -322,6 +355,13 @@ enum class MapType : uint8_t
 	Write,
 };
 
+enum class PrimitiveTopology : uint8_t
+{
+	TriangleList,
+	TriangleStrip,
+	PointList
+};
+
 struct InputLayoutDescriptor final
 {
 	std::string semanticName{};
@@ -338,6 +378,28 @@ struct RasterizerStateDescriptor final
 	FillMode         fillMode = FillMode::Solid;
 	CullMode         cullMode = CullMode::Back;
 	CounterDirection counterDirection = CounterDirection::CCW;
+};
+
+struct BlendDesc final
+{
+	bool           blendEnabled = false;
+	ColorWriteMask writeMask = ColorWriteMask::All;
+	BlendFactor    srcBlend = BlendFactor::One;
+	BlendFactor    dstBlend = BlendFactor::Zero;
+	BlendOp        blendOp = BlendOp::Add;
+	BlendFactor    srcBlendAlpha = BlendFactor::One;
+	BlendFactor    dstBlendAlpha = BlendFactor::Zero;
+	BlendOp        blendOpAlpha = BlendOp::Add;
+};
+
+struct BlendStateDescriptor final
+{
+	BlendDesc blendDesc;
+
+	bool      separateBlendEnabled = false;
+	BlendDesc renderTargetBlendDesc[RenderTargetSlotCount];
+
+	bool      alphaToCoverageEnabled = false;
 };
 
 struct StencilDesc final
@@ -377,67 +439,6 @@ enum class TexelsFormat : uint8_t
 	Depth_U24,
 	DepthStencil_U24, // A format to be used with the depth and stencil buffers where the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
 };
-
-
-//
-//enum class ColorWriteMask : uint8_t
-//{
-//	Red = (1U << 0),
-//	Green = (1U << 1),
-//	Blue = (1U << 2),
-//	Alpha = (1U << 3),
-//
-//	All = Red | Green | Blue | Alpha
-//};
-//
-//enum class BlendFactor : uint8_t
-//{
-//	Zero,
-//	One,
-//	SrcAlpha,
-//	DstAlpha,
-//	OneMinusSrcAlpha,
-//	OneMinusDstAlpha,
-//	SrcColor,
-//	DstColor,
-//	OneMinusSrcColor,
-//	OneMinusDstColor,
-//
-//	Count
-//};
-//
-//enum class BlendOp : uint8_t
-//{
-//	Add,
-//	Subtract,
-//	RevSubtract,
-//	Min,
-//	Max,
-//
-//	Count
-//};
-
-//struct BlendDesc final
-//{
-//	bool           blendEnabled = false;
-//	ColorWriteMask writeMask = ColorWriteMask::All;
-//	BlendFactor    srcBlend = BlendFactor::One;
-//	BlendFactor    dstBlend = BlendFactor::Zero;
-//	BlendOp        blendOp = BlendOp::Add;
-//	BlendFactor    srcBlendAlpha = BlendFactor::One;
-//	BlendFactor    dstBlendAlpha = BlendFactor::Zero;
-//	BlendOp        blendOpAlpha = BlendOp::Add;
-//};
-//
-//struct BlendState final
-//{
-//	BlendDesc blendDesc;
-//
-//	bool      separateBlendEnabled = false;
-//	BlendDesc renderTargetBlendDesc[RenderTargetSlotCount];
-//
-//	bool      alphaToCoverageEnabled = false;
-//};
 
 #pragma endregion
 //=============================================================================
@@ -518,10 +519,8 @@ struct TextureArray;
 struct PipelineStateCreateInfo final
 {
 	RasterizerStateDescriptor   rasterizerState;
-	//	BlendState          blendState;
+	BlendStateDescriptor        blendState;
 	DepthStencilStateDescriptor depthStencilState;
-	//	//SurfaceShaderHandle shader;
-	//	//VertexFormatHandle  vertexFormat;
 };
 struct PipelineState;
 using PipelineStatePtr = std::shared_ptr<PipelineState>;
