@@ -471,21 +471,23 @@ void CuteEngineApp::BindShaderProgram(ShaderProgramPtr resource)
 {
 	if (!resource) [[unlikely]] return;
 
-	if (resource->vertexShader)   rhiData::d3dContext->VSSetShader(resource->vertexShader.Get(), 0, 0);
-	if (resource->pixelShader)    rhiData::d3dContext->PSSetShader(resource->pixelShader.Get(), 0, 0);
-	if (resource->inputLayout)    rhiData::d3dContext->IASetInputLayout(resource->inputLayout.Get());
+	rhiData::d3dContext->VSSetShader(resource->vertexShader.Get(), 0, 0);
+	rhiData::d3dContext->PSSetShader(resource->pixelShader.Get(), 0, 0);
 
-	if (resource->hullShader)     rhiData::d3dContext->HSSetShader(resource->hullShader.Get(), 0, 0);
-	if (resource->domainShader)   rhiData::d3dContext->DSSetShader(resource->domainShader.Get(), 0, 0);
+	rhiData::d3dContext->IASetInputLayout(resource->inputLayout.Get());
 
-	if (resource->geometryShader) rhiData::d3dContext->GSSetShader(resource->geometryShader.Get(), 0, 0);
+	rhiData::d3dContext->HSSetShader(resource->hullShader.Get(), 0, 0);
+	rhiData::d3dContext->DSSetShader(resource->domainShader.Get(), 0, 0);
+
+	rhiData::d3dContext->GSSetShader(resource->geometryShader.Get(), 0, 0);
 }
 //=============================================================================
 void CuteEngineApp::BindPipelineState(PipelineStatePtr resource)
 {
 	rhiData::d3dContext->RSSetState(resource->rasterizerState.Get());
+	rhiData::d3dContext->OMSetBlendState(resource->blendState.Get(), nullptr, 0xffffffff);
 	rhiData::d3dContext->OMSetDepthStencilState(resource->depthStencilState.Get(), resource->stencilRef);
-	rhiData::d3dContext->OMSetBlendState(nullptr, nullptr, 0xffffffff); // TODO: доделать бленд сейт
+
 }
 //=============================================================================
 void CuteEngineApp::BindSamplerState(SamplerStatePtr resource, uint32_t slot)
