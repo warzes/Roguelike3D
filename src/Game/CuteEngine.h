@@ -364,7 +364,8 @@ enum CPUAccessFlags : uint8_t
 {
 	None,
 	Write,
-	Read
+	Read,
+	WriteRead
 };
 
 enum class MapType : uint8_t
@@ -521,21 +522,10 @@ struct BufferCreateInfo
 {
 	BufferUsage    usage{ BufferUsage::Default };
 	CPUAccessFlags cpuAccessFlags{ CPUAccessFlags::None };
-	void* memoryData{ nullptr };
+	void*          memoryData{ nullptr };
 	size_t         size{ 0 };
+	size_t         stride{ 0 };
 };
-
-struct VertexBufferCreateInfo final : public BufferCreateInfo
-{
-
-};
-
-struct IndexBufferCreateInfo final : public BufferCreateInfo
-{
-
-};
-
-using ConstantBufferCreateInfo = BufferCreateInfo;
 
 struct Texture1DCreateInfo final
 {
@@ -679,9 +669,11 @@ public:
 	std::expected<ShaderProgramPtr, std::string>  LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
 	std::expected<PipelineStatePtr, std::string>  CreatePipelineState(const PipelineStateCreateInfo& createInfo);
 	std::expected<SamplerStatePtr, std::string>   CreateSamplerState(const SamplerStateCreateInfo& createInfo);
-	std::expected<BufferPtr, std::string>         CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo);
-	std::expected<BufferPtr, std::string>         CreateVertexBuffer(const VertexBufferCreateInfo& createInfo);
-	std::expected<BufferPtr, std::string>         CreateIndexBuffer(const IndexBufferCreateInfo& createInfo);
+	std::expected<BufferPtr, std::string>         CreateConstantBuffer(const BufferCreateInfo& createInfo);
+	std::expected<BufferPtr, std::string>         CreateVertexBuffer(const BufferCreateInfo& createInfo);
+	std::expected<BufferPtr, std::string>         CreateIndexBuffer(const BufferCreateInfo& createInfo);
+
+
 	std::expected<Texture2DPtr, std::string>      CreateTexture2D(const Texture2DCreateInfo& createInfo);
 
 

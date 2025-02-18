@@ -154,10 +154,11 @@ inline UINT ConvertToD3D11(CPUAccessFlags flags)
 {
 	switch (flags)
 	{
-	case CPUAccessFlags::None:  return 0;
-	case CPUAccessFlags::Write: return D3D11_CPU_ACCESS_WRITE;
-	case CPUAccessFlags::Read:  return D3D11_CPU_ACCESS_READ;
-	default:                    return 0;
+	case CPUAccessFlags::None:      return 0;
+	case CPUAccessFlags::Write:     return D3D11_CPU_ACCESS_WRITE;
+	case CPUAccessFlags::Read:      return D3D11_CPU_ACCESS_READ;
+	case CPUAccessFlags::WriteRead: return D3D11_CPU_ACCESS_WRITE |D3D11_CPU_ACCESS_READ;
+	default:                        return 0;
 	}
 }
 //=============================================================================

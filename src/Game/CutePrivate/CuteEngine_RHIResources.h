@@ -29,8 +29,9 @@ struct SamplerState final
 
 struct Buffer final
 {
-	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
-	UINT                                 bindFlags;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>              buffer;
+	UINT                                              bindFlags;
+	UINT                                              dataBufferStride;
 };
 
 struct Texture2D final
@@ -316,20 +317,21 @@ std::expected<SamplerStatePtr, std::string> CuteEngineApp::CreateSamplerState(co
 	return samplerState;
 }
 //=============================================================================
-std::expected<BufferPtr, std::string> CuteEngineApp::CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo)
+std::expected<BufferPtr, std::string> CreateBuffer(const BufferCreateInfo& createInfo, UINT bindFlags)
 {
 	BufferPtr buffer = std::make_shared<Buffer>();
-	buffer->bindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	buffer->bindFlags = bindFlags;
+	buffer->dataBufferStride = static_cast<UINT>(createInfo.stride);
 
-	D3D11_BUFFER_DESC bufferDesc{};
+	D3D11_BUFFER_DESC bufferDesc   = { 0 };
 	bufferDesc.ByteWidth           = static_cast<UINT>(createInfo.size);
 	bufferDesc.Usage               = ConvertToD3D11(createInfo.usage);
 	bufferDesc.BindFlags           = buffer->bindFlags;
 	bufferDesc.CPUAccessFlags      = ConvertToD3D11(createInfo.cpuAccessFlags);
 	bufferDesc.MiscFlags           = 0;
-	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.size);
+	bufferDesc.StructureByteStride = buffer->dataBufferStride;
 
-	D3D11_SUBRESOURCE_DATA data{};
+	D3D11_SUBRESOURCE_DATA data = { 0 };
 	data.pSysMem = createInfo.memoryData;
 
 	HRESULT result = rhiData::d3dDevice->CreateBuffer(&bufferDesc, (createInfo.memoryData == nullptr) ? nullptr : &data, &buffer->buffer);
@@ -338,48 +340,19 @@ std::expected<BufferPtr, std::string> CuteEngineApp::CreateConstantBuffer(const 
 	return buffer;
 }
 //=============================================================================
-std::expected<BufferPtr, std::string> CuteEngineApp::CreateVertexBuffer(const VertexBufferCreateInfo& createInfo)
+std::expected<BufferPtr, std::string> CuteEngineApp::CreateConstantBuffer(const BufferCreateInfo& createInfo)
 {
-	BufferPtr buffer = std::make_shared<Buffer>();
-	buffer->bindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-	D3D11_BUFFER_DESC bufferDesc{};
-	bufferDesc.ByteWidth           = static_cast<UINT>(createInfo.size);
-	bufferDesc.Usage               = ConvertToD3D11(createInfo.usage);
-	bufferDesc.BindFlags           = buffer->bindFlags;
-	bufferDesc.CPUAccessFlags      = ConvertToD3D11(createInfo.cpuAccessFlags);
-	bufferDesc.MiscFlags           = 0;
-	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.size);
-
-	D3D11_SUBRESOURCE_DATA data{};
-	data.pSysMem = createInfo.memoryData;
-
-	HRESULT result = rhiData::d3dDevice->CreateBuffer(&bufferDesc, (createInfo.memoryData == nullptr) ? nullptr : &data, &buffer->buffer);
-	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateBuffer() failed: ", result));
-
-	return buffer;
+	return CreateBuffer(createInfo, D3D11_BIND_CONSTANT_BUFFER);
 }
 //=============================================================================
-std::expected<BufferPtr, std::string> CuteEngineApp::CreateIndexBuffer(const IndexBufferCreateInfo& createInfo)
+std::expected<BufferPtr, std::string> CuteEngineApp::CreateVertexBuffer(const BufferCreateInfo& createInfo)
 {
-	BufferPtr buffer = std::make_shared<Buffer>();
-	buffer->bindFlags = D3D11_BIND_INDEX_BUFFER;
-
-	D3D11_BUFFER_DESC bufferDesc{};
-	bufferDesc.ByteWidth           = static_cast<UINT>(createInfo.size);
-	bufferDesc.Usage               = ConvertToD3D11(createInfo.usage);
-	bufferDesc.BindFlags           = buffer->bindFlags;
-	bufferDesc.CPUAccessFlags      = ConvertToD3D11(createInfo.cpuAccessFlags);
-	bufferDesc.MiscFlags           = 0;
-	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.size);
-
-	D3D11_SUBRESOURCE_DATA data{};
-	data.pSysMem = createInfo.memoryData;
-
-	HRESULT result = rhiData::d3dDevice->CreateBuffer(&bufferDesc, (createInfo.memoryData == nullptr) ? nullptr : &data, &buffer->buffer);
-	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateBuffer() failed: ", result));
-
-	return buffer;
+	return CreateBuffer(createInfo, D3D11_BIND_VERTEX_BUFFER);
+}
+//=============================================================================
+std::expected<BufferPtr, std::string> CuteEngineApp::CreateIndexBuffer(const BufferCreateInfo& createInfo)
+{
+	return CreateBuffer(createInfo, D3D11_BIND_INDEX_BUFFER);
 }
 //=============================================================================
 std::expected<Texture2DPtr, std::string> CuteEngineApp::CreateTexture2D(const Texture2DCreateInfo& createInfo)
