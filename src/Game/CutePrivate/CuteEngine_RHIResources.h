@@ -2,14 +2,22 @@
 //=============================================================================
 struct ShaderProgram final
 {
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout>  inputLayout;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader>  pixelShader;
+	Microsoft::WRL::ComPtr<ID3D11VertexShader>   vertexShader;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout>    inputLayout;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader>    pixelShader;
+
+	Microsoft::WRL::ComPtr<ID3D11HullShader>     hullShader;
+	Microsoft::WRL::ComPtr<ID3D11DomainShader>   domainShader;
+
+	Microsoft::WRL::ComPtr<ID3D11GeometryShader> geometryShader;
+
+	Microsoft::WRL::ComPtr<ID3D11ComputeShader>  computeShader;
 };
 
 struct PipelineState final
 {
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState2>  rasterizerState;
+	Microsoft::WRL::ComPtr<ID3D11BlendState1>       blendState;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
 	uint32_t                                        stencilRef;
 };
@@ -38,24 +46,64 @@ struct Texture2D final
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> view;
 };
 //=============================================================================
+std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShaderFromFile(const ShaderLoadInfo& loadInfo, const std::string& target)
+{
+	if (loadInfo.entryPoint.empty()) return std::unexpected("Entry point in ShaderLoadInfo is empty.");
+
+	D3D_SHADER_MACRO* d3dmacros = nullptr;
+	if (!loadInfo.macros.empty())
+	{
+		d3dmacros = new D3D_SHADER_MACRO[loadInfo.macros.size()];
+		for (size_t i = 0; i < loadInfo.macros.size(); ++i)
+		{
+			d3dmacros[i].Name       = loadInfo.macros[i].name;
+			d3dmacros[i].Definition = loadInfo.macros[i].value;
+		}
+	}
+
+	UINT d3dFlags = 0;
+	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Debug))     d3dFlags |= D3DCOMPILE_DEBUG;
+	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Strict))    d3dFlags |= D3DCOMPILE_ENABLE_STRICTNESS;
+	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::IEEStrict)) d3dFlags |= D3DCOMPILE_IEEE_STRICTNESS;
+	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Optimize0)) d3dFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL0;
+	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Optimize1)) d3dFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL1;
+	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Optimize2)) d3dFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL2;
+	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Optimize3)) d3dFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
+
+	Microsoft::WRL::ComPtr<ID3DBlob> blob;
+	Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+	HRESULT result = D3DCompileFromFile(loadInfo.file.c_str(), d3dmacros, 0, loadInfo.entryPoint.c_str(), target.c_str(), d3dFlags, 0, &blob, &errorBlob);
+	delete[] d3dmacros;
+	if (FAILED(result))
+	{
+		std::string errorText = DX_ERR_STR("D3DCompileFromFile() failed: ", result);
+		if (errorBlob != nullptr)
+		{
+			std::string error;
+			error.resize(errorBlob->GetBufferSize());
+			std::memcpy(error.data(), errorBlob->GetBufferPointer(), errorBlob->GetBufferSize());
+			errorText += "\n";
+			errorText += error;
+		}
+
+		return std::unexpected(errorText);
+	}
+	return blob;
+}
+//=============================================================================
 std::expected<ShaderProgramPtr, std::string> CuteEngineApp::LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo)
 {
 	ShaderProgramPtr program = std::make_shared<ShaderProgram>();
 
 	// Create Vertex Shader
 	{
-		const auto& vsli = loadInfo.vertexShader;
-		if (!vsli.file.empty())
+		if (!loadInfo.vertexShader.file.empty())
 		{
-			Print(L"Load Vertex Shader in File: " + vsli.file);
-			if (vsli.entryPoint.empty()) return std::unexpected("Entry point in ShaderProgramLoadInfo::vertexShader is empty.");
-			if (vsli.target.empty()) return std::unexpected("Target in ShaderProgramLoadInfo::vertexShader is empty.");
-
-			Microsoft::WRL::ComPtr<ID3DBlob> blob;
-			HRESULT result = D3DCompileFromFile(vsli.file.c_str(), 0, 0, vsli.entryPoint.c_str(), vsli.target.c_str(), 0, 0, &blob, 0);
-			if (FAILED(result)) return std::unexpected(DX_ERR_STR("D3DCompileFromFile() failed: ", result));
-
-			result = rhiData::d3dDevice->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), 0, &program->vertexShader);
+			Print(L"Load Vertex Shader in File: " + loadInfo.vertexShader.file);
+			auto blobRet = CompileShaderFromFile(loadInfo.vertexShader, "vs_5_0");
+			if (!blobRet.has_value()) return std::unexpected(blobRet.error());
+			auto blob = blobRet.value();
+			HRESULT result = rhiData::d3dDevice->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), 0, &program->vertexShader);
 			if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateVertexShader() failed: ", result));
 
 			// Create Input Layout
@@ -89,19 +137,66 @@ std::expected<ShaderProgramPtr, std::string> CuteEngineApp::LoadShaderProgram(co
 
 	// Create Pixel Shader
 	{
-		const auto& psli = loadInfo.pixelShader;
-		if (!psli.file.empty())
+		if (!loadInfo.pixelShader.file.empty())
 		{
-			Print(L"Load Pixel Shader in File: " + psli.file);
-			if (psli.entryPoint.empty()) return std::unexpected("Entry point in ShaderProgramLoadInfo::pixelShader is empty.");
-			if (psli.target.empty()) return std::unexpected("Target in ShaderProgramLoadInfo::pixelShader is empty.");
-
-			Microsoft::WRL::ComPtr<ID3DBlob> blob;
-			HRESULT result = D3DCompileFromFile(psli.file.c_str(), 0, 0, psli.entryPoint.c_str(), psli.target.c_str(), 0, 0, &blob, 0);
-			if (FAILED(result)) return std::unexpected(DX_ERR_STR("D3DCompileFromFile() failed: ", result));
-
-			result = rhiData::d3dDevice->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), 0, &program->pixelShader);
+			Print(L"Load Pixel Shader in File: " + loadInfo.pixelShader.file);
+			auto blobRet = CompileShaderFromFile(loadInfo.pixelShader, "ps_5_0");
+			if (!blobRet.has_value()) return std::unexpected(blobRet.error());
+			auto blob = blobRet.value();
+			HRESULT result = rhiData::d3dDevice->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), 0, &program->pixelShader);
 			if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreatePixelShader() failed: ", result));
+		}
+	}
+
+	// Create Hull Shader
+	{
+		if (!loadInfo.hullShader.file.empty())
+		{
+			Print(L"Load Hull Shader in File: " + loadInfo.hullShader.file);
+			auto blobRet = CompileShaderFromFile(loadInfo.hullShader, "hs_5_0");
+			if (!blobRet.has_value()) return std::unexpected(blobRet.error());
+			auto blob = blobRet.value();
+			HRESULT result = rhiData::d3dDevice->CreateHullShader(blob->GetBufferPointer(), blob->GetBufferSize(), 0, &program->hullShader);
+			if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateHullShader() failed: ", result));
+		}
+	}
+
+	// Create Domain Shader
+	{
+		if (!loadInfo.domainShader.file.empty())
+		{
+			Print(L"Load Domain Shader in File: " + loadInfo.domainShader.file);
+			auto blobRet = CompileShaderFromFile(loadInfo.domainShader, "ds_5_0");
+			if (!blobRet.has_value()) return std::unexpected(blobRet.error());
+			auto blob = blobRet.value();
+			HRESULT result = rhiData::d3dDevice->CreateDomainShader(blob->GetBufferPointer(), blob->GetBufferSize(), 0, &program->domainShader);
+			if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateDomainShader() failed: ", result));
+		}
+	}
+
+	// Create Geometry Shader
+	{
+		if (!loadInfo.geometryShader.file.empty())
+		{
+			Print(L"Load Geometry Shader in File: " + loadInfo.geometryShader.file);
+			auto blobRet = CompileShaderFromFile(loadInfo.geometryShader, "gs_5_0");
+			if (!blobRet.has_value()) return std::unexpected(blobRet.error());
+			auto blob = blobRet.value();
+			HRESULT result = rhiData::d3dDevice->CreateGeometryShader(blob->GetBufferPointer(), blob->GetBufferSize(), 0, &program->geometryShader);
+			if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateGeometryShader() failed: ", result));
+		}
+	}
+
+	// Create Compute Shader
+	{
+		if (!loadInfo.computeShader.file.empty())
+		{
+			Print(L"Load Compute Shader in File: " + loadInfo.computeShader.file);
+			auto blobRet = CompileShaderFromFile(loadInfo.geometryShader, "cs_5_0");
+			if (!blobRet.has_value()) return std::unexpected(blobRet.error());
+			auto blob = blobRet.value();
+			HRESULT result = rhiData::d3dDevice->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), 0, &program->computeShader);
+			if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateComputeShader() failed: ", result));
 		}
 	}
 
@@ -136,7 +231,42 @@ std::expected<PipelineStatePtr, std::string> CuteEngineApp::CreatePipelineState(
 
 	// create blend state
 	{
+		const auto& state = createInfo.blendState;
 
+		D3D11_BLEND_DESC1 blendDesc = { 0 };
+		blendDesc.AlphaToCoverageEnable = state.alphaToCoverageEnabled;
+		blendDesc.IndependentBlendEnable = state.separateBlendEnabled;
+
+		//if (state.blendDesc.blendEnabled) {
+		blendDesc.RenderTarget[0].BlendEnable           = state.blendDesc.blendEnabled;
+		blendDesc.RenderTarget[0].RenderTargetWriteMask = static_cast<UINT8>(state.renderTargetBlendDesc[0].writeMask);
+		blendDesc.RenderTarget[0].SrcBlend              = ConvertToD3D11(state.blendDesc.srcBlend);
+		blendDesc.RenderTarget[0].DestBlend             = ConvertToD3D11(state.blendDesc.dstBlend);
+		blendDesc.RenderTarget[0].BlendOp               = ConvertToD3D11(state.blendDesc.blendOp);
+		blendDesc.RenderTarget[0].SrcBlendAlpha         = ConvertToD3D11(state.blendDesc.srcBlendAlpha);
+		blendDesc.RenderTarget[0].DestBlendAlpha        = ConvertToD3D11(state.blendDesc.dstBlendAlpha);
+		blendDesc.RenderTarget[0].BlendOpAlpha          = ConvertToD3D11(state.blendDesc.blendOpAlpha);
+		//}
+		// TODO: D3D11_RENDER_TARGET_BLEND_DESC1::LogicOp and D3D11_RENDER_TARGET_BLEND_DESC1::LogicOpEnable
+
+		if (state.separateBlendEnabled)
+		{
+			for (size_t i = 0; i < 8; ++i)
+			{
+				blendDesc.RenderTarget[i].BlendEnable           = state.renderTargetBlendDesc[i].blendEnabled;
+				blendDesc.RenderTarget[i].RenderTargetWriteMask = static_cast<UINT8>(state.renderTargetBlendDesc[i].writeMask);
+				blendDesc.RenderTarget[i].SrcBlend              = ConvertToD3D11(state.renderTargetBlendDesc[i].srcBlend);
+				blendDesc.RenderTarget[i].DestBlend             = ConvertToD3D11(state.renderTargetBlendDesc[i].dstBlend);
+				blendDesc.RenderTarget[i].BlendOp               = ConvertToD3D11(state.renderTargetBlendDesc[i].blendOp);
+				blendDesc.RenderTarget[i].SrcBlendAlpha         = ConvertToD3D11(state.renderTargetBlendDesc[i].srcBlendAlpha);
+				blendDesc.RenderTarget[i].DestBlendAlpha        = ConvertToD3D11(state.renderTargetBlendDesc[i].dstBlendAlpha);
+				blendDesc.RenderTarget[i].BlendOpAlpha          = ConvertToD3D11(state.renderTargetBlendDesc[i].blendOpAlpha);
+				// TODO: D3D11_RENDER_TARGET_BLEND_DESC1::LogicOp and D3D11_RENDER_TARGET_BLEND_DESC1::LogicOpEnable
+			}
+		}
+
+		HRESULT result = rhiData::d3dDevice->CreateBlendState1(&blendDesc, &pipelineState->blendState);
+		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateBlendState1() failed: ", result));
 	}
 
 	// create depth stencil state
@@ -339,9 +469,14 @@ void CuteEngineApp::BindShaderProgram(ShaderProgramPtr resource)
 {
 	if (!resource) [[unlikely]] return;
 
-	if (resource->vertexShader) rhiData::d3dContext->VSSetShader(resource->vertexShader.Get(), 0, 0);
-	if (resource->pixelShader)  rhiData::d3dContext->PSSetShader(resource->pixelShader.Get(), 0, 0);
-	if (resource->inputLayout)  rhiData::d3dContext->IASetInputLayout(resource->inputLayout.Get());
+	if (resource->vertexShader)   rhiData::d3dContext->VSSetShader(resource->vertexShader.Get(), 0, 0);
+	if (resource->pixelShader)    rhiData::d3dContext->PSSetShader(resource->pixelShader.Get(), 0, 0);
+	if (resource->inputLayout)    rhiData::d3dContext->IASetInputLayout(resource->inputLayout.Get());
+
+	if (resource->hullShader)     rhiData::d3dContext->HSSetShader(resource->hullShader.Get(), 0, 0);
+	if (resource->domainShader)   rhiData::d3dContext->DSSetShader(resource->domainShader.Get(), 0, 0);
+
+	if (resource->geometryShader) rhiData::d3dContext->GSSetShader(resource->geometryShader.Get(), 0, 0);
 }
 //=============================================================================
 void CuteEngineApp::BindPipelineState(PipelineStatePtr resource)

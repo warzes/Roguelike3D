@@ -21,7 +21,7 @@ Version 0.0.1
 - Главный класс приложения CuteEngineApp
 - Создание и управление окном
 - Инициализация и управление контекстом Direct3D11
-- Основные ресурсы Direct3D11: ShaderProgram
+- Основные ресурсы Direct3D11
 */
 
 #pragma endregion
@@ -222,6 +222,8 @@ namespace Input
 constexpr const int      RenderTargetSlotCount = 8;
 constexpr const uint32_t AppendAlignedElement = 0xffffffff;
 
+#pragma region [ RHI Enum ]
+
 enum class DataFormat : uint8_t
 {
 	R1, R8, R16, R16F, R32I, R32U, R32F,               // R
@@ -229,6 +231,22 @@ enum class DataFormat : uint8_t
 	RGB32I, RGB32U, RGB32F,                            // RGB
 	RGBA8, RGBA16, RGBA16F, RGBA32I, RGBA32U, RGBA32F, // RGBA
 	R11G11B10F
+};
+
+enum class TexelsFormat : uint8_t
+{
+	R_U8,     // An 8 bits per pixel red channel texture format.
+	R_U16,    // A 16 bits per pixel red channel texture format.
+	RG_U8,    // An 8 bits per pixel red and green channel texture format.
+	RG_U16,   // A 16 bits per pixel red and green channel texture format.
+	RGB_U8,   // An 8 bits per pixel red, green, and blue channel texture format.
+	RGBA_U8,  // An 8 bits per pixel red, green, blue, and alpha channel texture format.
+	RGBA_U16, // A 16 bits per pixel red, green, blue, and alpha channel texture format.
+
+	Depth_U16,
+	DepthStencil_U16,
+	Depth_U24,
+	DepthStencil_U24, // A format to be used with the depth and stencil buffers where the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
 };
 
 enum class ComparisonFunc : uint8_t
@@ -305,12 +323,12 @@ enum class BlendOp : uint8_t
 
 enum class ColorWriteMask : uint8_t
 {
-	Red   = (1u << 0),
+	Red = (1u << 0),
 	Green = (1u << 1),
-	Blue  = (1u << 2),
+	Blue = (1u << 2),
 	Alpha = (1u << 3),
 
-	All   = Red | Green | Blue | Alpha
+	All = Red | Green | Blue | Alpha
 };
 
 enum class TextureFilter : size_t
@@ -362,6 +380,62 @@ enum class PrimitiveTopology : uint8_t
 	PointList
 };
 
+namespace ShaderCompileFlags
+{
+	enum : uint64_t
+	{
+		Debug = (1UL << 0),
+		Strict = (1UL << 1),
+		IEEStrict = (1UL << 2),
+		Optimize0 = (1UL << 3),
+		Optimize1 = (1UL << 4),
+		Optimize2 = (1UL << 5),
+		Optimize3 = (1UL << 6)
+	};
+}
+
+#pragma endregion
+
+#pragma region [ RHI Core Desc]
+
+struct BlendDesc final
+{
+	bool           blendEnabled = false;
+	ColorWriteMask writeMask = ColorWriteMask::All;
+	BlendFactor    srcBlend = BlendFactor::One;
+	BlendFactor    dstBlend = BlendFactor::Zero;
+	BlendOp        blendOp = BlendOp::Add;
+	BlendFactor    srcBlendAlpha = BlendFactor::One;
+	BlendFactor    dstBlendAlpha = BlendFactor::Zero;
+	BlendOp        blendOpAlpha = BlendOp::Add;
+};
+
+struct StencilDesc final
+{
+	StencilFunc stencilFunc = StencilFunc::Always;
+	StencilOp   failOp = StencilOp::Keep;
+	StencilOp   depthFailOp = StencilOp::Keep;
+	StencilOp   passOp = StencilOp::Keep;
+};
+
+struct ShaderCompileMacro final
+{
+	const char* name{};
+	const char* value{};
+};
+
+struct ShaderLoadInfo final
+{
+	std::wstring                    file{};       // example: L"gpu.hlsl"
+	std::string                     entryPoint{}; // example: "vsMain"
+	std::vector<ShaderCompileMacro> macros{};
+	uint64_t                        flags{ 0 };
+};
+
+#pragma endregion
+
+#pragma region [ RHI Descriptors ]
+
 struct InputLayoutDescriptor final
 {
 	std::string semanticName{};
@@ -380,18 +454,6 @@ struct RasterizerStateDescriptor final
 	CounterDirection counterDirection = CounterDirection::CCW;
 };
 
-struct BlendDesc final
-{
-	bool           blendEnabled = false;
-	ColorWriteMask writeMask = ColorWriteMask::All;
-	BlendFactor    srcBlend = BlendFactor::One;
-	BlendFactor    dstBlend = BlendFactor::Zero;
-	BlendOp        blendOp = BlendOp::Add;
-	BlendFactor    srcBlendAlpha = BlendFactor::One;
-	BlendFactor    dstBlendAlpha = BlendFactor::Zero;
-	BlendOp        blendOpAlpha = BlendOp::Add;
-};
-
 struct BlendStateDescriptor final
 {
 	BlendDesc blendDesc;
@@ -400,14 +462,6 @@ struct BlendStateDescriptor final
 	BlendDesc renderTargetBlendDesc[RenderTargetSlotCount];
 
 	bool      alphaToCoverageEnabled = false;
-};
-
-struct StencilDesc final
-{
-	StencilFunc stencilFunc = StencilFunc::Always;
-	StencilOp   failOp = StencilOp::Keep;
-	StencilOp   depthFailOp = StencilOp::Keep;
-	StencilOp   passOp = StencilOp::Keep;
 };
 
 struct DepthStencilStateDescriptor final
@@ -424,97 +478,23 @@ struct DepthStencilStateDescriptor final
 	StencilDesc    backFaceStencilDesc{};
 };
 
-enum class TexelsFormat : uint8_t
-{
-	R_U8,     // An 8 bits per pixel red channel texture format.
-	R_U16,    // A 16 bits per pixel red channel texture format.
-	RG_U8,    // An 8 bits per pixel red and green channel texture format.
-	RG_U16,   // A 16 bits per pixel red and green channel texture format.
-	RGB_U8,   // An 8 bits per pixel red, green, and blue channel texture format.
-	RGBA_U8,  // An 8 bits per pixel red, green, blue, and alpha channel texture format.
-	RGBA_U16, // A 16 bits per pixel red, green, blue, and alpha channel texture format.
-
-	Depth_U16,
-	DepthStencil_U16,
-	Depth_U24,
-	DepthStencil_U24, // A format to be used with the depth and stencil buffers where the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
-};
-
 #pragma endregion
-//=============================================================================
-#pragma region [ RHI Resources ]
 
-struct ShaderLoadInfo final
-{
-	std::wstring file{};       // example: L"gpu.hlsl"
-	std::string  entryPoint{}; // example: "vsMain"
-	std::string  target{};     // vs_5_0
-};
+#pragma region [ RHI CreateInfo structs ]
+
 struct ShaderProgramLoadInfo final
 {
 	ShaderLoadInfo                     vertexShader{};
 	std::vector<InputLayoutDescriptor> inputLayout{};
 	ShaderLoadInfo                     pixelShader{};
+	ShaderLoadInfo                     hullShader{};
+	ShaderLoadInfo                     domainShader{};
+	ShaderLoadInfo                     geometryShader{};
+	ShaderLoadInfo                     computeShader{};
 };
 struct ShaderProgramCreateInfo final
 {
 };
-
-struct ShaderProgram;
-using ShaderProgramPtr = std::shared_ptr<ShaderProgram>;
-
-struct BufferCreateInfo
-{
-	BufferUsage    usage{ BufferUsage::Default };
-	CPUAccessFlags cpuAccessFlags{ CPUAccessFlags::None };
-	void*          memoryData{ nullptr };
-	size_t         size{ 0 };
-};
-
-struct VertexBufferCreateInfo final : public BufferCreateInfo
-{
-
-};
-struct VertexBuffer;
-using VertexBufferPtr = std::shared_ptr<VertexBuffer>;
-
-struct IndexBufferCreateInfo final : public BufferCreateInfo
-{
-
-};
-struct IndexBuffer;
-using IndexBufferPtr = std::shared_ptr<IndexBuffer>;
-
-using ConstantBufferCreateInfo = BufferCreateInfo;
-struct ConstantBuffer;
-using ConstantBufferPtr = std::shared_ptr<ConstantBuffer>;
-
-struct Texture1DCreateInfo final
-{
-};
-struct Texture1D;
-
-struct Texture2DCreateInfo final
-{
-	uint32_t     width{ 0 };
-	uint32_t     height{ 0 };
-	uint32_t     mipCount{ 1 };
-	//TexelsFormat format{ TexelsFormat::RGBA_U8 }; // TODO: также учесть SRGB
-	void*        memoryData{ nullptr };
-	size_t       size{ 0 };
-};
-struct Texture2D;
-using Texture2DPtr = std::shared_ptr<Texture2D>;
-
-struct Texture3DCreateInfo final
-{
-};
-struct Texture3D;
-
-struct TextureArrayCreateInfo final
-{
-};
-struct TextureArray;
 
 struct PipelineStateCreateInfo final
 {
@@ -522,8 +502,6 @@ struct PipelineStateCreateInfo final
 	BlendStateDescriptor        blendState;
 	DepthStencilStateDescriptor depthStencilState;
 };
-struct PipelineState;
-using PipelineStatePtr = std::shared_ptr<PipelineState>;
 
 struct SamplerStateCreateInfo final
 {
@@ -538,8 +516,84 @@ struct SamplerStateCreateInfo final
 	float          minLod = -FLT_MAX;
 	float          maxLod = FLT_MAX;
 };
+
+struct BufferCreateInfo
+{
+	BufferUsage    usage{ BufferUsage::Default };
+	CPUAccessFlags cpuAccessFlags{ CPUAccessFlags::None };
+	void* memoryData{ nullptr };
+	size_t         size{ 0 };
+};
+
+struct VertexBufferCreateInfo final : public BufferCreateInfo
+{
+
+};
+
+struct IndexBufferCreateInfo final : public BufferCreateInfo
+{
+
+};
+
+using ConstantBufferCreateInfo = BufferCreateInfo;
+
+struct Texture1DCreateInfo final
+{
+};
+
+struct Texture2DCreateInfo final
+{
+	uint32_t     width{ 0 };
+	uint32_t     height{ 0 };
+	uint32_t     mipCount{ 1 };
+	//TexelsFormat format{ TexelsFormat::RGBA_U8 }; // TODO: также учесть SRGB
+	void* memoryData{ nullptr };
+	size_t       size{ 0 };
+};
+
+struct Texture3DCreateInfo final
+{
+};
+
+struct TextureArrayCreateInfo final
+{
+};
+
+#pragma endregion
+
+#pragma region [ RHI Resources ]
+
+struct ShaderProgram;
+using ShaderProgramPtr = std::shared_ptr<ShaderProgram>;
+
+struct PipelineState;
+using PipelineStatePtr = std::shared_ptr<PipelineState>;
+
 struct SamplerState;
 using SamplerStatePtr = std::shared_ptr<SamplerState>;
+
+struct VertexBuffer;
+using VertexBufferPtr = std::shared_ptr<VertexBuffer>;
+
+struct IndexBuffer;
+using IndexBufferPtr = std::shared_ptr<IndexBuffer>;
+
+struct ConstantBuffer;
+using ConstantBufferPtr = std::shared_ptr<ConstantBuffer>;
+
+struct Texture1D;
+using Texture1DPtr = std::shared_ptr<Texture1D>;
+
+struct Texture2D;
+using Texture2DPtr = std::shared_ptr<Texture2D>;
+
+struct Texture3D;
+using Texture3DPtr = std::shared_ptr<Texture3D>;
+
+struct TextureArray;
+using TextureArrayPtr = std::shared_ptr<TextureArray>;
+
+#pragma endregion
 
 #pragma endregion
 //=============================================================================

@@ -171,3 +171,34 @@ D3D11_MAP ConvertToD3D11(MapType type)
 	}
 }
 //=============================================================================
+D3D11_BLEND ConvertToD3D11(BlendFactor type)
+{
+	switch (type)
+	{
+	case BlendFactor::Zero:             return D3D11_BLEND_ZERO;
+	case BlendFactor::One:              return D3D11_BLEND_ONE;
+	case BlendFactor::SrcAlpha:         return D3D11_BLEND_SRC_ALPHA;
+	case BlendFactor::DstAlpha:         return D3D11_BLEND_DEST_ALPHA;
+	case BlendFactor::OneMinusSrcAlpha: return D3D11_BLEND_INV_SRC_ALPHA;
+	case BlendFactor::OneMinusDstAlpha: return D3D11_BLEND_INV_DEST_ALPHA;
+	case BlendFactor::SrcColor:         return D3D11_BLEND_SRC_COLOR;
+	case BlendFactor::DstColor:         return D3D11_BLEND_DEST_COLOR;
+	case BlendFactor::OneMinusSrcColor: return D3D11_BLEND_INV_SRC_COLOR;
+	case BlendFactor::OneMinusDstColor: return D3D11_BLEND_INV_DEST_COLOR;
+	default: return D3D11_BLEND_ONE;
+	}
+}
+//=============================================================================
+D3D11_BLEND_OP ConvertToD3D11(BlendOp type)
+{
+	switch (type)
+	{
+	case BlendOp::Add:         return D3D11_BLEND_OP_ADD;
+	case BlendOp::Subtract:    return D3D11_BLEND_OP_SUBTRACT;
+	case BlendOp::RevSubtract: return D3D11_BLEND_OP_REV_SUBTRACT;
+	case BlendOp::Min:         return D3D11_BLEND_OP_MIN;
+	case BlendOp::Max:         return D3D11_BLEND_OP_MAX;
+	default: return D3D11_BLEND_OP_ADD;
+	}
+}
+//=============================================================================

@@ -26,8 +26,8 @@ bool GameApp::OnInit()
 	// Create ShaderProgram
 	{
 		ShaderProgramLoadInfo spli{};
-		spli.vertexShader = { L"shaders.hlsl", "vs_main", "vs_5_0" };
-		spli.pixelShader =  { L"shaders.hlsl", "ps_main", "ps_5_0" };
+		spli.vertexShader = { L"shaders.hlsl", "vs_main" };
+		spli.pixelShader =  { L"shaders.hlsl", "ps_main" };
 		spli.inputLayout = { 
 			// float3 position, float3 normal, float2 texcoord, uint3 rotation, float3 color
 			{"POS", 0, DataFormat::RGB32F, 0, 0,                    false},

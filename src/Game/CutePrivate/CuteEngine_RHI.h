@@ -18,22 +18,23 @@ namespace rhiData
 {
 	using Microsoft::WRL::ComPtr;
 
-	ComPtr<ID3D11Device5>          d3dDevice;
-	ComPtr<ID3D11DeviceContext4>   d3dContext;
+	ComPtr<ID3D11Device5>             d3dDevice;
+	ComPtr<ID3D11DeviceContext4>      d3dContext;
+	ComPtr<ID3DUserDefinedAnnotation> d3dDebugAnnotation;
 
-	ComPtr<IDXGISwapChain4>        swapChain;
-	DXGI_FORMAT                    backBufferFormat{ };
-	DXGI_COLOR_SPACE_TYPE          colorSpace{};
-	uint32_t                       backBufferWidth{ 0 };
-	uint32_t                       backBufferHeight{ 0 };
-	D3D11_VIEWPORT                 viewport{};
+	ComPtr<IDXGISwapChain4>           swapChain;
+	DXGI_FORMAT                       backBufferFormat{ };
+	DXGI_COLOR_SPACE_TYPE             colorSpace{};
+	uint32_t                          backBufferWidth{ 0 };
+	uint32_t                          backBufferHeight{ 0 };
+	D3D11_VIEWPORT                    viewport{};
 
-	ComPtr<ID3D11RenderTargetView> renderTargetView;
-	ComPtr<ID3D11DepthStencilView> depthStencilView;
-	const DXGI_FORMAT              depthBufferFormat{ DXGI_FORMAT_D24_UNORM_S8_UINT };
-	const UINT                     backBufferCount{ 2 };
-	bool                           vsync{ false };
-	bool                           supportAllowTearing{ false };
+	ComPtr<ID3D11RenderTargetView>    renderTargetView;
+	ComPtr<ID3D11DepthStencilView>    depthStencilView;
+	const DXGI_FORMAT                 depthBufferFormat{ DXGI_FORMAT_D24_UNORM_S8_UINT };
+	const UINT                        backBufferCount{ 2 };
+	bool                              vsync{ false };
+	bool                              supportAllowTearing{ false };
 } // namespace rhiData
 //=============================================================================
 bool setBackBufferSize(uint32_t width, uint32_t height);
@@ -69,6 +70,7 @@ void CloseRHI()
 	depthStencilView.Reset();
 	renderTargetView.Reset();
 	swapChain.Reset();
+	d3dDebugAnnotation.Reset();
 	d3dContext.Reset();
 	d3dDevice.Reset();
 
@@ -237,6 +239,12 @@ bool createDevice(Microsoft::WRL::ComPtr<IDXGIAdapter4> DXGIAdapter)
 	if (FAILED(context.As(&d3dContext)))
 	{
 		Fatal("ID3D11DeviceContext as ID3D11DeviceContext4 failed");
+		return false;
+	}
+
+	if (FAILED(d3dContext.As(&d3dDebugAnnotation)))
+	{
+		Fatal("ID3D11DeviceContext as ID3DUserDefinedAnnotation failed");
 		return false;
 	}
 
