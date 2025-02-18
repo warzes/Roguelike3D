@@ -27,17 +27,10 @@ struct SamplerState final
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> state;
 };
 
-struct ConstantBuffer final
+struct Buffer final
 {
 	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
-};
-struct VertexBuffer final
-{
-	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
-};
-struct IndexBuffer final
-{
-	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+	UINT                                 bindFlags;
 };
 
 struct Texture2D final
@@ -323,14 +316,15 @@ std::expected<SamplerStatePtr, std::string> CuteEngineApp::CreateSamplerState(co
 	return samplerState;
 }
 //=============================================================================
-std::expected<ConstantBufferPtr, std::string> CuteEngineApp::CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo)
+std::expected<BufferPtr, std::string> CuteEngineApp::CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo)
 {
-	ConstantBufferPtr buffer = std::make_shared<ConstantBuffer>();
+	BufferPtr buffer = std::make_shared<Buffer>();
+	buffer->bindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 	D3D11_BUFFER_DESC bufferDesc{};
 	bufferDesc.ByteWidth           = static_cast<UINT>(createInfo.size);
 	bufferDesc.Usage               = ConvertToD3D11(createInfo.usage);
-	bufferDesc.BindFlags           = D3D11_BIND_CONSTANT_BUFFER;
+	bufferDesc.BindFlags           = buffer->bindFlags;
 	bufferDesc.CPUAccessFlags      = ConvertToD3D11(createInfo.cpuAccessFlags);
 	bufferDesc.MiscFlags           = 0;
 	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.size);
@@ -344,14 +338,15 @@ std::expected<ConstantBufferPtr, std::string> CuteEngineApp::CreateConstantBuffe
 	return buffer;
 }
 //=============================================================================
-std::expected<VertexBufferPtr, std::string> CuteEngineApp::CreateVertexBuffer(const VertexBufferCreateInfo& createInfo)
+std::expected<BufferPtr, std::string> CuteEngineApp::CreateVertexBuffer(const VertexBufferCreateInfo& createInfo)
 {
-	VertexBufferPtr buffer = std::make_shared<VertexBuffer>();
+	BufferPtr buffer = std::make_shared<Buffer>();
+	buffer->bindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_BUFFER_DESC bufferDesc{};
 	bufferDesc.ByteWidth           = static_cast<UINT>(createInfo.size);
 	bufferDesc.Usage               = ConvertToD3D11(createInfo.usage);
-	bufferDesc.BindFlags           = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc.BindFlags           = buffer->bindFlags;
 	bufferDesc.CPUAccessFlags      = ConvertToD3D11(createInfo.cpuAccessFlags);
 	bufferDesc.MiscFlags           = 0;
 	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.size);
@@ -365,14 +360,15 @@ std::expected<VertexBufferPtr, std::string> CuteEngineApp::CreateVertexBuffer(co
 	return buffer;
 }
 //=============================================================================
-std::expected<IndexBufferPtr, std::string> CuteEngineApp::CreateIndexBuffer(const IndexBufferCreateInfo& createInfo)
+std::expected<BufferPtr, std::string> CuteEngineApp::CreateIndexBuffer(const IndexBufferCreateInfo& createInfo)
 {
-	IndexBufferPtr buffer = std::make_shared<IndexBuffer>();
+	BufferPtr buffer = std::make_shared<Buffer>();
+	buffer->bindFlags = D3D11_BIND_INDEX_BUFFER;
 
 	D3D11_BUFFER_DESC bufferDesc{};
 	bufferDesc.ByteWidth           = static_cast<UINT>(createInfo.size);
 	bufferDesc.Usage               = ConvertToD3D11(createInfo.usage);
-	bufferDesc.BindFlags           = D3D11_BIND_INDEX_BUFFER;
+	bufferDesc.BindFlags           = buffer->bindFlags;
 	bufferDesc.CPUAccessFlags      = ConvertToD3D11(createInfo.cpuAccessFlags);
 	bufferDesc.MiscFlags           = 0;
 	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.size);
@@ -428,17 +424,7 @@ void CuteEngineApp::DeleteRHIResource(SamplerStatePtr& resource)
 	resource.reset();
 }
 //=============================================================================
-void CuteEngineApp::DeleteRHIResource(ConstantBufferPtr& resource)
-{
-	resource.reset();
-}
-//=============================================================================
-void CuteEngineApp::DeleteRHIResource(VertexBufferPtr& resource)
-{
-	resource.reset();
-}
-//=============================================================================
-void CuteEngineApp::DeleteRHIResource(IndexBufferPtr& resource)
+void CuteEngineApp::DeleteRHIResource(BufferPtr& resource)
 {
 	resource.reset();
 }
@@ -448,7 +434,7 @@ void CuteEngineApp::DeleteRHIResource(Texture2DPtr& resource)
 	resource.reset();
 }
 //=============================================================================
-void* CuteEngineApp::Map(ConstantBufferPtr buffer, MapType type)
+void* CuteEngineApp::Map(BufferPtr buffer, MapType type)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedSubresource{};
 	HRESULT result = rhiData::d3dContext->Map(buffer->buffer.Get(), 0, ConvertToD3D11(type), 0, &mappedSubresource);
@@ -460,7 +446,7 @@ void* CuteEngineApp::Map(ConstantBufferPtr buffer, MapType type)
 	return mappedSubresource.pData;
 }
 //=============================================================================
-void CuteEngineApp::UnMap(ConstantBufferPtr buffer)
+void CuteEngineApp::UnMap(BufferPtr buffer)
 {
 	rhiData::d3dContext->Unmap(buffer->buffer.Get(), 0);
 }
@@ -491,17 +477,17 @@ void CuteEngineApp::BindSamplerState(SamplerStatePtr resource, uint32_t slot)
 	rhiData::d3dContext->PSSetSamplers(slot, 1, resource->state.GetAddressOf());
 }
 //=============================================================================
-void CuteEngineApp::BindConstantBuffer(ConstantBufferPtr resource, uint32_t slot)
+void CuteEngineApp::BindConstantBuffer(BufferPtr resource, uint32_t slot)
 {
 	rhiData::d3dContext->VSSetConstantBuffers(slot, 1, resource->buffer.GetAddressOf());
 }
 //=============================================================================
-void CuteEngineApp::BindVertexBuffer(VertexBufferPtr resource)
+void CuteEngineApp::BindVertexBuffer(BufferPtr resource)
 {
 	// TODO:
 }
 //=============================================================================
-void CuteEngineApp::BindVertexBuffers(const std::vector<VertexBufferPtr>& resources, const std::vector<uint32_t>& strides, const std::vector<uint32_t>& offsets)
+void CuteEngineApp::BindVertexBuffers(const std::vector<BufferPtr>& resources, const std::vector<uint32_t>& strides, const std::vector<uint32_t>& offsets)
 {
 	std::vector<ID3D11Buffer*> buffers(resources.size());
 	for (size_t i = 0; i < resources.size(); i++)
@@ -510,7 +496,7 @@ void CuteEngineApp::BindVertexBuffers(const std::vector<VertexBufferPtr>& resour
 	rhiData::d3dContext->IASetVertexBuffers(0, resources.size(), buffers.data(), strides.data(), offsets.data());
 }
 //=============================================================================
-void CuteEngineApp::BindIndexBuffer(IndexBufferPtr resource)
+void CuteEngineApp::BindIndexBuffer(BufferPtr resource)
 {
 	rhiData::d3dContext->IASetIndexBuffer(resource->buffer.Get(), DXGI_FORMAT_R32_UINT, 0); // TODO: DXGI_FORMAT_R32_UINT должно передаваться
 }

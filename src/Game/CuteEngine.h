@@ -572,14 +572,8 @@ using PipelineStatePtr = std::shared_ptr<PipelineState>;
 struct SamplerState;
 using SamplerStatePtr = std::shared_ptr<SamplerState>;
 
-struct VertexBuffer;
-using VertexBufferPtr = std::shared_ptr<VertexBuffer>;
-
-struct IndexBuffer;
-using IndexBufferPtr = std::shared_ptr<IndexBuffer>;
-
-struct ConstantBuffer;
-using ConstantBufferPtr = std::shared_ptr<ConstantBuffer>;
+struct Buffer;
+using BufferPtr = std::shared_ptr<Buffer>;
 
 struct Texture1D;
 using Texture1DPtr = std::shared_ptr<Texture1D>;
@@ -685,9 +679,9 @@ public:
 	std::expected<ShaderProgramPtr, std::string>  LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
 	std::expected<PipelineStatePtr, std::string>  CreatePipelineState(const PipelineStateCreateInfo& createInfo);
 	std::expected<SamplerStatePtr, std::string>   CreateSamplerState(const SamplerStateCreateInfo& createInfo);
-	std::expected<ConstantBufferPtr, std::string> CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo);
-	std::expected<VertexBufferPtr, std::string>   CreateVertexBuffer(const VertexBufferCreateInfo& createInfo);
-	std::expected<IndexBufferPtr, std::string>    CreateIndexBuffer(const IndexBufferCreateInfo& createInfo);
+	std::expected<BufferPtr, std::string>         CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo);
+	std::expected<BufferPtr, std::string>         CreateVertexBuffer(const VertexBufferCreateInfo& createInfo);
+	std::expected<BufferPtr, std::string>         CreateIndexBuffer(const IndexBufferCreateInfo& createInfo);
 	std::expected<Texture2DPtr, std::string>      CreateTexture2D(const Texture2DCreateInfo& createInfo);
 
 
@@ -695,23 +689,21 @@ public:
 	void DeleteRHIResource(ShaderProgramPtr& resource);
 	void DeleteRHIResource(PipelineStatePtr& resource);
 	void DeleteRHIResource(SamplerStatePtr& resource);
-	void DeleteRHIResource(ConstantBufferPtr& resource);
-	void DeleteRHIResource(VertexBufferPtr& resource);
-	void DeleteRHIResource(IndexBufferPtr& resource);
+	void DeleteRHIResource(BufferPtr& resource);
 	void DeleteRHIResource(Texture2DPtr& resource);
 
 	// RHI Resources Mod
-	void* Map(ConstantBufferPtr buffer, MapType type);
-	void UnMap(ConstantBufferPtr buffer);
+	void* Map(BufferPtr buffer, MapType type);
+	void UnMap(BufferPtr buffer);
 
 	// RHI Resources Bind
 	void BindShaderProgram(ShaderProgramPtr resource);
 	void BindPipelineState(PipelineStatePtr resource);
 	void BindSamplerState(SamplerStatePtr resource, uint32_t slot);
-	void BindConstantBuffer(ConstantBufferPtr resource, uint32_t slot);
-	void BindVertexBuffer(VertexBufferPtr resource);
-	void BindVertexBuffers(const std::vector<VertexBufferPtr>& resources, const std::vector<uint32_t>& strides, const std::vector<uint32_t>& offsets);
-	void BindIndexBuffer(IndexBufferPtr resource);
+	void BindConstantBuffer(BufferPtr resource, uint32_t slot);
+	void BindVertexBuffer(BufferPtr resource);
+	void BindVertexBuffers(const std::vector<BufferPtr>& resources, const std::vector<uint32_t>& strides, const std::vector<uint32_t>& offsets);
+	void BindIndexBuffer(BufferPtr resource);
 	void BindTexture2D(Texture2DPtr resource, uint32_t slot);
 };
 
