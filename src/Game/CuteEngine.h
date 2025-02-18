@@ -695,6 +695,9 @@ public:
 	// RHI Resources Mod
 	void* Map(BufferPtr buffer, MapType type);
 	void UnMap(BufferPtr buffer);
+	void UpdateBuffer(BufferPtr buffer, const void* mem);
+	void CopyBufferData(BufferPtr buffer, size_t offset, size_t size, const void* mem);
+
 
 	// RHI Resources Bind
 	void BindShaderProgram(ShaderProgramPtr resource);

@@ -436,7 +436,7 @@ void CuteEngineApp::DeleteRHIResource(Texture2DPtr& resource)
 //=============================================================================
 void* CuteEngineApp::Map(BufferPtr buffer, MapType type)
 {
-	D3D11_MAPPED_SUBRESOURCE mappedSubresource{};
+	D3D11_MAPPED_SUBRESOURCE mappedSubresource = { 0 };
 	HRESULT result = rhiData::d3dContext->Map(buffer->buffer.Get(), 0, ConvertToD3D11(type), 0, &mappedSubresource);
 	if (FAILED(result))
 	{
@@ -449,6 +449,22 @@ void* CuteEngineApp::Map(BufferPtr buffer, MapType type)
 void CuteEngineApp::UnMap(BufferPtr buffer)
 {
 	rhiData::d3dContext->Unmap(buffer->buffer.Get(), 0);
+}
+//=============================================================================
+void CuteEngineApp::UpdateBuffer(BufferPtr buffer, const void* mem)
+{
+	rhiData::d3dContext->UpdateSubresource(buffer->buffer.Get(), 0, nullptr, mem, 0, 0);
+}
+//=============================================================================
+void CuteEngineApp::CopyBufferData(BufferPtr buffer, size_t offset, size_t size, const void* mem)
+{
+	const D3D11_BOX box = {
+		.left   = static_cast<UINT>(offset),
+		.top    = 0, .front = 0,
+		.right  = static_cast<UINT>(offset + size),
+		.bottom = 1, .back = 1,
+	};
+	rhiData::d3dContext->UpdateSubresource(buffer->buffer.Get(), 0, &box, mem, 0, 0);
 }
 //=============================================================================
 void CuteEngineApp::BindShaderProgram(ShaderProgramPtr resource)

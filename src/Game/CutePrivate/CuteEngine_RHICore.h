@@ -87,7 +87,7 @@ inline D3D11_FILTER ConvertToD3D11(TextureFilter filter)
 	}
 }
 //=============================================================================
-D3D11_TEXTURE_ADDRESS_MODE ConvertToD3D11(AddressMode mode)
+inline D3D11_TEXTURE_ADDRESS_MODE ConvertToD3D11(AddressMode mode)
 {
 	switch (mode)
 	{
@@ -99,7 +99,7 @@ D3D11_TEXTURE_ADDRESS_MODE ConvertToD3D11(AddressMode mode)
 	}
 }
 //=============================================================================
-D3D11_COMPARISON_FUNC ConvertToD3D11(ComparisonFunc func)
+inline D3D11_COMPARISON_FUNC ConvertToD3D11(ComparisonFunc func)
 {
 	switch (func)
 	{
@@ -115,7 +115,7 @@ D3D11_COMPARISON_FUNC ConvertToD3D11(ComparisonFunc func)
 	}
 }
 //=============================================================================
-D3D11_DEPTH_WRITE_MASK ConvertToD3D11(DepthWriteMask mask)
+inline D3D11_DEPTH_WRITE_MASK ConvertToD3D11(DepthWriteMask mask)
 {
 	switch (mask)
 	{
@@ -125,7 +125,7 @@ D3D11_DEPTH_WRITE_MASK ConvertToD3D11(DepthWriteMask mask)
 	}
 }
 //=============================================================================
-D3D11_STENCIL_OP ConvertToD3D11(StencilOp op)
+inline D3D11_STENCIL_OP ConvertToD3D11(StencilOp op)
 {
 	switch (op)
 	{
@@ -138,7 +138,7 @@ D3D11_STENCIL_OP ConvertToD3D11(StencilOp op)
 	}
 }
 //=============================================================================
-D3D11_USAGE ConvertToD3D11(BufferUsage usage)
+inline D3D11_USAGE ConvertToD3D11(BufferUsage usage)
 {
 	switch (usage)
 	{
@@ -150,7 +150,7 @@ D3D11_USAGE ConvertToD3D11(BufferUsage usage)
 	}
 }
 //=============================================================================
-UINT ConvertToD3D11(CPUAccessFlags flags)
+inline UINT ConvertToD3D11(CPUAccessFlags flags)
 {
 	switch (flags)
 	{
@@ -161,7 +161,7 @@ UINT ConvertToD3D11(CPUAccessFlags flags)
 	}
 }
 //=============================================================================
-D3D11_MAP ConvertToD3D11(MapType type)
+inline D3D11_MAP ConvertToD3D11(MapType type)
 {
 	switch (type)
 	{
@@ -171,7 +171,7 @@ D3D11_MAP ConvertToD3D11(MapType type)
 	}
 }
 //=============================================================================
-D3D11_BLEND ConvertToD3D11(BlendFactor type)
+inline D3D11_BLEND ConvertToD3D11(BlendFactor type)
 {
 	switch (type)
 	{
@@ -189,7 +189,7 @@ D3D11_BLEND ConvertToD3D11(BlendFactor type)
 	}
 }
 //=============================================================================
-D3D11_BLEND_OP ConvertToD3D11(BlendOp type)
+inline D3D11_BLEND_OP ConvertToD3D11(BlendOp type)
 {
 	switch (type)
 	{
