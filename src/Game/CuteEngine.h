@@ -235,19 +235,49 @@ enum class DataFormat : uint8_t
 
 enum class TexelsFormat : uint8_t
 {
-	R_U8,     // An 8 bits per pixel red channel texture format.
-	R_U16,    // A 16 bits per pixel red channel texture format.
-	RG_U8,    // An 8 bits per pixel red and green channel texture format.
-	RG_U16,   // A 16 bits per pixel red and green channel texture format.
-	RGB_U8,   // An 8 bits per pixel red, green, and blue channel texture format.
-	RGBA_U8,  // An 8 bits per pixel red, green, blue, and alpha channel texture format.
-	RGBA_U16, // A 16 bits per pixel red, green, blue, and alpha channel texture format.
+	BC1,    // DXT1
+	BC2,    // DXT3
+	BC3,    // DXT5
+	BC4,    // LATC1/ATI1
+	BC5,    // LATC2/ATI2
+	BC6H,   // BC6H
+	BC7,    // BC7
 
-	Depth_U16,
-	DepthStencil_U16,
-	Depth_U24,
-	DepthStencil_U24, // A format to be used with the depth and stencil buffers where the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
+	UnknownCompressed, // compressed formats above
+
+	R1,
+	R8,
+	R16,
+	R16F,
+	R32I,
+	R32U,
+	R32F,
+	RG8,
+	RG16,
+	RG16F,
+	RG32I,
+	RG32U,
+	RG32F,
+	RGB32I,
+	RGB32U,
+	RGB32F,
+	RGBA8,
+	RGBA16,
+	RGBA16F,
+	RGBA32I,
+	RGBA32U,
+	RGBA32F,
+	R11G11B10F,
+
+	UnknownDepth, // depth formats below
+
+	D16,
+	D24S8,
+	D32F,
 };
+
+inline bool IsCompressedFormat(TexelsFormat format) { return format < TexelsFormat::UnknownCompressed; }
+inline bool IsDepthFormat(TexelsFormat format) { return format > TexelsFormat::UnknownDepth; }
 
 enum class ComparisonFunc : uint8_t
 {
@@ -395,6 +425,17 @@ namespace ShaderCompileFlags
 	};
 }
 
+namespace TextureFlags
+{
+	enum : uint32_t {
+		RenderTarget = (1U << 0),
+		DepthStencil = (1U << 1),
+		CPURead = (1U << 2),
+		GPUWrite = (1U << 3),
+		GPUCounter = (1U << 4)
+	};
+}
+
 #pragma endregion
 
 #pragma region [ RHI Core Desc]
@@ -529,6 +570,12 @@ struct BufferCreateInfo
 
 struct Texture1DCreateInfo final
 {
+	uint32_t     width{ 0 };
+	uint32_t     mipCount{ 1 };
+	TexelsFormat format{ TexelsFormat::RGBA8 };
+	uint32_t     flags{ 0 };
+	void*        memoryData{ nullptr };
+	size_t       size{ 0 };
 };
 
 struct Texture2DCreateInfo final
@@ -536,8 +583,9 @@ struct Texture2DCreateInfo final
 	uint32_t     width{ 0 };
 	uint32_t     height{ 0 };
 	uint32_t     mipCount{ 1 };
-	//TexelsFormat format{ TexelsFormat::RGBA_U8 }; // TODO: также учесть SRGB
-	void* memoryData{ nullptr };
+	TexelsFormat format{ TexelsFormat::RGBA8 };
+	uint32_t     flags{ 0 };
+	void*        memoryData{ nullptr };
 	size_t       size{ 0 };
 };
 
@@ -674,6 +722,7 @@ public:
 	std::expected<BufferPtr, std::string>         CreateIndexBuffer(const BufferCreateInfo& createInfo);
 
 
+	std::expected<Texture1DPtr, std::string>      CreateTexture1D(const Texture1DCreateInfo& createInfo);
 	std::expected<Texture2DPtr, std::string>      CreateTexture2D(const Texture2DCreateInfo& createInfo);
 
 

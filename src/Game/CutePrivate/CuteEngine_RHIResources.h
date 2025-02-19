@@ -34,9 +34,16 @@ struct Buffer final
 	UINT                                              dataBufferStride;
 };
 
+struct Texture1D final
+{
+	Microsoft::WRL::ComPtr<ID3D11Texture1D>            texture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>   view;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav;
+};
+
 struct Texture2D final
 {
-	Microsoft::WRL::ComPtr<ID3D11Texture2D>          texture;
+	Microsoft::WRL::ComPtr<ID3D11Texture2D1>          texture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> view;
 };
 //=============================================================================
@@ -355,16 +362,85 @@ std::expected<BufferPtr, std::string> CuteEngineApp::CreateIndexBuffer(const Buf
 	return CreateBuffer(createInfo, D3D11_BIND_INDEX_BUFFER);
 }
 //=============================================================================
+std::expected<Texture1DPtr, std::string> CuteEngineApp::CreateTexture1D(const Texture1DCreateInfo& createInfo)
+{
+	Texture1DPtr texture = std::make_shared<Texture1D>();
+
+	UINT        bindFlags = D3D11_BIND_SHADER_RESOURCE;
+	D3D11_USAGE usageFlags = D3D11_USAGE_DEFAULT;
+	UINT        cpuAccess = 0;
+	bool        isStaging = false;
+	bool        isUAV = false;
+
+	if (createInfo.flags & TextureFlags::RenderTarget)
+		bindFlags |= D3D11_BIND_RENDER_TARGET;
+	if (createInfo.flags & TextureFlags::DepthStencil)
+		bindFlags |= D3D11_BIND_DEPTH_STENCIL;
+
+	if (createInfo.flags & TextureFlags::CPURead)
+	{
+		bindFlags = 0;
+		usageFlags = D3D11_USAGE_STAGING;
+		cpuAccess = D3D11_CPU_ACCESS_READ;
+		isStaging = true;
+	}
+
+	if (createInfo.flags & TextureFlags::GPUWrite)
+	{
+		bindFlags |= D3D11_BIND_UNORDERED_ACCESS;
+		isUAV = true;
+	}
+
+	D3D11_TEXTURE1D_DESC textureDesc = { 0 };
+	textureDesc.Width          = createInfo.width;
+	textureDesc.MipLevels      = createInfo.mipCount;
+	textureDesc.ArraySize      = 1;
+	textureDesc.Format         = ConvertToD3D11(createInfo.format);
+	textureDesc.Usage          = usageFlags;
+	textureDesc.BindFlags      = bindFlags;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags      = 0;
+
+	// TODO: доделать загрузку данных при инициализации
+
+	HRESULT result = rhiData::d3dDevice->CreateTexture1D(&textureDesc, nullptr, &texture->texture);
+	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateTexture1D() failed: ", result));
+
+	if (!isStaging)
+	{
+		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
+		viewDesc.Format              = ConvertToD3D11(createInfo.format);
+		viewDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE1D;
+		viewDesc.Texture1D.MipLevels = createInfo.mipCount;
+
+		result = rhiData::d3dDevice->CreateShaderResourceView(texture->texture.Get(), nullptr, &texture->view);
+		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateShaderResourceView() failed: ", result));
+	}
+	
+	if (isUAV)
+	{
+		D3D11_UNORDERED_ACCESS_VIEW_DESC1 uavDesc = {};
+		uavDesc.Format                            = ConvertToD3D11(createInfo.format);
+		uavDesc.ViewDimension                     = D3D11_UAV_DIMENSION_TEXTURE1D;
+		uavDesc.Texture1D.MipSlice                = 0;
+
+		result = rhiData::d3dDevice->CreateUnorderedAccessView1(texture->texture.Get(), &uavDesc, &texture->uav);
+		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateUnorderedAccessView1() failed: ", result));
+	}
+
+	return texture;
+}
+//=============================================================================
 std::expected<Texture2DPtr, std::string> CuteEngineApp::CreateTexture2D(const Texture2DCreateInfo& createInfo)
 {
 	Texture2DPtr texture = std::make_shared<Texture2D>();
 
-	D3D11_TEXTURE2D_DESC textureDesc{};
+	D3D11_TEXTURE2D_DESC1 textureDesc = { 0 };
 	textureDesc.Width      = createInfo.width;
 	textureDesc.Height     = createInfo.height;
 	textureDesc.MipLevels  = createInfo.mipCount;
 	textureDesc.ArraySize  = 1;
-	textureDesc.Format     = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	textureDesc.Format     = ConvertToD3D11(createInfo.format);
 	textureDesc.SampleDesc = { 1, 0 };
 	textureDesc.Usage      = D3D11_USAGE_IMMUTABLE;
 	textureDesc.BindFlags  = D3D11_BIND_SHADER_RESOURCE;
@@ -373,8 +449,8 @@ std::expected<Texture2DPtr, std::string> CuteEngineApp::CreateTexture2D(const Te
 	textureData.pSysMem = createInfo.memoryData;
 	textureData.SysMemPitch = 2 * sizeof(UINT); // texture is 2 pixels wide, 4 bytes per pixel // TODO: доделать
 
-	HRESULT result = rhiData::d3dDevice->CreateTexture2D(&textureDesc, &textureData, &texture->texture);
-	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateTexture2D() failed: ", result));
+	HRESULT result = rhiData::d3dDevice->CreateTexture2D1(&textureDesc, &textureData, &texture->texture);
+	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateTexture2D1() failed: ", result));
 
 	result = rhiData::d3dDevice->CreateShaderResourceView(texture->texture.Get(), nullptr, &texture->view);
 	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateShaderResourceView() failed: ", result));

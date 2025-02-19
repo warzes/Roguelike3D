@@ -51,6 +51,49 @@ inline DXGI_FORMAT ConvertToD3D11(DataFormat format)
 	}
 }
 //=============================================================================
+DXGI_FORMAT ConvertToD3D11(TexelsFormat format)
+{
+	switch (format)
+	{
+	case TexelsFormat::BC1:               return DXGI_FORMAT_BC1_UNORM;        // DXT1
+	case TexelsFormat::BC2:               return DXGI_FORMAT_BC2_UNORM;        // DXT3
+	case TexelsFormat::BC3:               return DXGI_FORMAT_BC3_UNORM;        // DXT5
+	case TexelsFormat::BC4:               return DXGI_FORMAT_BC4_UNORM;        // LATC1/ATI1
+	case TexelsFormat::BC5:               return DXGI_FORMAT_BC5_UNORM;        // LATC2/ATI2
+	case TexelsFormat::BC6H:              return DXGI_FORMAT_BC6H_TYPELESS;    // BC6H
+	case TexelsFormat::BC7:               return DXGI_FORMAT_BC7_UNORM;        // BC7	
+	case TexelsFormat::UnknownCompressed: return DXGI_FORMAT_UNKNOWN; // compressed formats above
+	case TexelsFormat::R1:                return DXGI_FORMAT_R1_UNORM;         // R1
+	case TexelsFormat::R8:                return DXGI_FORMAT_R8_UNORM;         // R8
+	case TexelsFormat::R16:               return DXGI_FORMAT_R16_UNORM;        // R16
+	case TexelsFormat::R16F:              return DXGI_FORMAT_R16_FLOAT;        // R16F
+	case TexelsFormat::R32I:              return DXGI_FORMAT_R32_SINT;         // R32I
+	case TexelsFormat::R32U:              return DXGI_FORMAT_R32_UINT;         // R32U
+	case TexelsFormat::R32F:              return DXGI_FORMAT_R32_FLOAT;        // R32F
+	case TexelsFormat::RG8:               return DXGI_FORMAT_R8G8_UNORM;       // RG8
+	case TexelsFormat::RG16:              return DXGI_FORMAT_R16G16_UNORM;     // RG16
+	case TexelsFormat::RG16F:             return DXGI_FORMAT_R16G16_FLOAT;     // RG16F
+	case TexelsFormat::RG32I:             return DXGI_FORMAT_R32G32_SINT;      // RG32I
+	case TexelsFormat::RG32U:             return DXGI_FORMAT_R32G32_UINT;      // RG32U
+	case TexelsFormat::RG32F:             return DXGI_FORMAT_R32G32_FLOAT;     // RG32F
+	case TexelsFormat::RGB32I:            return DXGI_FORMAT_R32G32B32_SINT;   // RGB32I
+	case TexelsFormat::RGB32U:            return DXGI_FORMAT_R32G32B32_UINT;   // RGB32U
+	case TexelsFormat::RGB32F:            return DXGI_FORMAT_R32G32B32_FLOAT;  // RGB32F
+	case TexelsFormat::RGBA8:             return DXGI_FORMAT_R8G8B8A8_UNORM;   // RGBA8
+	case TexelsFormat::RGBA16:            return DXGI_FORMAT_R16G16B16A16_UNORM;// RGBA16
+	case TexelsFormat::RGBA16F:           return DXGI_FORMAT_R16G16B16A16_FLOAT;// RGBA16F
+	case TexelsFormat::RGBA32I:           return DXGI_FORMAT_R32G32B32A32_SINT;// RGBA32I
+	case TexelsFormat::RGBA32U:           return DXGI_FORMAT_R32G32B32A32_UINT;// RGBA32U
+	case TexelsFormat::RGBA32F:           return DXGI_FORMAT_R32G32B32A32_FLOAT;// RGBA32F
+	case TexelsFormat::R11G11B10F:        return DXGI_FORMAT_R11G11B10_FLOAT; // R11G11B10F
+	case TexelsFormat::UnknownDepth:      return DXGI_FORMAT_UNKNOWN;     // depth formats below
+	case TexelsFormat::D16:               return DXGI_FORMAT_D16_UNORM;        // D16
+	case TexelsFormat::D24S8:             return DXGI_FORMAT_D24_UNORM_S8_UINT;// D24S8
+	case TexelsFormat::D32F:              return DXGI_FORMAT_D32_FLOAT;        // D32F
+	default:                              return DXGI_FORMAT_UNKNOWN;
+	}
+}
+//=============================================================================
 inline D3D11_FILL_MODE ConvertToD3D11(FillMode fillMode)
 {
 	switch (fillMode)
