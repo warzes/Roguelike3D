@@ -161,7 +161,7 @@ bool GameApp::OnInit()
 		tci.width      = 2;
 		tci.height     = 2;
 		tci.mipCount   = 1;
-		tci.memoryData = TextureData;
+		//tci.memoryData = TextureData;
 
 		auto resource = CreateTexture2D(tci);
 		if (!resource.has_value())
@@ -170,6 +170,17 @@ bool GameApp::OnInit()
 			return false;
 		}
 		m_texture = resource.value();
+
+// TODO: доделать загрузку данных при инициализации
+		UpdateTexture(
+			m_texture, 
+			TextureData, 
+			0, 
+			0, 2,
+			0, 2,
+			0, 1,
+			2 * 4, // Размер строки в байтах (ширина текстуры * количество байт на пиксель), для данного примера textureData.SysMemPitch = 2 * sizeof(UINT);
+			0);    // Размер среза в байтах (для 2D текстур обычно 0)
 	}
 
 	float w = GetWindowAspect(); // width (aspect ratio)
@@ -207,7 +218,7 @@ void GameApp::OnUpdate(double deltaTime)
 
 	Constants* data = (Constants*)Map(m_constantBuffer, MapType::Write);
 	*data = constants;
-	UnMap(m_constantBuffer);
+	Unmap(m_constantBuffer);
 }
 //=============================================================================
 void GameApp::OnFrame()

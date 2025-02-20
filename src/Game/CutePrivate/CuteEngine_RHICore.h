@@ -246,3 +246,14 @@ inline D3D11_BLEND_OP ConvertToD3D11(BlendOp type)
 	}
 }
 //=============================================================================
+inline D3D11_PRIMITIVE_TOPOLOGY ConvertToD3D11(PrimitiveTopology topology)
+{
+	switch (topology)
+	{
+	case PrimitiveTopology::TriangleList:  return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	case PrimitiveTopology::TriangleStrip: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+	case PrimitiveTopology::PointList:     return D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+	default: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	}
+}
+//=============================================================================

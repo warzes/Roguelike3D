@@ -43,8 +43,16 @@ struct Texture1D final
 
 struct Texture2D final
 {
-	Microsoft::WRL::ComPtr<ID3D11Texture2D1>          texture;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> view;
+	Microsoft::WRL::ComPtr<ID3D11Texture2D1>           texture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>   view;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav;
+};
+
+struct Texture3D final
+{
+	Microsoft::WRL::ComPtr<ID3D11Texture3D1>           texture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>   view;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav;
 };
 //=============================================================================
 std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShaderFromFile(const ShaderLoadInfo& loadInfo, const std::string& target)
@@ -367,7 +375,7 @@ std::expected<Texture1DPtr, std::string> CuteEngineApp::CreateTexture1D(const Te
 	Texture1DPtr texture = std::make_shared<Texture1D>();
 
 	UINT        bindFlags = D3D11_BIND_SHADER_RESOURCE;
-	D3D11_USAGE usageFlags = D3D11_USAGE_DEFAULT;
+	D3D11_USAGE usageFlags = D3D11_USAGE_DEFAULT; // TODO: а еще есть D3D11_USAGE_IMMUTABLE, сделать
 	UINT        cpuAccess = 0;
 	bool        isStaging = false;
 	bool        isUAV = false;
@@ -435,25 +443,164 @@ std::expected<Texture2DPtr, std::string> CuteEngineApp::CreateTexture2D(const Te
 {
 	Texture2DPtr texture = std::make_shared<Texture2D>();
 
+	UINT        bindFlags = D3D11_BIND_SHADER_RESOURCE;
+	D3D11_USAGE usageFlags = D3D11_USAGE_DEFAULT; // TODO: а еще есть D3D11_USAGE_IMMUTABLE, сделать
+	UINT        cpuAccess = 0;
+	bool        isStaging = false;
+	bool        isUAV = false;
+
+	if (createInfo.flags & TextureFlags::RenderTarget)
+		bindFlags |= D3D11_BIND_RENDER_TARGET;
+	if (createInfo.flags & TextureFlags::DepthStencil)
+		bindFlags |= D3D11_BIND_DEPTH_STENCIL;
+
+	if (createInfo.flags & TextureFlags::CPURead)
+	{
+		bindFlags = 0;
+		usageFlags = D3D11_USAGE_STAGING;
+		cpuAccess = D3D11_CPU_ACCESS_READ;
+		isStaging = true;
+	}
+
+	if (createInfo.flags & TextureFlags::GPUWrite)
+	{
+		bindFlags |= D3D11_BIND_UNORDERED_ACCESS;
+		isUAV = true;
+	}
+
+	DXGI_FORMAT dataFormat = ConvertToD3D11(createInfo.format);
+
+	DXGI_FORMAT textureFormat = dataFormat;
+	DXGI_FORMAT viewFormat = dataFormat;
+
+	if (createInfo.format == TexelsFormat::D16)
+	{
+		textureFormat = DXGI_FORMAT_R16_TYPELESS;
+		viewFormat = DXGI_FORMAT_R16_UNORM;
+	}
+
+	if (createInfo.format == TexelsFormat::D24S8)
+	{
+		// TODO: X8 part of the texture is not accessible ATM, try to handle this properly
+		textureFormat = DXGI_FORMAT_R24G8_TYPELESS;
+		viewFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	}
+
+	if (createInfo.format == TexelsFormat::D32F)
+	{
+		textureFormat = DXGI_FORMAT_R32_TYPELESS;
+		viewFormat = DXGI_FORMAT_R32_FLOAT;
+	}
+
 	D3D11_TEXTURE2D_DESC1 textureDesc = { 0 };
-	textureDesc.Width      = createInfo.width;
-	textureDesc.Height     = createInfo.height;
-	textureDesc.MipLevels  = createInfo.mipCount;
-	textureDesc.ArraySize  = 1;
-	textureDesc.Format     = ConvertToD3D11(createInfo.format);
-	textureDesc.SampleDesc = { 1, 0 };
-	textureDesc.Usage      = D3D11_USAGE_IMMUTABLE;
-	textureDesc.BindFlags  = D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.Width          = createInfo.width;
+	textureDesc.Height         = createInfo.height;
+	textureDesc.MipLevels      = createInfo.mipCount;
+	textureDesc.ArraySize      = 1;
+	textureDesc.Format         = textureFormat;
+	textureDesc.SampleDesc     = { 1, 0 };
+	textureDesc.Usage          = usageFlags;
+	textureDesc.BindFlags      = bindFlags;
+	textureDesc.CPUAccessFlags = cpuAccess;
+	textureDesc.MiscFlags = 0;
 
-	D3D11_SUBRESOURCE_DATA textureData{};
-	textureData.pSysMem = createInfo.memoryData;
-	textureData.SysMemPitch = 2 * sizeof(UINT); // texture is 2 pixels wide, 4 bytes per pixel // TODO: доделать
+	//D3D11_SUBRESOURCE_DATA textureData{};
+	//textureData.pSysMem = createInfo.memoryData;
+	//textureData.SysMemPitch = 2 * sizeof(UINT); // texture is 2 pixels wide, 4 bytes per pixel // TODO: доделать
+	// TODO: доделать загрузку данных при инициализации
 
-	HRESULT result = rhiData::d3dDevice->CreateTexture2D1(&textureDesc, &textureData, &texture->texture);
+	HRESULT result = rhiData::d3dDevice->CreateTexture2D1(&textureDesc, nullptr, &texture->texture);
 	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateTexture2D1() failed: ", result));
 
-	result = rhiData::d3dDevice->CreateShaderResourceView(texture->texture.Get(), nullptr, &texture->view);
-	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateShaderResourceView() failed: ", result));
+	if (!isStaging)
+	{
+		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
+		viewDesc.Format              = viewFormat;
+		viewDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
+		viewDesc.Texture2D.MipLevels = createInfo.mipCount;
+
+		result = rhiData::d3dDevice->CreateShaderResourceView(texture->texture.Get(), nullptr, &texture->view);
+		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateShaderResourceView() failed: ", result));
+	}
+
+	if (isUAV)
+	{
+		D3D11_UNORDERED_ACCESS_VIEW_DESC1 uavDesc = {};
+		uavDesc.Format             = ConvertToD3D11(createInfo.format);
+		uavDesc.ViewDimension      = D3D11_UAV_DIMENSION_TEXTURE2D;
+
+		result = rhiData::d3dDevice->CreateUnorderedAccessView1(texture->texture.Get(), &uavDesc, &texture->uav);
+		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateUnorderedAccessView1() failed: ", result));
+	}
+
+	return texture;
+}
+//=============================================================================
+std::expected<Texture3DPtr, std::string> CuteEngineApp::CreateTexture3D(const Texture3DCreateInfo& createInfo)
+{
+	Texture3DPtr texture = std::make_shared<Texture3D>();
+
+	UINT        bindFlags = D3D11_BIND_SHADER_RESOURCE;
+	D3D11_USAGE usageFlags = D3D11_USAGE_DEFAULT;
+	UINT        cpuAccess = 0;
+	bool        isStaging = false;
+	bool        isUAV = false;
+
+	if (createInfo.flags & TextureFlags::RenderTarget)
+		bindFlags |= D3D11_BIND_RENDER_TARGET;
+	if (createInfo.flags & TextureFlags::DepthStencil)
+		bindFlags |= D3D11_BIND_DEPTH_STENCIL;
+
+	if (createInfo.flags & TextureFlags::CPURead)
+	{
+		bindFlags = 0;
+		usageFlags = D3D11_USAGE_STAGING;
+		cpuAccess = D3D11_CPU_ACCESS_READ;
+		isStaging = true;
+	}
+
+	if (createInfo.flags & TextureFlags::GPUWrite)
+	{
+		bindFlags |= D3D11_BIND_UNORDERED_ACCESS;
+		isUAV = true;
+	}
+
+	D3D11_TEXTURE3D_DESC1 textureDesc = { 0 };
+	textureDesc.Width          = createInfo.width;
+	textureDesc.Height         = createInfo.height;
+	textureDesc.Depth          = createInfo.depth;
+	textureDesc.MipLevels      = createInfo.mipCount;
+	textureDesc.Format         = ConvertToD3D11(createInfo.format);
+	textureDesc.Usage          = usageFlags;
+	textureDesc.BindFlags      = bindFlags;
+	textureDesc.CPUAccessFlags = cpuAccess;
+	textureDesc.MiscFlags      = 0;
+
+	// TODO: доделать загрузку данных при инициализации
+
+	HRESULT result = rhiData::d3dDevice->CreateTexture3D1(&textureDesc, nullptr, &texture->texture);
+	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateTexture3D1() failed: ", result));
+
+	if (!isStaging)
+	{
+		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
+		viewDesc.Format              = ConvertToD3D11(createInfo.format);
+		viewDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE3D;
+		viewDesc.Texture3D.MipLevels = createInfo.mipCount;
+
+		result = rhiData::d3dDevice->CreateShaderResourceView(texture->texture.Get(), nullptr, &texture->view);
+		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateShaderResourceView() failed: ", result));
+	}
+
+	if (isUAV)
+	{
+		D3D11_UNORDERED_ACCESS_VIEW_DESC1 uavDesc = {};
+		uavDesc.Format        = ConvertToD3D11(createInfo.format);
+		uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+
+		result = rhiData::d3dDevice->CreateUnorderedAccessView1(texture->texture.Get(), &uavDesc, &texture->uav);
+		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateUnorderedAccessView1() failed: ", result));
+	}
 
 	return texture;
 }
@@ -478,7 +625,17 @@ void CuteEngineApp::DeleteRHIResource(BufferPtr& resource)
 	resource.reset();
 }
 //=============================================================================
+void CuteEngineApp::DeleteRHIResource(Texture1DPtr& resource)
+{
+	resource.reset();
+}
+//=============================================================================
 void CuteEngineApp::DeleteRHIResource(Texture2DPtr& resource)
+{
+	resource.reset();
+}
+//=============================================================================
+void CuteEngineApp::DeleteRHIResource(Texture3DPtr& resource)
 {
 	resource.reset();
 }
@@ -495,7 +652,7 @@ void* CuteEngineApp::Map(BufferPtr buffer, MapType type)
 	return mappedSubresource.pData;
 }
 //=============================================================================
-void CuteEngineApp::UnMap(BufferPtr buffer)
+void CuteEngineApp::Unmap(BufferPtr buffer)
 {
 	rhiData::d3dContext->Unmap(buffer->buffer.Get(), 0);
 }
@@ -514,6 +671,129 @@ void CuteEngineApp::CopyBufferData(BufferPtr buffer, size_t offset, size_t size,
 		.bottom = 1, .back = 1,
 	};
 	rhiData::d3dContext->UpdateSubresource(buffer->buffer.Get(), 0, &box, mem, 0, 0);
+}
+//=============================================================================
+inline void ClearTextureRW(Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav, uint32_t value)
+{
+	uint32_t d3dValues[4] = { value, 0, 0, 0 };
+	if (uav) rhiData::d3dContext->ClearUnorderedAccessViewUint(uav.Get(), d3dValues);
+}
+//=============================================================================
+inline void ClearTextureRW(Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav, float value)
+{
+	float d3dValues[4] = { value, 0.F, 0.0F, 0.0F };
+	if (uav) rhiData::d3dContext->ClearUnorderedAccessViewFloat(uav.Get(), d3dValues);
+}
+//=============================================================================
+void CuteEngineApp::ClearTextureRW(Texture1DPtr texture, uint32_t value)
+{
+	::ClearTextureRW(texture->uav, value);
+}
+//=============================================================================
+void CuteEngineApp::ClearTextureRW(Texture1DPtr texture, float value)
+{
+	::ClearTextureRW(texture->uav, value);
+}
+//=============================================================================
+void CuteEngineApp::ClearTextureRW(Texture2DPtr texture, uint32_t value)
+{
+	::ClearTextureRW(texture->uav, value);
+}
+//=============================================================================
+void CuteEngineApp::ClearTextureRW(Texture2DPtr texture, float value)
+{
+	::ClearTextureRW(texture->uav, value);
+}
+//=============================================================================
+void CuteEngineApp::ClearTextureRW(Texture3DPtr texture, uint32_t value)
+{
+	::ClearTextureRW(texture->uav, value);
+}
+//=============================================================================
+void CuteEngineApp::ClearTextureRW(Texture3DPtr texture, float value)
+{
+	::ClearTextureRW(texture->uav, value);
+}
+//=============================================================================
+inline void* Map(Microsoft::WRL::ComPtr<ID3D11Resource> texture, MapType type)
+{
+	D3D11_MAPPED_SUBRESOURCE mappedSubresource = { 0 };
+	HRESULT result = rhiData::d3dContext->Map(texture.Get(), 0, ConvertToD3D11(type), 0, &mappedSubresource);
+	if (FAILED(result))
+	{
+		DX_ERR("ID3D11Device5::Map() failed: ", result);
+		return nullptr;
+	}
+	return mappedSubresource.pData;
+}
+//=============================================================================
+void* CuteEngineApp::Map(Texture1DPtr handle, MapType type)
+{
+	return ::Map(handle->texture, type);
+}
+//=============================================================================
+void* CuteEngineApp::Map(Texture2DPtr handle, MapType type)
+{
+	return ::Map(handle->texture, type);
+}
+//=============================================================================
+void* CuteEngineApp::Map(Texture3DPtr handle, MapType type)
+{
+	return ::Map(handle->texture, type);
+}
+//=============================================================================
+void CuteEngineApp::Unmap(Texture1DPtr handle)
+{
+	rhiData::d3dContext->Unmap(handle->texture.Get(), 0);
+}
+//=============================================================================
+void CuteEngineApp::Unmap(Texture2DPtr handle)
+{
+	rhiData::d3dContext->Unmap(handle->texture.Get(), 0);
+}
+//=============================================================================
+void CuteEngineApp::Unmap(Texture3DPtr handle)
+{
+	rhiData::d3dContext->Unmap(handle->texture.Get(), 0);
+}
+//=============================================================================
+void CuteEngineApp::UpdateTexture(Texture1DPtr handle, const void* mem, uint32_t mip, size_t offsetX, size_t sizeX, size_t offsetY, size_t sizeY, size_t offsetZ, size_t sizeZ, size_t rowPitch, size_t depthPitch)
+{
+	D3D11_BOX box;
+	box.left = static_cast<UINT>(offsetX);
+	box.right = static_cast<UINT>(offsetX + sizeX);
+	box.top = static_cast<UINT>(offsetY);
+	box.bottom = static_cast<UINT>(offsetY + sizeY);
+	box.front = static_cast<UINT>(offsetZ);
+	box.back = static_cast<UINT>(offsetZ + sizeZ);
+
+	rhiData::d3dContext->UpdateSubresource(handle->texture.Get(), mip, &box, mem, static_cast<UINT>(rowPitch), static_cast<UINT>(depthPitch));
+}
+//=============================================================================
+void CuteEngineApp::UpdateTexture(Texture2DPtr handle, const void* mem, uint32_t mip, size_t offsetX, size_t sizeX, size_t offsetY, size_t sizeY, size_t offsetZ, size_t sizeZ, size_t rowPitch, size_t depthPitch)
+{
+	D3D11_BOX box;
+	box.left = static_cast<UINT>(offsetX);
+	box.right = static_cast<UINT>(offsetX + sizeX);
+	box.top = static_cast<UINT>(offsetY);
+	box.bottom = static_cast<UINT>(offsetY + sizeY);
+	box.front = static_cast<UINT>(offsetZ);
+	box.back = static_cast<UINT>(offsetZ + sizeZ);
+
+	rhiData::d3dContext->UpdateSubresource(handle->texture.Get(), mip, &box, mem, static_cast<UINT>(rowPitch), static_cast<UINT>(depthPitch));
+}
+//=============================================================================
+void CuteEngineApp::UpdateTexture(Texture3DPtr handle, const void* mem, uint32_t mip, size_t offsetX, size_t sizeX, size_t offsetY, size_t sizeY, size_t offsetZ, size_t sizeZ, size_t rowPitch, size_t depthPitch)
+{
+	D3D11_BOX box;
+	box.left = static_cast<UINT>(offsetX);
+	box.right = static_cast<UINT>(offsetX + sizeX);
+	box.top = static_cast<UINT>(offsetY);
+	box.bottom = static_cast<UINT>(offsetY + sizeY);
+	box.front = static_cast<UINT>(offsetZ);
+	box.back = static_cast<UINT>(offsetZ + sizeZ);
+
+	rhiData::d3dContext->UpdateSubresource(handle->texture.Get(), mip, &box, mem, static_cast<UINT>(rowPitch), static_cast<UINT>(depthPitch));
 }
 //=============================================================================
 void CuteEngineApp::BindShaderProgram(ShaderProgramPtr resource)

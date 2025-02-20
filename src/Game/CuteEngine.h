@@ -591,6 +591,14 @@ struct Texture2DCreateInfo final
 
 struct Texture3DCreateInfo final
 {
+	uint32_t     width{ 0 };
+	uint32_t     height{ 0 };
+	uint32_t     depth{ 0 };
+	uint32_t     mipCount{ 1 };
+	TexelsFormat format{ TexelsFormat::RGBA8 };
+	uint32_t     flags{ 0 };
+	void*        memoryData{ nullptr };
+	size_t       size{ 0 };
 };
 
 struct TextureArrayCreateInfo final
@@ -724,6 +732,7 @@ public:
 
 	std::expected<Texture1DPtr, std::string>      CreateTexture1D(const Texture1DCreateInfo& createInfo);
 	std::expected<Texture2DPtr, std::string>      CreateTexture2D(const Texture2DCreateInfo& createInfo);
+	std::expected<Texture3DPtr, std::string>      CreateTexture3D(const Texture3DCreateInfo& createInfo);
 
 
 	// RHI Resources Delete
@@ -731,14 +740,55 @@ public:
 	void DeleteRHIResource(PipelineStatePtr& resource);
 	void DeleteRHIResource(SamplerStatePtr& resource);
 	void DeleteRHIResource(BufferPtr& resource);
+	void DeleteRHIResource(Texture1DPtr& resource);
 	void DeleteRHIResource(Texture2DPtr& resource);
+	void DeleteRHIResource(Texture3DPtr& resource);
 
 	// RHI Resources Mod
+
 	void* Map(BufferPtr buffer, MapType type);
-	void UnMap(BufferPtr buffer);
+	void Unmap(BufferPtr buffer);
 	void UpdateBuffer(BufferPtr buffer, const void* mem);
 	void CopyBufferData(BufferPtr buffer, size_t offset, size_t size, const void* mem);
 
+	void ClearTextureRW(Texture1DPtr texture, uint32_t value);
+	void ClearTextureRW(Texture1DPtr texture, float value);
+	void ClearTextureRW(Texture2DPtr texture, uint32_t value);
+	void ClearTextureRW(Texture2DPtr texture, float value);
+	void ClearTextureRW(Texture3DPtr texture, uint32_t value);
+	void ClearTextureRW(Texture3DPtr texture, float value);
+	
+	void* Map(Texture1DPtr handle, MapType type);
+	void* Map(Texture2DPtr handle, MapType type);
+	void* Map(Texture3DPtr handle, MapType type);
+	void Unmap(Texture1DPtr handle);
+	void Unmap(Texture2DPtr handle);
+	void Unmap(Texture3DPtr handle);
+
+	void UpdateTexture(
+		Texture1DPtr handle, const void* mem,
+		uint32_t mip,
+		size_t offsetX, size_t sizeX,
+		size_t offsetY, size_t sizeY,
+		size_t offsetZ, size_t sizeZ,
+		size_t rowPitch, size_t depthPitch
+	);
+	void UpdateTexture(
+		Texture2DPtr handle, const void* mem,
+		uint32_t mip,
+		size_t offsetX, size_t sizeX,
+		size_t offsetY, size_t sizeY,
+		size_t offsetZ, size_t sizeZ,
+		size_t rowPitch, size_t depthPitch
+	);
+	void UpdateTexture(
+		Texture3DPtr handle, const void* mem,
+		uint32_t mip,
+		size_t offsetX, size_t sizeX,
+		size_t offsetY, size_t sizeY,
+		size_t offsetZ, size_t sizeZ,
+		size_t rowPitch, size_t depthPitch
+	);
 
 	// RHI Resources Bind
 	void BindShaderProgram(ShaderProgramPtr resource);
