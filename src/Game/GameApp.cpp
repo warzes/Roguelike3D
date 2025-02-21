@@ -227,19 +227,15 @@ void GameApp::OnUpdate(double deltaTime)
 //=============================================================================
 void GameApp::OnFrame()
 {
-	std::vector buffers = { m_vertexBuffer, m_instanceRotationBuffer, m_instanceColorBuffer };
-	std::vector<uint32_t> strides = { 8 * sizeof(float), 3 * sizeof(uint32_t), 3 * sizeof(float) }; // vertex (float3 position, float3 normal, float2 texcoord), instance rotation (uint3 rotation), instance color (float3 color)
-	std::vector<uint32_t> offsets = { 0, 0, 0 };
-
 	SetMainFrame();
 	BindShaderProgram(m_shaderProgram);
 	BindPipelineState(m_pipelineState);
 	BindSamplerState(m_samplerState, 0);
 	BindConstantBuffer(m_constantBuffer, 0);
-	BindVertexBuffers(buffers, strides, offsets);
+	BindVertexBuffers({ m_vertexBuffer, m_instanceRotationBuffer, m_instanceColorBuffer });
 	BindIndexBuffer(m_indexBuffer);
-	BindTexture2D(m_texture, 0);
+	BindTexture(m_texture, 0);
 	
-	DrawIndexedInstanced(ARRAYSIZE(IndexData), 24);
+	DrawIndexedInstanced(PrimitiveTopology::TriangleList, ARRAYSIZE(IndexData), 24);
 }
 //=============================================================================

@@ -13,7 +13,8 @@
 #endif  // _DEBUG
 #include "CutePrivate/CuteEngine_Window.h"
 #include "CutePrivate/CuteEngine_RHICore.h"
-#include "CutePrivate/CuteEngine_RHI.h"
+#include "CutePrivate/CuteEngine_RHIDevice.h"
+#include "CutePrivate/CuteEngine_RHIStateCache.h"
 #include "CutePrivate/CuteEngine_RHIResources.h"
 #if defined(_MSC_VER)
 #	pragma warning(pop)

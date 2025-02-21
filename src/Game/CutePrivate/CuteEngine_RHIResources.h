@@ -805,6 +805,11 @@ void CuteEngineApp::CopyBufferData(BufferPtr buffer, size_t offset, size_t size,
 	UpdateSubresource(buffer->buffer.Get(), mem, 0, offset, size, 0, 1, 0, 1, 0, 0);
 }
 //=============================================================================
+void CuteEngineApp::CopyResource(BufferPtr src, BufferPtr dst)
+{
+	rhiData::d3dContext->CopyResource(dst->buffer.Get(), src->buffer.Get());
+}
+//=============================================================================
 void* CuteEngineApp::Map(ConstantBufferPtr buffer, MapType type)
 {
 	return ::Map(buffer->buffer.Get(), type);
@@ -818,6 +823,11 @@ void CuteEngineApp::Unmap(ConstantBufferPtr buffer)
 void CuteEngineApp::UpdateBuffer(ConstantBufferPtr buffer, const void* mem)
 {
 	rhiData::d3dContext->UpdateSubresource(buffer->buffer.Get(), 0, nullptr, mem, 0, 0);
+}
+//=============================================================================
+void CuteEngineApp::CopyResource(ConstantBufferPtr src, ConstantBufferPtr dst)
+{
+	rhiData::d3dContext->CopyResource(dst->buffer.Get(), src->buffer.Get());
 }
 //=============================================================================
 void CuteEngineApp::ClearTextureRW(TexturePtr texture, uint32_t value)
@@ -843,6 +853,11 @@ void CuteEngineApp::Unmap(TexturePtr handle)
 void CuteEngineApp::UpdateTexture(TexturePtr handle, const void* mem, uint32_t mip, size_t offsetX, size_t sizeX, size_t offsetY, size_t sizeY, size_t offsetZ, size_t sizeZ, size_t rowPitch, size_t depthPitch)
 {
 	UpdateSubresource(handle->texture.Get(), mem, mip, offsetX, sizeX, offsetY, sizeY, offsetZ, sizeZ, rowPitch, depthPitch);
+}
+//=============================================================================
+void CuteEngineApp::CopyResource(TexturePtr src, TexturePtr dst)
+{
+	rhiData::d3dContext->CopyResource(dst->texture.Get(), src->texture.Get());
 }
 //=============================================================================
 void CuteEngineApp::BindShaderProgram(ShaderProgramPtr resource)
@@ -882,13 +897,22 @@ void CuteEngineApp::BindVertexBuffer(BufferPtr resource)
 	// TODO:
 }
 //=============================================================================
-void CuteEngineApp::BindVertexBuffers(const std::vector<BufferPtr>& resources, const std::vector<uint32_t>& strides, const std::vector<uint32_t>& offsets)
+void CuteEngineApp::BindVertexBuffers(const std::vector<BufferPtr>& resources)
 {
-	std::vector<ID3D11Buffer*> buffers(resources.size());
+	RHIStateCache::currentFreeVertexBuffer = 0;
 	for (size_t i = 0; i < resources.size(); i++)
-		buffers[i] = resources[i]->buffer.Get();
+	{
+		RHIStateCache::vertexBuffer[RHIStateCache::currentFreeVertexBuffer] = resources[i]->buffer.Get();
+		RHIStateCache::vertexBufferStride[RHIStateCache::currentFreeVertexBuffer] = resources[i]->dataBufferStride;
 
-	rhiData::d3dContext->IASetVertexBuffers(0, resources.size(), buffers.data(), strides.data(), offsets.data());
+		RHIStateCache::currentFreeVertexBuffer++;
+		assert(RHIStateCache::currentFreeVertexBuffer < MaxVertexBuffers);
+	}
+	rhiData::d3dContext->IASetVertexBuffers(
+		0, RHIStateCache::currentFreeVertexBuffer, 
+		RHIStateCache::vertexBuffer, 
+		RHIStateCache::vertexBufferStride, 
+		RHIStateCache::vertexBufferOffset);
 }
 //=============================================================================
 void CuteEngineApp::BindIndexBuffer(BufferPtr resource)
@@ -896,7 +920,7 @@ void CuteEngineApp::BindIndexBuffer(BufferPtr resource)
 	rhiData::d3dContext->IASetIndexBuffer(resource->buffer.Get(), DXGI_FORMAT_R32_UINT, 0); // TODO: DXGI_FORMAT_R32_UINT должно передаваться
 }
 //=============================================================================
-void CuteEngineApp::BindTexture2D(TexturePtr resource, uint32_t slot)
+void CuteEngineApp::BindTexture(TexturePtr resource, uint32_t slot)
 {
 	rhiData::d3dContext->PSSetShaderResources(slot, 1, resource->dataView.GetAddressOf());
 }

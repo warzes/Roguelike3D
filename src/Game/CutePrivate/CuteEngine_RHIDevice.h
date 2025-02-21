@@ -390,6 +390,16 @@ void setColorSpace1()
 		rhiData::swapChain->SetColorSpace1(rhiData::colorSpace);
 }
 //=============================================================================
+void CuteEngineApp::BeginPerfEvent(const wchar_t* name)
+{
+	rhiData::d3dDebugAnnotation->BeginEvent(name);
+}
+//=============================================================================
+void CuteEngineApp::EndPerfEvent()
+{
+	rhiData::d3dDebugAnnotation->EndEvent();
+}
+//=============================================================================
 void CuteEngineApp::SetMainFrame()
 {
 	// TODO: сделать возможность устанавливать цвет очистки. В виде optional и в случае нуля очистка вообще не выполняется
@@ -400,9 +410,14 @@ void CuteEngineApp::SetMainFrame()
 	rhiData::d3dContext->RSSetViewports(1, &rhiData::viewport);
 }
 //=============================================================================
-void CuteEngineApp::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
+void CuteEngineApp::DrawIndexedInstanced(PrimitiveTopology topology, uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
 {
-	rhiData::d3dContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	rhiData::d3dContext->IASetPrimitiveTopology(ConvertToD3D11(topology));
 	rhiData::d3dContext->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+}
+//=============================================================================
+void CuteEngineApp::RHIDeviceFlush()
+{
+	rhiData::d3dContext->Flush();
 }
 //=============================================================================

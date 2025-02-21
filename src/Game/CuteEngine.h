@@ -742,8 +742,11 @@ public:
 	bool IsKeyReleased(uint32_t keyCode) const;
 
 	// RHI Core
+	void BeginPerfEvent(const wchar_t* name);
+	void EndPerfEvent();
 	void SetMainFrame();
-	void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, uint32_t baseVertexLocation = 0, uint32_t startInstanceLocation = 0);
+	void DrawIndexedInstanced(PrimitiveTopology topology, uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, uint32_t baseVertexLocation = 0, uint32_t startInstanceLocation = 0);
+	void RHIDeviceFlush();
 
 	// RHI Resources Create
 	std::expected<ShaderProgramPtr, std::string>  LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
@@ -755,7 +758,6 @@ public:
 	std::expected<TexturePtr, std::string>        CreateTexture2D(const Texture2DCreateInfo& createInfo);
 	std::expected<TexturePtr, std::string>        CreateTexture3D(const Texture3DCreateInfo& createInfo);
 
-
 	// RHI Resources Delete
 	void DeleteRHIResource(ShaderProgramPtr& resource);
 	void DeleteRHIResource(PipelineStatePtr& resource);
@@ -765,17 +767,18 @@ public:
 	void DeleteRHIResource(TexturePtr& resource);
 
 	// RHI Resources Mod
-
 	void ClearBufferRW(BufferPtr buffer, uint32_t value);
 	void ClearBufferRW(BufferPtr buffer, float value);
 	void* Map(BufferPtr buffer, MapType type);
 	void Unmap(BufferPtr buffer);
 	void UpdateBuffer(BufferPtr buffer, const void* mem);
 	void CopyBufferData(BufferPtr buffer, size_t offset, size_t size, const void* mem);
+	void CopyResource(BufferPtr src, BufferPtr dst);
 
 	void* Map(ConstantBufferPtr buffer, MapType type);
 	void Unmap(ConstantBufferPtr buffer);
 	void UpdateBuffer(ConstantBufferPtr buffer, const void* mem);
+	void CopyResource(ConstantBufferPtr src, ConstantBufferPtr dst);
 
 	void ClearTextureRW(TexturePtr texture, uint32_t value);
 	void ClearTextureRW(TexturePtr texture, float value);
@@ -789,7 +792,10 @@ public:
 		size_t offsetY, size_t sizeY,
 		size_t offsetZ, size_t sizeZ,
 		size_t rowPitch, size_t depthPitch
-	);	
+	);
+
+
+	void CopyResource(TexturePtr src, TexturePtr dst);
 
 	// RHI Resources Bind
 	void BindShaderProgram(ShaderProgramPtr resource);
@@ -797,9 +803,9 @@ public:
 	void BindSamplerState(SamplerStatePtr resource, uint32_t slot);
 	void BindConstantBuffer(ConstantBufferPtr resource, uint32_t slot);
 	void BindVertexBuffer(BufferPtr resource);
-	void BindVertexBuffers(const std::vector<BufferPtr>& resources, const std::vector<uint32_t>& strides, const std::vector<uint32_t>& offsets);
+	void BindVertexBuffers(const std::vector<BufferPtr>& resources);
 	void BindIndexBuffer(BufferPtr resource);
-	void BindTexture2D(TexturePtr resource, uint32_t slot);
+	void BindTexture(TexturePtr resource, uint32_t slot);
 };
 
 #pragma endregion

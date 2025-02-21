@@ -42,7 +42,7 @@
     <ClInclude Include="CutePrivate\CuteEngine_Window.h">
       <Filter>CuteEngine\CutePrivate</Filter>
     </ClInclude>
-    <ClInclude Include="CutePrivate\CuteEngine_RHI.h">
+    <ClInclude Include="CutePrivate\CuteEngine_RHIDevice.h">
       <Filter>CuteEngine\CutePrivate</Filter>
     </ClInclude>
     <ClInclude Include="CutePrivate\CuteEngine_RHIResources.h">
@@ -62,6 +62,9 @@
     </ClInclude>
     <ClInclude Include="HighResolutionTimer.h">
       <Filter>CuteOther</Filter>
+    </ClInclude>
+    <ClInclude Include="CutePrivate\CuteEngine_RHIStateCache.h">
+      <Filter>CuteEngine\CutePrivate</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
