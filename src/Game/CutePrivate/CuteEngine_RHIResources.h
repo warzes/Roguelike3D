@@ -106,6 +106,43 @@ std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShaderFromFi
 	return blob;
 }
 //=============================================================================
+inline void* Map(ID3D11Resource* resource, MapType type)
+{
+	D3D11_MAPPED_SUBRESOURCE mappedSubresource = { 0 };
+	HRESULT result = rhiData::d3dContext->Map(resource, 0, ConvertToD3D11(type), 0, &mappedSubresource);
+	if (FAILED(result))
+	{
+		DX_ERR("ID3D11Device5::Map() failed: ", result);
+		return nullptr;
+	}
+	return mappedSubresource.pData;
+}
+//=============================================================================
+inline void UpdateSubresource(ID3D11Resource* resource, const void* mem, uint32_t mip, size_t offsetX, size_t sizeX, size_t offsetY, size_t sizeY, size_t offsetZ, size_t sizeZ, size_t rowPitch, size_t depthPitch)
+{
+	D3D11_BOX box{};
+	box.left = static_cast<UINT>(offsetX);
+	box.right = static_cast<UINT>(offsetX + sizeX);
+	box.top = static_cast<UINT>(offsetY);
+	box.bottom = static_cast<UINT>(offsetY + sizeY);
+	box.front = static_cast<UINT>(offsetZ);
+	box.back = static_cast<UINT>(offsetZ + sizeZ);
+
+	rhiData::d3dContext->UpdateSubresource(resource, mip, &box, mem, static_cast<UINT>(rowPitch), static_cast<UINT>(depthPitch));
+}
+//=============================================================================
+inline void ClearTextureRW(Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav, uint32_t value)
+{
+	uint32_t d3dValues[4] = { value, 0, 0, 0 };
+	if (uav) rhiData::d3dContext->ClearUnorderedAccessViewUint(uav.Get(), d3dValues);
+}
+//=============================================================================
+inline void ClearTextureRW(Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav, float value)
+{
+	float d3dValues[4] = { value, 0.0f, 0.0f, 0.0f };
+	if (uav) rhiData::d3dContext->ClearUnorderedAccessViewFloat(uav.Get(), d3dValues);
+}
+//=============================================================================
 std::expected<ShaderProgramPtr, std::string> CuteEngineApp::LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo)
 {
 	ShaderProgramPtr program = std::make_shared<ShaderProgram>();
@@ -325,10 +362,10 @@ std::expected<SamplerStatePtr, std::string> CuteEngineApp::CreateSamplerState(co
 	samplerDesc.MipLODBias     = createInfo.lodBias;
 	samplerDesc.MaxAnisotropy  = createInfo.maxAnisotropy;
 	samplerDesc.ComparisonFunc = ConvertToD3D11(createInfo.comparisonFunc);
-	samplerDesc.BorderColor[0] = static_cast<float>((createInfo.borderColor >> 0) & 0xFF) / 255.0F;
-	samplerDesc.BorderColor[1] = static_cast<float>((createInfo.borderColor >> 8) & 0xFF) / 255.0F;
-	samplerDesc.BorderColor[2] = static_cast<float>((createInfo.borderColor >> 16) & 0xFF) / 255.0F;
-	samplerDesc.BorderColor[3] = static_cast<float>((createInfo.borderColor >> 24) & 0xFF) / 255.0F;
+	samplerDesc.BorderColor[0] = static_cast<float>((createInfo.borderColor >> 0) & 0xFF) / 255.0f;
+	samplerDesc.BorderColor[1] = static_cast<float>((createInfo.borderColor >> 8) & 0xFF) / 255.0f;
+	samplerDesc.BorderColor[2] = static_cast<float>((createInfo.borderColor >> 16) & 0xFF) / 255.0f;
+	samplerDesc.BorderColor[3] = static_cast<float>((createInfo.borderColor >> 24) & 0xFF) / 255.0f;
 	samplerDesc.MinLOD         = createInfo.minLod;
 	samplerDesc.MaxLOD         = createInfo.maxLod;
 
@@ -669,14 +706,7 @@ void CuteEngineApp::DeleteRHIResource(Texture3DPtr& resource)
 //=============================================================================
 void* CuteEngineApp::Map(BufferPtr buffer, MapType type)
 {
-	D3D11_MAPPED_SUBRESOURCE mappedSubresource = { 0 };
-	HRESULT result = rhiData::d3dContext->Map(buffer->buffer.Get(), 0, ConvertToD3D11(type), 0, &mappedSubresource);
-	if (FAILED(result))
-	{
-		DX_ERR("ID3D11Device5::Map() failed: ", result);
-		return nullptr;
-	}
-	return mappedSubresource.pData;
+	return ::Map(buffer->buffer.Get(), type);
 }
 //=============================================================================
 void CuteEngineApp::Unmap(BufferPtr buffer)
@@ -691,25 +721,12 @@ void CuteEngineApp::UpdateBuffer(BufferPtr buffer, const void* mem)
 //=============================================================================
 void CuteEngineApp::CopyBufferData(BufferPtr buffer, size_t offset, size_t size, const void* mem)
 {
-	const D3D11_BOX box = {
-		.left   = static_cast<UINT>(offset),
-		.top    = 0, .front = 0,
-		.right  = static_cast<UINT>(offset + size),
-		.bottom = 1, .back = 1,
-	};
-	rhiData::d3dContext->UpdateSubresource(buffer->buffer.Get(), 0, &box, mem, 0, 0);
+	UpdateSubresource(buffer->buffer.Get(), mem, 0, offset, size, 0, 1, 0, 1, 0, 0);
 }
 //=============================================================================
 void* CuteEngineApp::Map(ConstantBufferPtr buffer, MapType type)
 {
-	D3D11_MAPPED_SUBRESOURCE mappedSubresource = { 0 };
-	HRESULT result = rhiData::d3dContext->Map(buffer->buffer.Get(), 0, ConvertToD3D11(type), 0, &mappedSubresource);
-	if (FAILED(result))
-	{
-		DX_ERR("ID3D11Device5::Map() failed: ", result);
-		return nullptr;
-	}
-	return mappedSubresource.pData;
+	return ::Map(buffer->buffer.Get(), type);
 }
 //=============================================================================
 void CuteEngineApp::Unmap(ConstantBufferPtr buffer)
@@ -717,16 +734,9 @@ void CuteEngineApp::Unmap(ConstantBufferPtr buffer)
 	rhiData::d3dContext->Unmap(buffer->buffer.Get(), 0);
 }
 //=============================================================================
-inline void ClearTextureRW(Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav, uint32_t value)
+void CuteEngineApp::UpdateBuffer(ConstantBufferPtr buffer, const void* mem)
 {
-	uint32_t d3dValues[4] = { value, 0, 0, 0 };
-	if (uav) rhiData::d3dContext->ClearUnorderedAccessViewUint(uav.Get(), d3dValues);
-}
-//=============================================================================
-inline void ClearTextureRW(Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav, float value)
-{
-	float d3dValues[4] = { value, 0.F, 0.0F, 0.0F };
-	if (uav) rhiData::d3dContext->ClearUnorderedAccessViewFloat(uav.Get(), d3dValues);
+	rhiData::d3dContext->UpdateSubresource(buffer->buffer.Get(), 0, nullptr, mem, 0, 0);
 }
 //=============================================================================
 void CuteEngineApp::ClearTextureRW(Texture1DPtr texture, uint32_t value)
@@ -759,31 +769,19 @@ void CuteEngineApp::ClearTextureRW(Texture3DPtr texture, float value)
 	::ClearTextureRW(texture->uav, value);
 }
 //=============================================================================
-inline void* Map(Microsoft::WRL::ComPtr<ID3D11Resource> texture, MapType type)
-{
-	D3D11_MAPPED_SUBRESOURCE mappedSubresource = { 0 };
-	HRESULT result = rhiData::d3dContext->Map(texture.Get(), 0, ConvertToD3D11(type), 0, &mappedSubresource);
-	if (FAILED(result))
-	{
-		DX_ERR("ID3D11Device5::Map() failed: ", result);
-		return nullptr;
-	}
-	return mappedSubresource.pData;
-}
-//=============================================================================
 void* CuteEngineApp::Map(Texture1DPtr handle, MapType type)
 {
-	return ::Map(handle->texture, type);
+	return ::Map(handle->texture.Get(), type);
 }
 //=============================================================================
 void* CuteEngineApp::Map(Texture2DPtr handle, MapType type)
 {
-	return ::Map(handle->texture, type);
+	return ::Map(handle->texture.Get(), type);
 }
 //=============================================================================
 void* CuteEngineApp::Map(Texture3DPtr handle, MapType type)
 {
-	return ::Map(handle->texture, type);
+	return ::Map(handle->texture.Get(), type);
 }
 //=============================================================================
 void CuteEngineApp::Unmap(Texture1DPtr handle)
@@ -803,41 +801,17 @@ void CuteEngineApp::Unmap(Texture3DPtr handle)
 //=============================================================================
 void CuteEngineApp::UpdateTexture(Texture1DPtr handle, const void* mem, uint32_t mip, size_t offsetX, size_t sizeX, size_t offsetY, size_t sizeY, size_t offsetZ, size_t sizeZ, size_t rowPitch, size_t depthPitch)
 {
-	D3D11_BOX box;
-	box.left = static_cast<UINT>(offsetX);
-	box.right = static_cast<UINT>(offsetX + sizeX);
-	box.top = static_cast<UINT>(offsetY);
-	box.bottom = static_cast<UINT>(offsetY + sizeY);
-	box.front = static_cast<UINT>(offsetZ);
-	box.back = static_cast<UINT>(offsetZ + sizeZ);
-
-	rhiData::d3dContext->UpdateSubresource(handle->texture.Get(), mip, &box, mem, static_cast<UINT>(rowPitch), static_cast<UINT>(depthPitch));
+	UpdateSubresource(handle->texture.Get(), mem, mip, offsetX, sizeX, offsetY, sizeY, offsetZ, sizeZ, rowPitch, depthPitch);
 }
 //=============================================================================
 void CuteEngineApp::UpdateTexture(Texture2DPtr handle, const void* mem, uint32_t mip, size_t offsetX, size_t sizeX, size_t offsetY, size_t sizeY, size_t offsetZ, size_t sizeZ, size_t rowPitch, size_t depthPitch)
 {
-	D3D11_BOX box;
-	box.left = static_cast<UINT>(offsetX);
-	box.right = static_cast<UINT>(offsetX + sizeX);
-	box.top = static_cast<UINT>(offsetY);
-	box.bottom = static_cast<UINT>(offsetY + sizeY);
-	box.front = static_cast<UINT>(offsetZ);
-	box.back = static_cast<UINT>(offsetZ + sizeZ);
-
-	rhiData::d3dContext->UpdateSubresource(handle->texture.Get(), mip, &box, mem, static_cast<UINT>(rowPitch), static_cast<UINT>(depthPitch));
+	UpdateSubresource(handle->texture.Get(), mem, mip, offsetX, sizeX, offsetY, sizeY, offsetZ, sizeZ, rowPitch, depthPitch);
 }
 //=============================================================================
 void CuteEngineApp::UpdateTexture(Texture3DPtr handle, const void* mem, uint32_t mip, size_t offsetX, size_t sizeX, size_t offsetY, size_t sizeY, size_t offsetZ, size_t sizeZ, size_t rowPitch, size_t depthPitch)
 {
-	D3D11_BOX box;
-	box.left = static_cast<UINT>(offsetX);
-	box.right = static_cast<UINT>(offsetX + sizeX);
-	box.top = static_cast<UINT>(offsetY);
-	box.bottom = static_cast<UINT>(offsetY + sizeY);
-	box.front = static_cast<UINT>(offsetZ);
-	box.back = static_cast<UINT>(offsetZ + sizeZ);
-
-	rhiData::d3dContext->UpdateSubresource(handle->texture.Get(), mip, &box, mem, static_cast<UINT>(rowPitch), static_cast<UINT>(depthPitch));
+	UpdateSubresource(handle->texture.Get(), mem, mip, offsetX, sizeX, offsetY, sizeY, offsetZ, sizeZ, rowPitch, depthPitch);
 }
 //=============================================================================
 void CuteEngineApp::BindShaderProgram(ShaderProgramPtr resource)

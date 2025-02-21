@@ -763,8 +763,6 @@ public:
 	std::expected<ConstantBufferPtr, std::string> CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo);
 	std::expected<BufferPtr, std::string>         CreateVertexBuffer(const BufferCreateInfoOld& createInfo);
 	std::expected<BufferPtr, std::string>         CreateIndexBuffer(const BufferCreateInfoOld& createInfo);
-
-
 	std::expected<Texture1DPtr, std::string>      CreateTexture1D(const Texture1DCreateInfo& createInfo);
 	std::expected<Texture2DPtr, std::string>      CreateTexture2D(const Texture2DCreateInfo& createInfo);
 	std::expected<Texture3DPtr, std::string>      CreateTexture3D(const Texture3DCreateInfo& createInfo);
@@ -789,6 +787,7 @@ public:
 
 	void* Map(ConstantBufferPtr buffer, MapType type);
 	void Unmap(ConstantBufferPtr buffer);
+	void UpdateBuffer(ConstantBufferPtr buffer, const void* mem);
 
 	void ClearTextureRW(Texture1DPtr texture, uint32_t value);
 	void ClearTextureRW(Texture1DPtr texture, float value);
