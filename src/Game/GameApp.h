@@ -23,7 +23,7 @@ private:
 	ShaderProgramPtr  m_shaderProgram{ nullptr };
 	PipelineStatePtr  m_pipelineState{ nullptr };
 	SamplerStatePtr   m_samplerState{ nullptr };
-	BufferPtr         m_constantBuffer{ nullptr };
+	ConstantBufferPtr         m_constantBuffer{ nullptr };
 
 	BufferPtr         m_vertexBuffer{ nullptr };
 	BufferPtr         m_instanceRotationBuffer{ nullptr };

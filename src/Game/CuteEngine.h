@@ -436,6 +436,22 @@ namespace TextureFlags
 	};
 }
 
+namespace BufferFlags
+{
+	enum : uint32_t {
+		VertexBuffer = (1U << 0), // can be set as a vertex buffer
+		IndexBuffer = (1U << 1), // can be set as an index buffer
+		StructuredBuffer = (1U << 2), // can be set as a structured buffer
+		CPURead = (1U << 3), // can be mapped to be read by the CPU
+		CPUWrite = (1U << 4), // can be mapped to be written by the CPU
+		GPUWrite = (1U << 5), // can be written by the GPU
+		GPUCounter = (1U << 6), // can be written by the GPU with atomic counter usage
+		GPUAppend = (1U << 7), // can be appended by the GPU
+		StreamOutput = (1U << 8), // can be used as a stream output buffer
+		IndirectArgs = (1U << 9), // can be used as a drawIndirect args buffer
+	};
+}
+
 #pragma endregion
 
 #pragma region [ RHI Core Desc]
@@ -559,13 +575,29 @@ struct SamplerStateCreateInfo final
 	float          maxLod = FLT_MAX;
 };
 
-struct BufferCreateInfo
+struct BufferCreateInfoOld final
 {
 	BufferUsage    usage{ BufferUsage::Default };
 	CPUAccessFlags cpuAccessFlags{ CPUAccessFlags::None };
 	void*          memoryData{ nullptr };
 	size_t         size{ 0 };
 	size_t         stride{ 0 };
+};
+
+struct BufferCreateInfo final
+{
+	uint32_t flags{ 0 };
+	void*    memoryData{ nullptr };
+	size_t   size{ 0 };
+	size_t   stride{ 0 };
+};
+
+struct ConstantBufferCreateInfo final
+{
+	BufferUsage    usage{ BufferUsage::Default };
+	CPUAccessFlags cpuAccessFlags{ CPUAccessFlags::None };
+	void*          memoryData{ nullptr };
+	size_t         size{ 0 };
 };
 
 struct Texture1DCreateInfo final
@@ -620,6 +652,9 @@ using SamplerStatePtr = std::shared_ptr<SamplerState>;
 
 struct Buffer;
 using BufferPtr = std::shared_ptr<Buffer>;
+
+struct ConstantBuffer;
+using ConstantBufferPtr = std::shared_ptr<ConstantBuffer>;
 
 struct Texture1D;
 using Texture1DPtr = std::shared_ptr<Texture1D>;
@@ -725,9 +760,9 @@ public:
 	std::expected<ShaderProgramPtr, std::string>  LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
 	std::expected<PipelineStatePtr, std::string>  CreatePipelineState(const PipelineStateCreateInfo& createInfo);
 	std::expected<SamplerStatePtr, std::string>   CreateSamplerState(const SamplerStateCreateInfo& createInfo);
-	std::expected<BufferPtr, std::string>         CreateConstantBuffer(const BufferCreateInfo& createInfo);
-	std::expected<BufferPtr, std::string>         CreateVertexBuffer(const BufferCreateInfo& createInfo);
-	std::expected<BufferPtr, std::string>         CreateIndexBuffer(const BufferCreateInfo& createInfo);
+	std::expected<ConstantBufferPtr, std::string> CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo);
+	std::expected<BufferPtr, std::string>         CreateVertexBuffer(const BufferCreateInfoOld& createInfo);
+	std::expected<BufferPtr, std::string>         CreateIndexBuffer(const BufferCreateInfoOld& createInfo);
 
 
 	std::expected<Texture1DPtr, std::string>      CreateTexture1D(const Texture1DCreateInfo& createInfo);
@@ -740,6 +775,7 @@ public:
 	void DeleteRHIResource(PipelineStatePtr& resource);
 	void DeleteRHIResource(SamplerStatePtr& resource);
 	void DeleteRHIResource(BufferPtr& resource);
+	void DeleteRHIResource(ConstantBufferPtr& resource);
 	void DeleteRHIResource(Texture1DPtr& resource);
 	void DeleteRHIResource(Texture2DPtr& resource);
 	void DeleteRHIResource(Texture3DPtr& resource);
@@ -750,6 +786,9 @@ public:
 	void Unmap(BufferPtr buffer);
 	void UpdateBuffer(BufferPtr buffer, const void* mem);
 	void CopyBufferData(BufferPtr buffer, size_t offset, size_t size, const void* mem);
+
+	void* Map(ConstantBufferPtr buffer, MapType type);
+	void Unmap(ConstantBufferPtr buffer);
 
 	void ClearTextureRW(Texture1DPtr texture, uint32_t value);
 	void ClearTextureRW(Texture1DPtr texture, float value);
@@ -794,7 +833,7 @@ public:
 	void BindShaderProgram(ShaderProgramPtr resource);
 	void BindPipelineState(PipelineStatePtr resource);
 	void BindSamplerState(SamplerStatePtr resource, uint32_t slot);
-	void BindConstantBuffer(BufferPtr resource, uint32_t slot);
+	void BindConstantBuffer(ConstantBufferPtr resource, uint32_t slot);
 	void BindVertexBuffer(BufferPtr resource);
 	void BindVertexBuffers(const std::vector<BufferPtr>& resources, const std::vector<uint32_t>& strides, const std::vector<uint32_t>& offsets);
 	void BindIndexBuffer(BufferPtr resource);

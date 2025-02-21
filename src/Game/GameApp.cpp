@@ -77,7 +77,7 @@ bool GameApp::OnInit()
 
 	// Create ConstantBuffer
 	{
-		BufferCreateInfo cbci{};
+		ConstantBufferCreateInfo cbci{};
 		cbci.usage          = BufferUsage::Dynamic;
 		cbci.size           = sizeof(Constants) + 0xf & 0xfffffff0;
 		cbci.cpuAccessFlags = CPUAccessFlags::Write;
@@ -93,7 +93,7 @@ bool GameApp::OnInit()
 
 	// Create VertexBuffer
 	{
-		BufferCreateInfo vbci{};
+		BufferCreateInfoOld vbci{};
 		vbci.usage      = BufferUsage::Immutable;
 		vbci.size       = sizeof(VertexData);
 		vbci.memoryData = VertexData;
@@ -109,7 +109,7 @@ bool GameApp::OnInit()
 
 	// Create InstanceRotationBuffer
 	{
-		BufferCreateInfo vbci{};
+		BufferCreateInfoOld vbci{};
 		vbci.usage      = BufferUsage::Immutable;
 		vbci.size = sizeof(InstanceRotationData);
 		vbci.memoryData = InstanceRotationData;
@@ -125,7 +125,7 @@ bool GameApp::OnInit()
 
 	// Create InstanceColorBuffer
 	{
-		BufferCreateInfo vbci{};
+		BufferCreateInfoOld vbci{};
 		vbci.usage = BufferUsage::Immutable;
 		vbci.size = sizeof(InstanceColorData);
 		vbci.memoryData = InstanceColorData;
@@ -141,7 +141,7 @@ bool GameApp::OnInit()
 
 	// Create IndexBuffer
 	{
-		BufferCreateInfo ibci{};
+		BufferCreateInfoOld ibci{};
 		ibci.usage = BufferUsage::Immutable;
 		ibci.size = sizeof(IndexData);
 		ibci.memoryData = IndexData;

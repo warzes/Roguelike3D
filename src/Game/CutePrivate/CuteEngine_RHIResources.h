@@ -34,6 +34,12 @@ struct Buffer final
 	UINT                                              dataBufferStride;
 };
 
+struct ConstantBuffer final
+{
+	Microsoft::WRL::ComPtr<ID3D11Buffer>              buffer;
+	//UINT                                              dataBufferStride;
+};
+
 struct Texture1D final
 {
 	Microsoft::WRL::ComPtr<ID3D11Texture1D>            texture;
@@ -332,7 +338,7 @@ std::expected<SamplerStatePtr, std::string> CuteEngineApp::CreateSamplerState(co
 	return samplerState;
 }
 //=============================================================================
-std::expected<BufferPtr, std::string> CreateBuffer(const BufferCreateInfo& createInfo, UINT bindFlags)
+std::expected<BufferPtr, std::string> CreateBuffer(const BufferCreateInfoOld& createInfo, UINT bindFlags)
 {
 	BufferPtr buffer = std::make_shared<Buffer>();
 	buffer->bindFlags = bindFlags;
@@ -355,17 +361,33 @@ std::expected<BufferPtr, std::string> CreateBuffer(const BufferCreateInfo& creat
 	return buffer;
 }
 //=============================================================================
-std::expected<BufferPtr, std::string> CuteEngineApp::CreateConstantBuffer(const BufferCreateInfo& createInfo)
+std::expected<ConstantBufferPtr, std::string> CuteEngineApp::CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo)
 {
-	return CreateBuffer(createInfo, D3D11_BIND_CONSTANT_BUFFER);
+	ConstantBufferPtr buffer = std::make_shared<ConstantBuffer>();
+
+	D3D11_BUFFER_DESC bufferDesc = { 0 };
+	bufferDesc.ByteWidth           = static_cast<UINT>(createInfo.size);
+	bufferDesc.Usage               = ConvertToD3D11(createInfo.usage);
+	bufferDesc.BindFlags           = D3D11_BIND_CONSTANT_BUFFER;
+	bufferDesc.CPUAccessFlags      = ConvertToD3D11(createInfo.cpuAccessFlags);
+	bufferDesc.MiscFlags           = 0;
+	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.size);
+	
+	D3D11_SUBRESOURCE_DATA data = { 0 };
+	data.pSysMem = createInfo.memoryData;
+
+	HRESULT result = rhiData::d3dDevice->CreateBuffer(&bufferDesc, (createInfo.memoryData == nullptr) ? nullptr : &data, &buffer->buffer);
+	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateBuffer() failed: ", result));
+
+	return buffer;
 }
 //=============================================================================
-std::expected<BufferPtr, std::string> CuteEngineApp::CreateVertexBuffer(const BufferCreateInfo& createInfo)
+std::expected<BufferPtr, std::string> CuteEngineApp::CreateVertexBuffer(const BufferCreateInfoOld& createInfo)
 {
 	return CreateBuffer(createInfo, D3D11_BIND_VERTEX_BUFFER);
 }
 //=============================================================================
-std::expected<BufferPtr, std::string> CuteEngineApp::CreateIndexBuffer(const BufferCreateInfo& createInfo)
+std::expected<BufferPtr, std::string> CuteEngineApp::CreateIndexBuffer(const BufferCreateInfoOld& createInfo)
 {
 	return CreateBuffer(createInfo, D3D11_BIND_INDEX_BUFFER);
 }
@@ -625,6 +647,11 @@ void CuteEngineApp::DeleteRHIResource(BufferPtr& resource)
 	resource.reset();
 }
 //=============================================================================
+void CuteEngineApp::DeleteRHIResource(ConstantBufferPtr& resource)
+{
+	resource.reset();
+}
+//=============================================================================
 void CuteEngineApp::DeleteRHIResource(Texture1DPtr& resource)
 {
 	resource.reset();
@@ -671,6 +698,23 @@ void CuteEngineApp::CopyBufferData(BufferPtr buffer, size_t offset, size_t size,
 		.bottom = 1, .back = 1,
 	};
 	rhiData::d3dContext->UpdateSubresource(buffer->buffer.Get(), 0, &box, mem, 0, 0);
+}
+//=============================================================================
+void* CuteEngineApp::Map(ConstantBufferPtr buffer, MapType type)
+{
+	D3D11_MAPPED_SUBRESOURCE mappedSubresource = { 0 };
+	HRESULT result = rhiData::d3dContext->Map(buffer->buffer.Get(), 0, ConvertToD3D11(type), 0, &mappedSubresource);
+	if (FAILED(result))
+	{
+		DX_ERR("ID3D11Device5::Map() failed: ", result);
+		return nullptr;
+	}
+	return mappedSubresource.pData;
+}
+//=============================================================================
+void CuteEngineApp::Unmap(ConstantBufferPtr buffer)
+{
+	rhiData::d3dContext->Unmap(buffer->buffer.Get(), 0);
 }
 //=============================================================================
 inline void ClearTextureRW(Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> uav, uint32_t value)
@@ -824,7 +868,7 @@ void CuteEngineApp::BindSamplerState(SamplerStatePtr resource, uint32_t slot)
 	rhiData::d3dContext->PSSetSamplers(slot, 1, resource->state.GetAddressOf());
 }
 //=============================================================================
-void CuteEngineApp::BindConstantBuffer(BufferPtr resource, uint32_t slot)
+void CuteEngineApp::BindConstantBuffer(ConstantBufferPtr resource, uint32_t slot)
 {
 	rhiData::d3dContext->VSSetConstantBuffers(slot, 1, resource->buffer.GetAddressOf());
 }
