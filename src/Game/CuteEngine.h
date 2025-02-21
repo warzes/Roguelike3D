@@ -219,8 +219,9 @@ namespace Input
 //=============================================================================
 #pragma region [ RHI Core ]
 
-constexpr const int      RenderTargetSlotCount = 8;
-constexpr const uint32_t AppendAlignedElement = 0xffffffff;
+constexpr const auto RenderTargetSlotCount = 8u;
+constexpr const auto MaxVertexBuffers = 16u;
+constexpr const auto AppendAlignedElement = 0xffffffff;
 
 #pragma region [ RHI Enum ]
 
@@ -245,28 +246,10 @@ enum class TexelsFormat : uint8_t
 
 	UnknownCompressed, // compressed formats above
 
-	R1,
-	R8,
-	R16,
-	R16F,
-	R32I,
-	R32U,
-	R32F,
-	RG8,
-	RG16,
-	RG16F,
-	RG32I,
-	RG32U,
-	RG32F,
-	RGB32I,
-	RGB32U,
-	RGB32F,
-	RGBA8,
-	RGBA16,
-	RGBA16F,
-	RGBA32I,
-	RGBA32U,
-	RGBA32F,
+	R1, R8, R16, R16F, R32I, R32U, R32F,               // R
+	RG8, RG16, RG16F, RG32I, RG32U, RG32F,             // RG
+	RGB32I, RGB32U, RGB32F,                            // RGB
+	RGBA8, RGBA16, RGBA16F, RGBA32I, RGBA32U, RGBA32F, // RGBA
 	R11G11B10F,
 
 	UnknownDepth, // depth formats below
@@ -281,6 +264,16 @@ enum class TextureType : uint8_t
 	Texture1D,
 	Texture2D,
 	Texture3D,
+};
+
+enum class ShaderType : uint8_t
+{
+	Vertex,
+	Pixel,
+	Hull,
+	Domain,
+	Geometry,
+	Compute,
 };
 
 inline bool IsCompressedFormat(TexelsFormat format) { return format < TexelsFormat::UnknownCompressed; }
@@ -360,12 +353,11 @@ enum class BlendOp : uint8_t
 
 enum class ColorWriteMask : uint8_t
 {
-	Red = (1u << 0),
+	Red   = (1u << 0),
 	Green = (1u << 1),
-	Blue = (1u << 2),
+	Blue  = (1u << 2),
 	Alpha = (1u << 3),
-
-	All = Red | Green | Blue | Alpha
+	All   = Red | Green | Blue | Alpha
 };
 
 enum class TextureFilter : size_t
@@ -420,42 +412,41 @@ enum class PrimitiveTopology : uint8_t
 
 namespace ShaderCompileFlags
 {
-	enum : uint64_t
-	{
-		Debug = (1UL << 0),
-		Strict = (1UL << 1),
-		IEEStrict = (1UL << 2),
-		Optimize0 = (1UL << 3),
-		Optimize1 = (1UL << 4),
-		Optimize2 = (1UL << 5),
-		Optimize3 = (1UL << 6)
+	enum : uint64_t {
+		Debug     = (1ul << 0),
+		Strict    = (1ul << 1),
+		IEEStrict = (1ul << 2),
+		Optimize0 = (1ul << 3),
+		Optimize1 = (1ul << 4),
+		Optimize2 = (1ul << 5),
+		Optimize3 = (1ul << 6)
 	};
 }
 
 namespace TextureFlags
 {
 	enum : uint32_t {
-		RenderTarget = (1U << 0),
-		DepthStencil = (1U << 1),
-		CPURead = (1U << 2),
-		GPUWrite = (1U << 3),
-		GPUCounter = (1U << 4)
+		RenderTarget = (1u << 0),
+		DepthStencil = (1u << 1),
+		CPURead      = (1u << 2),
+		GPUWrite     = (1u << 3),
+		GPUCounter   = (1u << 4)
 	};
 }
 
 namespace BufferFlags
 {
 	enum : uint32_t {
-		VertexBuffer = (1U << 0), // can be set as a vertex buffer
-		IndexBuffer = (1U << 1), // can be set as an index buffer
-		StructuredBuffer = (1U << 2), // can be set as a structured buffer
-		CPURead = (1U << 3), // can be mapped to be read by the CPU
-		CPUWrite = (1U << 4), // can be mapped to be written by the CPU
-		GPUWrite = (1U << 5), // can be written by the GPU
-		GPUCounter = (1U << 6), // can be written by the GPU with atomic counter usage
-		GPUAppend = (1U << 7), // can be appended by the GPU
-		StreamOutput = (1U << 8), // can be used as a stream output buffer
-		IndirectArgs = (1U << 9), // can be used as a drawIndirect args buffer
+		VertexBuffer     = (1u << 0), // can be set as a vertex buffer
+		IndexBuffer      = (1u << 1), // can be set as an index buffer
+		StructuredBuffer = (1u << 2), // can be set as a structured buffer
+		CPURead          = (1u << 3), // can be mapped to be read by the CPU
+		CPUWrite         = (1u << 4), // can be mapped to be written by the CPU
+		GPUWrite         = (1u << 5), // can be written by the GPU
+		GPUCounter       = (1u << 6), // can be written by the GPU with atomic counter usage
+		GPUAppend        = (1u << 7), // can be appended by the GPU
+		StreamOutput     = (1u << 8), // can be used as a stream output buffer
+		IndirectArgs     = (1u << 9), // can be used as a drawIndirect args buffer
 	};
 }
 
@@ -465,22 +456,22 @@ namespace BufferFlags
 
 struct BlendDesc final
 {
-	bool           blendEnabled = false;
-	ColorWriteMask writeMask = ColorWriteMask::All;
-	BlendFactor    srcBlend = BlendFactor::One;
-	BlendFactor    dstBlend = BlendFactor::Zero;
-	BlendOp        blendOp = BlendOp::Add;
+	bool           blendEnabled  = false;
+	ColorWriteMask writeMask     = ColorWriteMask::All;
+	BlendFactor    srcBlend      = BlendFactor::One;
+	BlendFactor    dstBlend      = BlendFactor::Zero;
+	BlendOp        blendOp       = BlendOp::Add;
 	BlendFactor    srcBlendAlpha = BlendFactor::One;
 	BlendFactor    dstBlendAlpha = BlendFactor::Zero;
-	BlendOp        blendOpAlpha = BlendOp::Add;
+	BlendOp        blendOpAlpha  = BlendOp::Add;
 };
 
 struct StencilDesc final
 {
 	StencilFunc stencilFunc = StencilFunc::Always;
-	StencilOp   failOp = StencilOp::Keep;
+	StencilOp   failOp      = StencilOp::Keep;
 	StencilOp   depthFailOp = StencilOp::Keep;
-	StencilOp   passOp = StencilOp::Keep;
+	StencilOp   passOp      = StencilOp::Keep;
 };
 
 struct ShaderCompileMacro final
@@ -657,6 +648,9 @@ using ConstantBufferPtr = std::shared_ptr<ConstantBuffer>;
 struct Texture;
 using TexturePtr = std::shared_ptr<Texture>;
 
+struct RenderTarget;
+using RenderTargetPtr = std::shared_ptr<RenderTarget>;
+
 #pragma endregion
 
 #pragma endregion
@@ -757,6 +751,7 @@ public:
 	std::expected<TexturePtr, std::string>        CreateTexture1D(const Texture1DCreateInfo& createInfo);
 	std::expected<TexturePtr, std::string>        CreateTexture2D(const Texture2DCreateInfo& createInfo);
 	std::expected<TexturePtr, std::string>        CreateTexture3D(const Texture3DCreateInfo& createInfo);
+	std::expected<RenderTargetPtr, std::string>   CreateRenderTarget(const std::vector<TexturePtr> colorTextures, TexturePtr depthStencilTexture = nullptr);
 
 	// RHI Resources Delete
 	void DeleteRHIResource(ShaderProgramPtr& resource);
@@ -765,6 +760,7 @@ public:
 	void DeleteRHIResource(BufferPtr& resource);
 	void DeleteRHIResource(ConstantBufferPtr& resource);
 	void DeleteRHIResource(TexturePtr& resource);
+	void DeleteRHIResource(RenderTargetPtr& resource);
 
 	// RHI Resources Mod
 	void ClearBufferRW(BufferPtr buffer, uint32_t value);
@@ -784,7 +780,6 @@ public:
 	void ClearTextureRW(TexturePtr texture, float value);
 	void* Map(TexturePtr handle, MapType type);
 	void Unmap(TexturePtr handle);
-
 	void UpdateTexture(
 		TexturePtr handle, const void* mem,
 		uint32_t mip,
@@ -793,19 +788,19 @@ public:
 		size_t offsetZ, size_t sizeZ,
 		size_t rowPitch, size_t depthPitch
 	);
-
-
 	void CopyResource(TexturePtr src, TexturePtr dst);
 
 	// RHI Resources Bind
 	void BindShaderProgram(ShaderProgramPtr resource);
 	void BindPipelineState(PipelineStatePtr resource);
-	void BindSamplerState(SamplerStatePtr resource, uint32_t slot);
-	void BindConstantBuffer(ConstantBufferPtr resource, uint32_t slot);
-	void BindVertexBuffer(BufferPtr resource);
+	void BindSamplerState(SamplerStatePtr resource, ShaderType shaderType, uint32_t slot);
+	void BindConstantBuffer(ConstantBufferPtr resource, ShaderType shaderType, uint32_t slot);
+	void BindShaderResource(BufferPtr resource, ShaderType shaderType, uint32_t slot);
+	void BindShaderResource(TexturePtr resource, ShaderType shaderType, uint32_t slot);
+	
+	void BindVertexBuffer(BufferPtr resource, uint32_t slot = 0);
 	void BindVertexBuffers(const std::vector<BufferPtr>& resources);
 	void BindIndexBuffer(BufferPtr resource);
-	void BindTexture(TexturePtr resource, uint32_t slot);
 };
 
 #pragma endregion

@@ -230,11 +230,11 @@ void GameApp::OnFrame()
 	SetMainFrame();
 	BindShaderProgram(m_shaderProgram);
 	BindPipelineState(m_pipelineState);
-	BindSamplerState(m_samplerState, 0);
-	BindConstantBuffer(m_constantBuffer, 0);
+	BindSamplerState(m_samplerState, ShaderType::Pixel, 0);
+	BindConstantBuffer(m_constantBuffer, ShaderType::Vertex, 0);
 	BindVertexBuffers({ m_vertexBuffer, m_instanceRotationBuffer, m_instanceColorBuffer });
 	BindIndexBuffer(m_indexBuffer);
-	BindTexture(m_texture, 0);
+	BindShaderResource(m_texture, ShaderType::Pixel, 0);
 	
 	DrawIndexedInstanced(PrimitiveTopology::TriangleList, ARRAYSIZE(IndexData), 24);
 }

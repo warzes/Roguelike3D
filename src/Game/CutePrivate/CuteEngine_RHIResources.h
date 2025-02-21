@@ -13,7 +13,7 @@ struct ShaderProgram final
 
 	Microsoft::WRL::ComPtr<ID3D11ComputeShader>  computeShader;
 };
-
+//=============================================================================
 struct PipelineState final
 {
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState2>  rasterizerState;
@@ -21,12 +21,12 @@ struct PipelineState final
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
 	uint32_t                                        stencilRef;
 };
-
+//=============================================================================
 struct SamplerState final
 {
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> state;
 };
-
+//=============================================================================
 struct Buffer final
 {
 	Microsoft::WRL::ComPtr<ID3D11Buffer>               buffer;
@@ -37,12 +37,12 @@ struct Buffer final
 	UINT                                               dataBufferSize;
 	UINT                                               dataBufferStride;
 };
-
+//=============================================================================
 struct ConstantBuffer final
 {
 	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
 };
-
+//=============================================================================
 struct Texture final
 {
 	Microsoft::WRL::ComPtr<ID3D11Resource>             texture;
@@ -51,7 +51,16 @@ struct Texture final
 	TextureType                                        type;
 };
 //=============================================================================
-std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShaderFromFile(const ShaderLoadInfo& loadInfo, const std::string& target)
+struct RenderTarget final
+{
+	UINT                                               numRenderTargets{ 0 };
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView>     renderTargetViews[RenderTargetSlotCount];
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>     depthStencilView;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> unorderedAccessViews[RenderTargetSlotCount];
+	uint32_t                                           uavCounters[RenderTargetSlotCount] = { 0 };
+};
+//=============================================================================
+inline std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShaderFromFile(const ShaderLoadInfo& loadInfo, const std::string& target)
 {
 	if (loadInfo.entryPoint.empty()) return std::unexpected("Entry point in ShaderLoadInfo is empty.");
 
@@ -98,14 +107,14 @@ std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShaderFromFi
 //=============================================================================
 inline void* Map(ID3D11Resource* resource, MapType type)
 {
-	D3D11_MAPPED_SUBRESOURCE mappedSubresource = { 0 };
-	HRESULT result = rhiData::d3dContext->Map(resource, 0, ConvertToD3D11(type), 0, &mappedSubresource);
+	D3D11_MAPPED_SUBRESOURCE mappedData = { 0 };
+	HRESULT result = rhiData::d3dContext->Map(resource, 0, ConvertToD3D11(type), 0, &mappedData);
 	if (FAILED(result))
 	{
 		DX_ERR("ID3D11Device5::Map() failed: ", result);
 		return nullptr;
 	}
-	return mappedSubresource.pData;
+	return mappedData.pData;
 }
 //=============================================================================
 inline void UpdateSubresource(ID3D11Resource* resource, const void* mem, uint32_t mip, size_t offsetX, size_t sizeX, size_t offsetY, size_t sizeY, size_t offsetZ, size_t sizeZ, size_t rowPitch, size_t depthPitch)
@@ -131,6 +140,33 @@ inline void ClearRW(ID3D11UnorderedAccessView1* uav, float value)
 {
 	float d3dValues[4] = { value, 0.0f, 0.0f, 0.0f };
 	if (uav) rhiData::d3dContext->ClearUnorderedAccessViewFloat(uav, d3dValues);
+}
+//=============================================================================
+inline void SetShaderResource(ID3D11ShaderResourceView* const* resource, ShaderType shaderType, uint32_t slot)
+{
+	switch (shaderType)
+	{
+	case ShaderType::Vertex:
+		rhiData::d3dContext->VSSetShaderResources(slot, 1, resource);
+		break;
+	case ShaderType::Pixel:
+		rhiData::d3dContext->PSSetShaderResources(slot, 1, resource);
+		break;
+	case ShaderType::Hull:
+		rhiData::d3dContext->HSSetShaderResources(slot, 1, resource);
+		break;
+	case ShaderType::Domain:
+		rhiData::d3dContext->DSSetShaderResources(slot, 1, resource);
+		break;
+	case ShaderType::Geometry:
+		rhiData::d3dContext->GSSetShaderResources(slot, 1, resource);
+		break;
+	case ShaderType::Compute:
+		rhiData::d3dContext->CSSetShaderResources(slot, 1, resource);
+		break;
+	default:
+		break;
+	}
 }
 //=============================================================================
 std::expected<ShaderProgramPtr, std::string> CuteEngineApp::LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo)
@@ -369,16 +405,16 @@ std::expected<BufferPtr, std::string> CuteEngineApp::CreateBuffer(const BufferCr
 {
 	BufferPtr buffer = std::make_shared<Buffer>();
 
-	D3D11_USAGE bufferUsage = D3D11_USAGE_IMMUTABLE;
+	D3D11_USAGE bufferUsage    = D3D11_USAGE_IMMUTABLE;
 	UINT        bufferCPUFlags = 0;
 	UINT        bufferBindFlag = 0;
 	UINT        bufferMiscFlag = 0;
 
 	bool isStructured = false;
-	bool isUAV = false;
-	bool isCounter = false;
-	bool isAppend = false;
-	bool isIndirect = false;
+	bool isUAV        = false;
+	bool isCounter    = false;
+	bool isAppend     = false;
+	bool isIndirect   = false;
 
 	if (createInfo.flags & BufferFlags::VertexBuffer)
 		bufferBindFlag = D3D11_BIND_VERTEX_BUFFER;
@@ -433,11 +469,11 @@ std::expected<BufferPtr, std::string> CuteEngineApp::CreateBuffer(const BufferCr
 	HRESULT result = rhiData::d3dDevice->CreateBuffer(&bufferDesc, (createInfo.memoryData == nullptr) ? nullptr : &bufferData, &buffer->buffer);
 	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateBuffer() failed: ", result));
 
-	buffer->bindFlags = bufferBindFlag;
+	buffer->bindFlags        = bufferBindFlag;
 	buffer->dataBufferSize   = static_cast<UINT>(createInfo.size);
 	buffer->dataBufferStride = static_cast<UINT>(createInfo.stride);
 
-	size_t numElements = createInfo.size / createInfo.stride;
+	const size_t numElements = createInfo.size / createInfo.stride;
 
 	if (isIndirect)
 	{
@@ -775,6 +811,11 @@ void CuteEngineApp::DeleteRHIResource(TexturePtr& resource)
 	resource.reset();
 }
 //=============================================================================
+void CuteEngineApp::DeleteRHIResource(RenderTargetPtr& resource)
+{
+	resource.reset();
+}
+//=============================================================================
 void CuteEngineApp::ClearBufferRW(BufferPtr buffer, uint32_t value)
 {
 	::ClearRW(buffer->dataUAV.Get(), value);
@@ -864,15 +905,13 @@ void CuteEngineApp::BindShaderProgram(ShaderProgramPtr resource)
 {
 	if (!resource) [[unlikely]] return;
 
-	rhiData::d3dContext->VSSetShader(resource->vertexShader.Get(), 0, 0);
-	rhiData::d3dContext->PSSetShader(resource->pixelShader.Get(), 0, 0);
-
 	rhiData::d3dContext->IASetInputLayout(resource->inputLayout.Get());
 
-	rhiData::d3dContext->HSSetShader(resource->hullShader.Get(), 0, 0);
-	rhiData::d3dContext->DSSetShader(resource->domainShader.Get(), 0, 0);
-
-	rhiData::d3dContext->GSSetShader(resource->geometryShader.Get(), 0, 0);
+	rhiData::d3dContext->VSSetShader(resource->vertexShader.Get(), nullptr, 0);
+	rhiData::d3dContext->PSSetShader(resource->pixelShader.Get(), nullptr, 0);
+	rhiData::d3dContext->HSSetShader(resource->hullShader.Get(), nullptr, 0);
+	rhiData::d3dContext->DSSetShader(resource->domainShader.Get(), nullptr, 0);
+	rhiData::d3dContext->GSSetShader(resource->geometryShader.Get(), nullptr, 0);
 }
 //=============================================================================
 void CuteEngineApp::BindPipelineState(PipelineStatePtr resource)
@@ -882,34 +921,102 @@ void CuteEngineApp::BindPipelineState(PipelineStatePtr resource)
 	rhiData::d3dContext->OMSetDepthStencilState(resource->depthStencilState.Get(), resource->stencilRef);
 }
 //=============================================================================
-void CuteEngineApp::BindSamplerState(SamplerStatePtr resource, uint32_t slot)
+void CuteEngineApp::BindSamplerState(SamplerStatePtr resource, ShaderType shaderType, uint32_t slot)
 {
-	rhiData::d3dContext->PSSetSamplers(slot, 1, resource->state.GetAddressOf());
+	switch (shaderType)
+	{
+	case ShaderType::Vertex: 
+		rhiData::d3dContext->VSSetSamplers(slot, 1, resource->state.GetAddressOf());
+		break;
+	case ShaderType::Pixel:
+		rhiData::d3dContext->PSSetSamplers(slot, 1, resource->state.GetAddressOf());
+		break;
+	case ShaderType::Hull:
+		rhiData::d3dContext->HSSetSamplers(slot, 1, resource->state.GetAddressOf());
+		break;
+	case ShaderType::Domain:
+		rhiData::d3dContext->DSSetSamplers(slot, 1, resource->state.GetAddressOf());
+		break;
+	case ShaderType::Geometry:
+		rhiData::d3dContext->GSSetSamplers(slot, 1, resource->state.GetAddressOf());
+		break;
+	case ShaderType::Compute:
+		rhiData::d3dContext->CSSetSamplers(slot, 1, resource->state.GetAddressOf());
+		break;
+	default:
+		break;
+	}
 }
 //=============================================================================
-void CuteEngineApp::BindConstantBuffer(ConstantBufferPtr resource, uint32_t slot)
+void CuteEngineApp::BindConstantBuffer(ConstantBufferPtr resource, ShaderType shaderType, uint32_t slot)
 {
-	rhiData::d3dContext->VSSetConstantBuffers(slot, 1, resource->buffer.GetAddressOf());
+	switch (shaderType)
+	{
+	case ShaderType::Vertex:
+		rhiData::d3dContext->VSSetConstantBuffers(slot, 1, resource->buffer.GetAddressOf());
+		break;
+	case ShaderType::Pixel:
+		rhiData::d3dContext->PSSetConstantBuffers(slot, 1, resource->buffer.GetAddressOf());
+		break;
+	case ShaderType::Hull:
+		rhiData::d3dContext->HSSetConstantBuffers(slot, 1, resource->buffer.GetAddressOf());
+		break;
+	case ShaderType::Domain:
+		rhiData::d3dContext->DSSetConstantBuffers(slot, 1, resource->buffer.GetAddressOf());
+		break;
+	case ShaderType::Geometry:
+		rhiData::d3dContext->GSSetConstantBuffers(slot, 1, resource->buffer.GetAddressOf());
+		break;
+	case ShaderType::Compute:
+		rhiData::d3dContext->CSSetConstantBuffers(slot, 1, resource->buffer.GetAddressOf());
+		break;
+	default:
+		break;
+	}
 }
 //=============================================================================
-void CuteEngineApp::BindVertexBuffer(BufferPtr resource)
+void CuteEngineApp::BindShaderResource(BufferPtr resource, ShaderType shaderType, uint32_t slot)
 {
-	// TODO:
+	SetShaderResource(resource->dataView.GetAddressOf(), shaderType, slot);
+}
+//=============================================================================
+void CuteEngineApp::BindShaderResource(TexturePtr resource, ShaderType shaderType, uint32_t slot)
+{
+	SetShaderResource(resource->dataView.GetAddressOf(), shaderType, slot);
+}
+//=============================================================================
+void CuteEngineApp::BindVertexBuffer(BufferPtr resource, uint32_t slot)
+{
+	uint32_t& id = RHIStateCache::currentFreeVertexBuffer;
+
+	id = slot;
+	RHIStateCache::vertexBuffer[id] = resource->buffer.Get();
+	RHIStateCache::vertexBufferStride[id] = resource->dataBufferStride;
+	RHIStateCache::vertexBufferOffset[id] = 0;
+
+	rhiData::d3dContext->IASetVertexBuffers(
+		slot, 1,
+		RHIStateCache::vertexBuffer,
+		RHIStateCache::vertexBufferStride,
+		RHIStateCache::vertexBufferOffset);
 }
 //=============================================================================
 void CuteEngineApp::BindVertexBuffers(const std::vector<BufferPtr>& resources)
 {
-	RHIStateCache::currentFreeVertexBuffer = 0;
+	uint32_t& id = RHIStateCache::currentFreeVertexBuffer;
+
+	id = 0;
 	for (size_t i = 0; i < resources.size(); i++)
 	{
-		RHIStateCache::vertexBuffer[RHIStateCache::currentFreeVertexBuffer] = resources[i]->buffer.Get();
-		RHIStateCache::vertexBufferStride[RHIStateCache::currentFreeVertexBuffer] = resources[i]->dataBufferStride;
+		RHIStateCache::vertexBuffer[id] = resources[i]->buffer.Get();
+		RHIStateCache::vertexBufferStride[id] = resources[i]->dataBufferStride;
+		RHIStateCache::vertexBufferOffset[id] = 0;
 
-		RHIStateCache::currentFreeVertexBuffer++;
-		assert(RHIStateCache::currentFreeVertexBuffer < MaxVertexBuffers);
+		id++;
+		assert(id < MaxVertexBuffers);
 	}
 	rhiData::d3dContext->IASetVertexBuffers(
-		0, RHIStateCache::currentFreeVertexBuffer, 
+		0, id,
 		RHIStateCache::vertexBuffer, 
 		RHIStateCache::vertexBufferStride, 
 		RHIStateCache::vertexBufferOffset);
@@ -918,10 +1025,5 @@ void CuteEngineApp::BindVertexBuffers(const std::vector<BufferPtr>& resources)
 void CuteEngineApp::BindIndexBuffer(BufferPtr resource)
 {
 	rhiData::d3dContext->IASetIndexBuffer(resource->buffer.Get(), DXGI_FORMAT_R32_UINT, 0); // TODO: DXGI_FORMAT_R32_UINT должно передаваться
-}
-//=============================================================================
-void CuteEngineApp::BindTexture(TexturePtr resource, uint32_t slot)
-{
-	rhiData::d3dContext->PSSetShaderResources(slot, 1, resource->dataView.GetAddressOf());
 }
 //=============================================================================

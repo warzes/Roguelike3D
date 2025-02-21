@@ -8,9 +8,6 @@
 //=============================================================================
 // Constants
 //=============================================================================
-constexpr size_t MaxVertexBuffers = 16;
-
-//=============================================================================
 
 //=============================================================================
 // Enums
@@ -52,7 +49,7 @@ inline DXGI_FORMAT ConvertToD3D11(DataFormat format)
 	}
 }
 //=============================================================================
-DXGI_FORMAT ConvertToD3D11(TexelsFormat format)
+inline DXGI_FORMAT ConvertToD3D11(TexelsFormat format)
 {
 	switch (format)
 	{
@@ -101,6 +98,7 @@ inline D3D11_FILL_MODE ConvertToD3D11(FillMode fillMode)
 	{
 	case FillMode::Solid:     return D3D11_FILL_SOLID;
 	case FillMode::Wireframe: return D3D11_FILL_WIREFRAME;
+	default:                  return D3D11_FILL_SOLID;
 	}
 }
 //=============================================================================
@@ -111,6 +109,7 @@ inline D3D11_CULL_MODE ConvertToD3D11(CullMode cullMode)
 	case CullMode::Back:  return D3D11_CULL_BACK;
 	case CullMode::Front: return D3D11_CULL_FRONT;
 	case CullMode::None:  return D3D11_CULL_NONE;
+	default:              return D3D11_CULL_BACK;
 	}
 }
 //=============================================================================
@@ -139,7 +138,7 @@ inline D3D11_TEXTURE_ADDRESS_MODE ConvertToD3D11(AddressMode mode)
 	case AddressMode::Mirror: return D3D11_TEXTURE_ADDRESS_MIRROR;
 	case AddressMode::Clamp:  return D3D11_TEXTURE_ADDRESS_CLAMP;
 	case AddressMode::Border: return D3D11_TEXTURE_ADDRESS_BORDER;
-	default: return D3D11_TEXTURE_ADDRESS_WRAP;
+	default:                  return D3D11_TEXTURE_ADDRESS_WRAP;
 	}
 }
 //=============================================================================
@@ -230,7 +229,7 @@ inline D3D11_BLEND ConvertToD3D11(BlendFactor type)
 	case BlendFactor::DstColor:         return D3D11_BLEND_DEST_COLOR;
 	case BlendFactor::OneMinusSrcColor: return D3D11_BLEND_INV_SRC_COLOR;
 	case BlendFactor::OneMinusDstColor: return D3D11_BLEND_INV_DEST_COLOR;
-	default: return D3D11_BLEND_ONE;
+	default:                            return D3D11_BLEND_ONE;
 	}
 }
 //=============================================================================
@@ -243,7 +242,7 @@ inline D3D11_BLEND_OP ConvertToD3D11(BlendOp type)
 	case BlendOp::RevSubtract: return D3D11_BLEND_OP_REV_SUBTRACT;
 	case BlendOp::Min:         return D3D11_BLEND_OP_MIN;
 	case BlendOp::Max:         return D3D11_BLEND_OP_MAX;
-	default: return D3D11_BLEND_OP_ADD;
+	default:                   return D3D11_BLEND_OP_ADD;
 	}
 }
 //=============================================================================
