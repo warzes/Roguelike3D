@@ -23,12 +23,12 @@ private:
 	ShaderProgramPtr  m_shaderProgram{ nullptr };
 	PipelineStatePtr  m_pipelineState{ nullptr };
 	SamplerStatePtr   m_samplerState{ nullptr };
-	ConstantBufferPtr         m_constantBuffer{ nullptr };
+	ConstantBufferPtr m_constantBuffer{ nullptr };
 
 	BufferPtr         m_vertexBuffer{ nullptr };
 	BufferPtr         m_instanceRotationBuffer{ nullptr };
 	BufferPtr         m_instanceColorBuffer{ nullptr };
 	BufferPtr         m_indexBuffer{ nullptr };
 
-	Texture2DPtr      m_texture{ nullptr };
+	TexturePtr        m_texture{ nullptr };
 };

@@ -93,12 +93,13 @@ bool GameApp::OnInit()
 
 	// Create VertexBuffer
 	{
-		BufferCreateInfoOld vbci{};
-		vbci.usage      = BufferUsage::Immutable;
+		BufferCreateInfo vbci{};
+		vbci.flags      = BufferFlags::VertexBuffer;
 		vbci.size       = sizeof(VertexData);
 		vbci.memoryData = VertexData;
+		vbci.stride     = 8 * sizeof(float);
 
-		auto resource = CreateVertexBuffer(vbci);
+		auto resource = CreateBuffer(vbci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -109,12 +110,13 @@ bool GameApp::OnInit()
 
 	// Create InstanceRotationBuffer
 	{
-		BufferCreateInfoOld vbci{};
-		vbci.usage      = BufferUsage::Immutable;
-		vbci.size = sizeof(InstanceRotationData);
+		BufferCreateInfo vbci{};
+		vbci.flags      = BufferFlags::VertexBuffer;
+		vbci.size       = sizeof(InstanceRotationData);
 		vbci.memoryData = InstanceRotationData;
+		vbci.stride     = 3 * sizeof(float);
 
-		auto resource = CreateVertexBuffer(vbci);
+		auto resource = CreateBuffer(vbci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -125,12 +127,13 @@ bool GameApp::OnInit()
 
 	// Create InstanceColorBuffer
 	{
-		BufferCreateInfoOld vbci{};
-		vbci.usage = BufferUsage::Immutable;
-		vbci.size = sizeof(InstanceColorData);
+		BufferCreateInfo vbci{};
+		vbci.flags      = BufferFlags::VertexBuffer;
+		vbci.size       = sizeof(InstanceColorData);
 		vbci.memoryData = InstanceColorData;
+		vbci.stride     = 3 * sizeof(float);
 
-		auto resource = CreateVertexBuffer(vbci);
+		auto resource = CreateBuffer(vbci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -141,12 +144,13 @@ bool GameApp::OnInit()
 
 	// Create IndexBuffer
 	{
-		BufferCreateInfoOld ibci{};
-		ibci.usage = BufferUsage::Immutable;
-		ibci.size = sizeof(IndexData);
+		BufferCreateInfo ibci{};
+		ibci.flags      = BufferFlags::IndexBuffer;
+		ibci.size       = sizeof(IndexData);
 		ibci.memoryData = IndexData;
+		ibci.stride     = sizeof(uint32_t);
 
-		auto resource = CreateIndexBuffer(ibci);
+		auto resource = CreateBuffer(ibci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
