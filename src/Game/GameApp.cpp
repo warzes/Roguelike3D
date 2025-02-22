@@ -227,7 +227,7 @@ void GameApp::OnUpdate(double deltaTime)
 //=============================================================================
 void GameApp::OnFrame()
 {
-	SetMainFrame();
+	SetMainFrame(Color{ 0.392156899f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
 	BindShaderProgram(m_shaderProgram);
 	BindPipelineState(m_pipelineState);
 	BindSamplerState(m_samplerState, ShaderType::Pixel, 0);

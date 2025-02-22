@@ -400,12 +400,18 @@ void CuteEngineApp::EndPerfEvent()
 	rhiData::d3dDebugAnnotation->EndEvent();
 }
 //=============================================================================
-void CuteEngineApp::SetMainFrame()
+void CuteEngineApp::SetMainFrame(const std::optional<Color>& clearColor, const std::optional<float>& clearDepth, const std::optional<uint8_t>& clearStencil)
 {
-	// TODO: сделать возможность устанавливать цвет очистки. В виде optional и в случае нуля очистка вообще не выполняется
+	if (clearColor.has_value())
+	{
+		rhiData::d3dContext->ClearRenderTargetView(rhiData::renderTargetView.Get(), clearColor.value().Get());
+	}
+	if (clearDepth.has_value())
+	{
+		uint8_t stencil = clearStencil.has_value() ? clearStencil.value() : 0;
+		rhiData::d3dContext->ClearDepthStencilView(rhiData::depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, clearDepth.value(), stencil);
+	}
 
-	rhiData::d3dContext->ClearRenderTargetView(rhiData::renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
-	rhiData::d3dContext->ClearDepthStencilView(rhiData::depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	rhiData::d3dContext->OMSetRenderTargets(1, rhiData::renderTargetView.GetAddressOf(), rhiData::depthStencilView.Get());
 	rhiData::d3dContext->RSSetViewports(1, &rhiData::viewport);
 }

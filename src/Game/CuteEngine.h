@@ -66,6 +66,16 @@ struct Color final
 	float a{ 1.0f };
 };
 
+struct Viewport final
+{
+	float TopLeftX{ 0.0f };
+	float TopLeftY{ 0.0f };
+	float Width{ 0.0f };
+	float Height{ 0.0f };
+	float MinDepth{ 0.0f };
+	float MaxDepth{ 1.0f };
+};
+
 #pragma endregion
 //=============================================================================
 #pragma region [ Input ]

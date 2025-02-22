@@ -1079,23 +1079,25 @@ void CuteEngineApp::SetRenderTarget(RenderTargetPtr rt, const std::optional<Colo
 		return;
 	}
 
-	if (clearColor.has_value())
+	ID3D11RenderTargetView* rtv[RenderTargetSlotCount] = { nullptr };
+	for (size_t i = 0; i < rt->numRenderTargets; i++)
 	{
-		for (size_t i = 0; i < rt->numRenderTargets; i++)
+		rtv[i] = rt->renderTargetViews[i].Get();
+
+		if (clearColor.has_value() && rtv[i])
 		{
-			if (rt->renderTargetViews[i])
-			{
-				rhiData::d3dContext->ClearRenderTargetView(rt->renderTargetViews[i].Get(), clearColor.value().Get());
-			}
+			rhiData::d3dContext->ClearRenderTargetView(rtv[i], clearColor.value().Get());
 		}
 	}
 
-	if (clearDepth.has_value())
+	ID3D11DepthStencilView* dsv = rt->depthStencilView.Get();
+	if (clearDepth.has_value() && dsv)
 	{
 		uint8_t stencil = clearStencil.has_value() ? clearStencil.value() : 0;
 		rhiData::d3dContext->ClearDepthStencilView(rt->depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, clearDepth.value(), stencil);
-
 		// TODO: переделать так чтобы можно было очищать что-то одно - дефбуфер или стенсил
 	}
+
+	rhiData::d3dContext->OMSetRenderTargets(rt->numRenderTargets, rtv, dsv);
 }
 //=============================================================================
