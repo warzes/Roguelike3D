@@ -54,10 +54,10 @@ struct Texture final
 struct RenderTarget final
 {
 	UINT                                               numRenderTargets{ 0 };
-	Microsoft::WRL::ComPtr<ID3D11RenderTargetView>     renderTargetViews[RenderTargetSlotCount];
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView1>    renderTargetViews[RenderTargetSlotCount];
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>     depthStencilView;
-	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> unorderedAccessViews[RenderTargetSlotCount];
-	uint32_t                                           uavCounters[RenderTargetSlotCount] = { 0 };
+	//Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> unorderedAccessViews[RenderTargetSlotCount];
+	//uint32_t                                           uavCounters[RenderTargetSlotCount] = { 0 };
 };
 //=============================================================================
 inline std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShaderFromFile(const ShaderLoadInfo& loadInfo, const std::string& target)
@@ -781,6 +781,50 @@ std::expected<TexturePtr, std::string> CuteEngineApp::CreateTexture3D(const Text
 	return texture;
 }
 //=============================================================================
+std::expected<RenderTargetPtr, std::string> CuteEngineApp::CreateRenderTarget(const std::vector<TexturePtr> colorTextures, TexturePtr depthStencilTexture)
+{
+	RenderTargetPtr rt = std::shared_ptr<RenderTarget>();
+
+	rt->numRenderTargets = colorTextures.size();
+
+	for (size_t i = 0; i < colorTextures.size(); i++)
+	{
+		D3D11_RENDER_TARGET_VIEW_DESC1 rtDesc{};
+		rtDesc.Format        = DXGI_FORMAT_UNKNOWN;
+		rtDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+
+		HRESULT result = rhiData::d3dDevice->CreateRenderTargetView1(colorTextures[i]->texture.Get(), &rtDesc, rt->renderTargetViews[i].GetAddressOf());
+		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateRenderTargetView1() failed: ", result));
+	}
+
+	if (depthStencilTexture)
+	{
+		D3D11_SHADER_RESOURCE_VIEW_DESC depthTextureDesc;
+		depthStencilTexture->dataView->GetDesc(&depthTextureDesc);
+
+		DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		switch (depthTextureDesc.Format)
+		{
+		case DXGI_FORMAT_R16_UNORM:
+			depthFormat = DXGI_FORMAT_D16_UNORM; break;
+		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+			depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT; break;
+		case DXGI_FORMAT_R32_FLOAT:
+			depthFormat = DXGI_FORMAT_D32_FLOAT; break;
+		}
+
+		D3D11_DEPTH_STENCIL_VIEW_DESC dsDesc{};
+		dsDesc.Format = depthFormat;
+		dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+
+		HRESULT result = rhiData::d3dDevice->CreateDepthStencilView(depthStencilTexture->texture.Get(), &dsDesc, rt->depthStencilView.GetAddressOf());
+		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateDepthStencilView() failed: ", result));
+	}
+
+
+	return rt;
+}
+//=============================================================================
 void CuteEngineApp::DeleteRHIResource(ShaderProgramPtr& resource)
 {
 	resource.reset();
@@ -1025,5 +1069,33 @@ void CuteEngineApp::BindVertexBuffers(const std::vector<BufferPtr>& resources)
 void CuteEngineApp::BindIndexBuffer(BufferPtr resource)
 {
 	rhiData::d3dContext->IASetIndexBuffer(resource->buffer.Get(), DXGI_FORMAT_R32_UINT, 0); // TODO: DXGI_FORMAT_R32_UINT должно передаваться
+}
+//=============================================================================
+void CuteEngineApp::SetRenderTarget(RenderTargetPtr rt, const std::optional<Color>& clearColor, const std::optional<float>& clearDepth, const std::optional<uint8_t>& clearStencil)
+{
+	if (!rt) [[unlikely]]
+	{
+		SetMainFrame(clearColor, clearDepth, clearStencil);
+		return;
+	}
+
+	if (clearColor.has_value())
+	{
+		for (size_t i = 0; i < rt->numRenderTargets; i++)
+		{
+			if (rt->renderTargetViews[i])
+			{
+				rhiData::d3dContext->ClearRenderTargetView(rt->renderTargetViews[i].Get(), clearColor.value().Get());
+			}
+		}
+	}
+
+	if (clearDepth.has_value())
+	{
+		uint8_t stencil = clearStencil.has_value() ? clearStencil.value() : 0;
+		rhiData::d3dContext->ClearDepthStencilView(rt->depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, clearDepth.value(), stencil);
+
+		// TODO: переделать так чтобы можно было очищать что-то одно - дефбуфер или стенсил
+	}
 }
 //=============================================================================

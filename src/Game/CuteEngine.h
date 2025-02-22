@@ -56,6 +56,16 @@ void Print(const std::string& message);
 void Print(const std::wstring& message);
 void Fatal(const std::string& error);
 
+struct Color final
+{
+	const float* Get() const { return &r; }
+
+	float r{ 1.0f };
+	float g{ 1.0f };
+	float b{ 1.0f };
+	float a{ 1.0f };
+};
+
 #pragma endregion
 //=============================================================================
 #pragma region [ Input ]
@@ -738,7 +748,7 @@ public:
 	// RHI Core
 	void BeginPerfEvent(const wchar_t* name);
 	void EndPerfEvent();
-	void SetMainFrame();
+	void SetMainFrame(const std::optional<Color>& clearColor, const std::optional<float>& clearDepth, const std::optional<uint8_t>& clearStencil);
 	void DrawIndexedInstanced(PrimitiveTopology topology, uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, uint32_t baseVertexLocation = 0, uint32_t startInstanceLocation = 0);
 	void RHIDeviceFlush();
 
@@ -801,6 +811,8 @@ public:
 	void BindVertexBuffer(BufferPtr resource, uint32_t slot = 0);
 	void BindVertexBuffers(const std::vector<BufferPtr>& resources);
 	void BindIndexBuffer(BufferPtr resource);
+
+	void SetRenderTarget(RenderTargetPtr rt, const std::optional<Color>& clearColor, const std::optional<float>& clearDepth, const std::optional<uint8_t>& clearStencil);
 };
 
 #pragma endregion
