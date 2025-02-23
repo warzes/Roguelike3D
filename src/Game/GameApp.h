@@ -1,16 +1,5 @@
 ﻿#pragma once
 
-struct float4 { float x, y, z, w; };
-
-struct Constants
-{
-	float4 projection[4];
-	float4 lightVector;
-	float4 rotate;
-	float4 scale;
-	float4 translate;
-};
-
 class GameApp final : public CuteEngineApp
 {
 public:

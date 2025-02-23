@@ -416,6 +416,18 @@ void CuteEngineApp::SetMainFrame(const std::optional<Color>& clearColor, const s
 	rhiData::d3dContext->RSSetViewports(1, &rhiData::viewport);
 }
 //=============================================================================
+void CuteEngineApp::Draw(PrimitiveTopology topology, uint32_t vertexCount, uint32_t startVertexLocation)
+{
+	rhiData::d3dContext->IASetPrimitiveTopology(ConvertToD3D11(topology));
+	rhiData::d3dContext->Draw(count, startVertex);
+}
+//=============================================================================
+void CuteEngineApp::DrawIndexed(PrimitiveTopology topology, uint32_t count, uint32_t startIndex, uint32_t startVertex)
+{
+	rhiData::d3dContext->IASetPrimitiveTopology(ConvertToD3D11(topology));
+	rhiData::d3dContext->DrawIndexed(count, startIndex, startVertex);
+}
+//=============================================================================
 void CuteEngineApp::DrawIndexedInstanced(PrimitiveTopology topology, uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
 {
 	rhiData::d3dContext->IASetPrimitiveTopology(ConvertToD3D11(topology));

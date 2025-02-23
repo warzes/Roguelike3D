@@ -24,6 +24,9 @@
     <ClCompile Include="HighResolutionTimer.cpp">
       <Filter>CuteOther</Filter>
     </ClCompile>
+    <ClCompile Include="DemoCube.cpp">
+      <Filter>Demo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -66,6 +69,9 @@
     <ClInclude Include="CutePrivate\CuteEngine_RHIStateCache.h">
       <Filter>CuteEngine\CutePrivate</Filter>
     </ClInclude>
+    <ClInclude Include="DemoCube.h">
+      <Filter>Demo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CuteEngine">
@@ -82,6 +88,12 @@
     </Filter>
     <Filter Include="CuteOther">
       <UniqueIdentifier>{440bc530-3e42-440d-92d1-8b505bbedd57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tutorial">
+      <UniqueIdentifier>{762137b8-310e-4649-80be-3e95228e631c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Demo">
+      <UniqueIdentifier>{8f629296-7999-4a02-93c0-1e3488535a59}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
