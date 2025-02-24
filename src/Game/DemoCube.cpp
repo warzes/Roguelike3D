@@ -1,7 +1,5 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "DemoCube.h"
-
-extern unsigned __int64 __stdcall GetTickCount64();
 
 //=============================================================================
 namespace
@@ -217,8 +215,8 @@ bool DemoCube::OnInit()
 		const size_t stride3 = stride2 + 2 * sizeof(float);   // uv1
 		const size_t stride4 = stride3 + 2 * sizeof(float);   // normal
 		const size_t stride5 = stride4 + 3 * sizeof(float);   // boneIDs
-		const size_t stride6 = stride6 + 4 * sizeof(uint8_t); // boneWeights
-		const size_t stride7 = stride7 + 4 * sizeof(float);   // color
+		const size_t stride6 = stride5 + 4 * sizeof(uint8_t); // boneWeights
+		const size_t stride7 = stride6 + 4 * sizeof(float);   // color
 
 		ShaderProgramLoadInfo spli{};
 		spli.vertexShader = { L"DemoCube.hlsl", "vs_main" };
@@ -336,7 +334,7 @@ bool DemoCube::OnInit()
 		}
 		m_texture = resource.value();
 
-		// TODO: доделать загрузку данных при инициализации
+		// TODO: РґРѕРґРµР»Р°С‚СЊ Р·Р°РіСЂСѓР·РєСѓ РґР°РЅРЅС‹С… РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 		UpdateTexture(
 			m_texture,
 			TextureData,
@@ -344,8 +342,8 @@ bool DemoCube::OnInit()
 			0, 2,
 			0, 2,
 			0, 1,
-			2 * 4, // Размер строки в байтах (ширина текстуры * количество байт на пиксель), для данного примера textureData.SysMemPitch = 2 * sizeof(UINT);
-			0);    // Размер среза в байтах (для 2D текстур обычно 0)
+			2 * 4, // Р Р°Р·РјРµСЂ СЃС‚СЂРѕРєРё РІ Р±Р°Р№С‚Р°С… (С€РёСЂРёРЅР° С‚РµРєСЃС‚СѓСЂС‹ * РєРѕР»РёС‡РµСЃС‚РІРѕ Р±Р°Р№С‚ РЅР° РїРёРєСЃРµР»СЊ), РґР»СЏ РґР°РЅРЅРѕРіРѕ РїСЂРёРјРµСЂР° textureData.SysMemPitch = 2 * sizeof(UINT);
+			0);    // Р Р°Р·РјРµСЂ СЃСЂРµР·Р° РІ Р±Р°Р№С‚Р°С… (РґР»СЏ 2D С‚РµРєСЃС‚СѓСЂ РѕР±С‹С‡РЅРѕ 0)
 	}
 
 	return true;
@@ -365,19 +363,19 @@ void DemoCube::OnClose()
 void DemoCube::OnUpdate(double deltaTime)
 {
 	// Update our time
-	static float t = 0.0f;
+	//static float t = 0.0f;
 
-	static unsigned __int64 dwTimeStart = 0;
-	unsigned __int64 dwTimeCur = GetTickCount64();
-	if (dwTimeStart == 0)
-	{
-		dwTimeStart = dwTimeCur;
-	}
-	t = (dwTimeCur - dwTimeStart) / 1000.0f;
+	//static unsigned __int64 dwTimeStart = 0;
+	//unsigned __int64 dwTimeCur = GetTickCount64();
+	//if (dwTimeStart == 0)
+	//{
+	//	dwTimeStart = dwTimeCur;
+	//}
+	//t = (dwTimeCur - dwTimeStart) / 1000.0f;
 
 	glm::mat4 projection = glm::perspective(glm::pi<float>() / 2.0F, GetWindowAspect(), 0.01f, 100.0f);
 	glm::mat4 view = glm::lookAt(glm::vec3(0.0F, 1.0F, -5.0F), glm::vec3(0.0F, 1.0F, 0.0F), glm::vec3(0.0F, 1.0F, 0.0F));
-	glm::mat4 world = glm::rotate(glm::mat4(1.0F), t, glm::vec3(0.0F, 1.0F, 0.0F));
+	glm::mat4 world = glm::rotate(glm::mat4(1.0F), 0.1f, glm::vec3(0.0F, 1.0F, 0.0F));
 
 	glm::mat4 mvp = projection * view * world;
 
@@ -397,6 +395,6 @@ void DemoCube::OnFrame()
 	BindIndexBuffer(m_indexBuffer);
 	BindShaderResource(m_texture, ShaderType::Pixel, 0);
 
-	DrawIndexedInstanced(PrimitiveTopology::TriangleList, ARRAYSIZE(IndexData), 24);
+	DrawIndexed(PrimitiveTopology::TriangleList, 36, 0, 0);
 }
 //=============================================================================

@@ -761,9 +761,8 @@ public:
 	void SetMainFrame(const std::optional<Color>& clearColor, const std::optional<float>& clearDepth, const std::optional<uint8_t>& clearStencil);
 
 	void Draw(PrimitiveTopology topology, uint32_t vertexCount, uint32_t startVertexLocation);
-	void DrawIndexed(PrimitiveTopology topology, uint32_t count, uint32_t startIndex, uint32_t startVertex);
-	void DrawInstanced(PrimitiveTopology topology, uint32_t instanceCount, uint32_t count, uint32_t startVertex, uint32_t startInstance);
-	void DrawIndexedInstanced(PrimitiveTopology topology, uint32_t instanceCount, uint32_t count, uint32_t startIndex, uint32_t startVertex, uint32_t startInstance);
+	void DrawIndexed(PrimitiveTopology topology, uint32_t indexCount, uint32_t startIndexLocation, uint32_t baseVertexLocation);
+	void DrawInstanced(PrimitiveTopology topology, uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation);
 	void DrawIndexedInstanced(PrimitiveTopology topology, uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, uint32_t baseVertexLocation = 0, uint32_t startInstanceLocation = 0);
 
 	void DrawInstancedIndirect(PrimitiveTopology topology, BufferPtr indirectArgs, size_t argsOffset);

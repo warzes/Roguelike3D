@@ -419,13 +419,19 @@ void CuteEngineApp::SetMainFrame(const std::optional<Color>& clearColor, const s
 void CuteEngineApp::Draw(PrimitiveTopology topology, uint32_t vertexCount, uint32_t startVertexLocation)
 {
 	rhiData::d3dContext->IASetPrimitiveTopology(ConvertToD3D11(topology));
-	rhiData::d3dContext->Draw(count, startVertex);
+	rhiData::d3dContext->Draw(vertexCount, startVertexLocation);
 }
 //=============================================================================
-void CuteEngineApp::DrawIndexed(PrimitiveTopology topology, uint32_t count, uint32_t startIndex, uint32_t startVertex)
+void CuteEngineApp::DrawIndexed(PrimitiveTopology topology, uint32_t indexCount, uint32_t startIndexLocation, uint32_t baseVertexLocation)
 {
 	rhiData::d3dContext->IASetPrimitiveTopology(ConvertToD3D11(topology));
-	rhiData::d3dContext->DrawIndexed(count, startIndex, startVertex);
+	rhiData::d3dContext->DrawIndexed(indexCount, startIndexLocation, baseVertexLocation);
+}
+//=============================================================================
+void CuteEngineApp::DrawInstanced(PrimitiveTopology topology, uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation)
+{
+	rhiData::d3dContext->IASetPrimitiveTopology(ConvertToD3D11(topology));
+	rhiData::d3dContext->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 }
 //=============================================================================
 void CuteEngineApp::DrawIndexedInstanced(PrimitiveTopology topology, uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
