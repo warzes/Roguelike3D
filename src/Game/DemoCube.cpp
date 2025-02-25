@@ -243,6 +243,38 @@ bool DemoCube::OnInit()
 	// Create PipelineState
 	{
 		PipelineStateCreateInfo psci{};
+		psci.rasterizerState.fillMode = FillMode::Solid;
+		psci.rasterizerState.cullMode = CullMode::Back;
+		psci.rasterizerState.counterDirection = CounterDirection::CW;
+
+		psci.blendState.blendDesc.blendEnabled                  = false;
+		psci.blendState.blendDesc.writeMask                     = ColorWriteMask::All;
+		psci.blendState.blendDesc.srcBlend                      = BlendFactor::One;
+		psci.blendState.blendDesc.dstBlend                      = BlendFactor::Zero;
+		psci.blendState.blendDesc.blendOp                       = BlendOp::Add;
+		psci.blendState.blendDesc.srcBlendAlpha                 = BlendFactor::One;
+		psci.blendState.blendDesc.dstBlendAlpha                 = BlendFactor::Zero;
+		psci.blendState.blendDesc.blendOpAlpha                  = BlendOp::Add;
+
+		psci.depthStencilState.depthEnabled                     = true;
+		psci.depthStencilState.writeMask                        = DepthWriteMask::All;
+		psci.depthStencilState.depthFunc                        = DepthFunc::Less;
+
+		psci.depthStencilState.stencilEnabled                   = false;
+		psci.depthStencilState.stencilRef                       = 0;
+		psci.depthStencilState.stencilReadMask                  = 0;
+		psci.depthStencilState.stencilWriteMask                 = 0;
+
+		psci.depthStencilState.frontFaceStencilDesc.stencilFunc = StencilFunc::Always;
+		psci.depthStencilState.frontFaceStencilDesc.failOp      = StencilOp::Keep;
+		psci.depthStencilState.frontFaceStencilDesc.depthFailOp = StencilOp::Keep;
+		psci.depthStencilState.frontFaceStencilDesc.passOp      = StencilOp::Keep;
+
+		psci.depthStencilState.backFaceStencilDesc.stencilFunc  = StencilFunc::Always;
+		psci.depthStencilState.backFaceStencilDesc.failOp       = StencilOp::Keep;
+		psci.depthStencilState.backFaceStencilDesc.depthFailOp  = StencilOp::Keep;
+		psci.depthStencilState.backFaceStencilDesc.passOp       = StencilOp::Keep;
+
 		auto resource = CreatePipelineState(psci);
 		if (!resource.has_value())
 		{
@@ -250,22 +282,6 @@ bool DemoCube::OnInit()
 			return false;
 		}
 		m_pipelineState = resource.value();
-	}
-
-	// Create SamplerState
-	{
-		SamplerStateCreateInfo ssci{};
-		ssci.filter = TextureFilter::MinMagMip_Point;
-		ssci.addressU = AddressMode::Wrap;
-		ssci.addressV = AddressMode::Wrap;
-		ssci.addressW = AddressMode::Wrap;
-		auto resource = CreateSamplerState(ssci);
-		if (!resource.has_value())
-		{
-			Fatal(resource.error());
-			return false;
-		}
-		m_samplerState = resource.value();
 	}
 
 	// Create ConstantBuffer
@@ -318,34 +334,6 @@ bool DemoCube::OnInit()
 		m_indexBuffer = resource.value();
 	}
 
-	// Create Texture2D
-	{
-		Texture2DCreateInfo tci{};
-		tci.width = 2;
-		tci.height = 2;
-		tci.mipCount = 1;
-		//tci.memoryData = TextureData;
-
-		auto resource = CreateTexture2D(tci);
-		if (!resource.has_value())
-		{
-			Fatal(resource.error());
-			return false;
-		}
-		m_texture = resource.value();
-
-		// TODO: доделать загрузку данных при инициализации
-		UpdateTexture(
-			m_texture,
-			TextureData,
-			0,
-			0, 2,
-			0, 2,
-			0, 1,
-			2 * 4, // Размер строки в байтах (ширина текстуры * количество байт на пиксель), для данного примера textureData.SysMemPitch = 2 * sizeof(UINT);
-			0);    // Размер среза в байтах (для 2D текстур обычно 0)
-	}
-
 	return true;
 }
 //=============================================================================
@@ -353,29 +341,20 @@ void DemoCube::OnClose()
 {
 	DeleteRHIResource(m_shaderProgram);
 	DeleteRHIResource(m_pipelineState);
-	DeleteRHIResource(m_samplerState);
 	DeleteRHIResource(m_constantBuffer);
 	DeleteRHIResource(m_vertexBuffer);
 	DeleteRHIResource(m_indexBuffer);
-	DeleteRHIResource(m_texture);
 }
 //=============================================================================
 void DemoCube::OnUpdate(double deltaTime)
 {
 	// Update our time
-	//static float t = 0.0f;
-
-	//static unsigned __int64 dwTimeStart = 0;
-	//unsigned __int64 dwTimeCur = GetTickCount64();
-	//if (dwTimeStart == 0)
-	//{
-	//	dwTimeStart = dwTimeCur;
-	//}
-	//t = (dwTimeCur - dwTimeStart) / 1000.0f;
+	static float t = 0.0f;
+	t += deltaTime;
 
 	glm::mat4 projection = glm::perspective(glm::pi<float>() / 2.0F, GetWindowAspect(), 0.01f, 100.0f);
-	glm::mat4 view = glm::lookAt(glm::vec3(0.0F, 1.0F, -5.0F), glm::vec3(0.0F, 1.0F, 0.0F), glm::vec3(0.0F, 1.0F, 0.0F));
-	glm::mat4 world = glm::rotate(glm::mat4(1.0F), 0.1f, glm::vec3(0.0F, 1.0F, 0.0F));
+	glm::mat4 view = glm::lookAt(glm::vec3(0.0F, 1.7F, -5.0F), glm::vec3(0.0F, 1.0F, 0.0F), glm::vec3(0.0F, 1.0F, 0.0F));
+	glm::mat4 world = glm::rotate(glm::mat4(1.0F), t, glm::vec3(0.0F, 1.0F, 0.0F));
 
 	glm::mat4 mvp = projection * view * world;
 
@@ -389,11 +368,9 @@ void DemoCube::OnFrame()
 	SetMainFrame(Color{ 0.392156899f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
 	BindShaderProgram(m_shaderProgram);
 	BindPipelineState(m_pipelineState);
-	BindSamplerState(m_samplerState, ShaderType::Pixel, 0);
 	BindConstantBuffer(m_constantBuffer, ShaderType::Vertex, 0);
 	BindVertexBuffer(m_vertexBuffer, 0);
 	BindIndexBuffer(m_indexBuffer);
-	BindShaderResource(m_texture, ShaderType::Pixel, 0);
 
 	DrawIndexed(PrimitiveTopology::TriangleList, 36, 0, 0);
 }

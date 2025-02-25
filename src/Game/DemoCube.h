@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class DemoCube final : public CuteEngineApp
 {
@@ -13,11 +13,8 @@ private:
 
 
 	PipelineStatePtr  m_pipelineState{ nullptr };
-	SamplerStatePtr   m_samplerState{ nullptr };
 	ConstantBufferPtr m_constantBuffer{ nullptr };
 
 	BufferPtr         m_vertexBuffer{ nullptr };
 	BufferPtr         m_indexBuffer{ nullptr };
-
-	TexturePtr        m_texture{ nullptr };
 };
