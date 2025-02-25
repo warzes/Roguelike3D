@@ -554,6 +554,12 @@ struct DepthStencilStateDescriptor final
 	StencilDesc    backFaceStencilDesc{};
 };
 
+struct RenderTargetColorDescriptor final
+{
+	TexelsFormat format{ TexelsFormat::RGBA8 };
+	bool         enable{ false };
+};
+
 #pragma endregion
 
 #pragma region [ RHI CreateInfo structs ]
@@ -644,6 +650,14 @@ struct Texture3DCreateInfo final
 
 struct TextureArrayCreateInfo final
 {
+};
+
+struct RenderTargetCreateInfo final
+{
+	RenderTargetColorDescriptor colorBuffers[RenderTargetSlotCount];
+	TexelsFormat                depthFormat{ TexelsFormat::D32F };
+	uint32_t                    width{ 0 };
+	uint32_t                    height{ 0 };
 };
 
 #pragma endregion

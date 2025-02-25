@@ -692,7 +692,7 @@ std::expected<TexturePtr, std::string> CuteEngineApp::CreateTexture2D(const Text
 		viewDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
 		viewDesc.Texture2D.MipLevels = createInfo.mipCount;
 
-		result = rhiData::d3dDevice->CreateShaderResourceView(texture->texture.Get(), nullptr, &texture->dataView);
+		result = rhiData::d3dDevice->CreateShaderResourceView(texture->texture.Get(), &viewDesc, &texture->dataView);
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateShaderResourceView() failed: ", result));
 	}
 
@@ -783,7 +783,7 @@ std::expected<TexturePtr, std::string> CuteEngineApp::CreateTexture3D(const Text
 //=============================================================================
 std::expected<RenderTargetPtr, std::string> CuteEngineApp::CreateRenderTarget(const std::vector<TexturePtr> colorTextures, TexturePtr depthStencilTexture)
 {
-	RenderTargetPtr rt = std::shared_ptr<RenderTarget>();
+	RenderTargetPtr rt = std::make_shared<RenderTarget>();
 
 	rt->numRenderTargets = colorTextures.size();
 

@@ -17,4 +17,8 @@ private:
 
 	BufferPtr         m_vertexBuffer{ nullptr };
 	BufferPtr         m_indexBuffer{ nullptr };
+
+	TexturePtr m_rt;
+	TexturePtr m_ds;
+	RenderTargetPtr m_rtv;
 };

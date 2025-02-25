@@ -334,6 +334,28 @@ bool DemoCube::OnInit()
 		m_indexBuffer = resource.value();
 	}
 
+	Texture2DCreateInfo tci;
+	tci.width = 1600;
+	tci.height = 900;
+	tci.flags = TextureFlags::RenderTarget;
+	auto resource = CreateTexture2D(tci);
+	m_rt = resource.value();
+
+	tci.format = TexelsFormat::D32F;
+	tci.flags = TextureFlags::DepthStencil;
+	resource = CreateTexture2D(tci);
+	m_ds = resource.value();
+
+	m_rtv = CreateRenderTarget({ m_rt }, m_ds).value();
+
+
+	RenderTargetCreateInfo rtci;
+	rtci.colorBuffers[0].enable = true;
+	rtci.width = 1600;
+	rtci.height = 900;
+
+	m_rtv = CreateRenderTarget(rtci).value();
+
 	return true;
 }
 //=============================================================================
@@ -365,13 +387,21 @@ void DemoCube::OnUpdate(double deltaTime)
 //=============================================================================
 void DemoCube::OnFrame()
 {
+	SetRenderTarget(m_rtv, Color{ 0.9f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
+	BindShaderProgram(m_shaderProgram);
+	BindPipelineState(m_pipelineState);
+	BindConstantBuffer(m_constantBuffer, ShaderType::Vertex, 0);
+	BindVertexBuffer(m_vertexBuffer, 0);
+	BindIndexBuffer(m_indexBuffer);
+	DrawIndexed(PrimitiveTopology::TriangleList, 36, 0, 0);
+
+
 	SetMainFrame(Color{ 0.392156899f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
 	BindShaderProgram(m_shaderProgram);
 	BindPipelineState(m_pipelineState);
 	BindConstantBuffer(m_constantBuffer, ShaderType::Vertex, 0);
 	BindVertexBuffer(m_vertexBuffer, 0);
 	BindIndexBuffer(m_indexBuffer);
-
 	DrawIndexed(PrimitiveTopology::TriangleList, 36, 0, 0);
 }
 //=============================================================================
