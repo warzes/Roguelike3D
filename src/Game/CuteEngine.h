@@ -274,6 +274,7 @@ enum class TexelsFormat : uint8_t
 
 	UnknownDepth, // depth formats below
 
+	DepthNone,
 	D16,
 	D24S8,
 	D32F,
@@ -557,7 +558,6 @@ struct DepthStencilStateDescriptor final
 struct RenderTargetColorDescriptor final
 {
 	TexelsFormat format{ TexelsFormat::RGBA8 };
-	bool         enable{ false };
 };
 
 #pragma endregion
@@ -633,7 +633,7 @@ struct Texture2DCreateInfo final
 	TexelsFormat format{ TexelsFormat::RGBA8 };
 	uint32_t     flags{ 0 };
 	void*        memoryData{ nullptr };
-	size_t       size{ 0 };
+	size_t       memorySize{ 0 };
 };
 
 struct Texture3DCreateInfo final
@@ -654,8 +654,9 @@ struct TextureArrayCreateInfo final
 
 struct RenderTargetCreateInfo final
 {
+	uint8_t                     rtSlotCount{ 1 };
 	RenderTargetColorDescriptor colorBuffers[RenderTargetSlotCount];
-	TexelsFormat                depthFormat{ TexelsFormat::D32F };
+	TexelsFormat                depthFormat{ TexelsFormat::D32F }; // DepthNone - нет буфера глубины
 	uint32_t                    width{ 0 };
 	uint32_t                    height{ 0 };
 };
@@ -785,7 +786,7 @@ public:
 	void RHIDeviceFlush();
 
 	// RHI Resources Create
-	std::expected<ShaderProgramPtr, std::string>  LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
+	ShaderProgramPtr LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo, std::string* errorText = nullptr);
 	std::expected<PipelineStatePtr, std::string>  CreatePipelineState(const PipelineStateCreateInfo& createInfo);
 	std::expected<SamplerStatePtr, std::string>   CreateSamplerState(const SamplerStateCreateInfo& createInfo);
 	std::expected<BufferPtr, std::string>         CreateBuffer(const BufferCreateInfo& createInfo);
@@ -793,7 +794,7 @@ public:
 	std::expected<TexturePtr, std::string>        CreateTexture1D(const Texture1DCreateInfo& createInfo);
 	std::expected<TexturePtr, std::string>        CreateTexture2D(const Texture2DCreateInfo& createInfo);
 	std::expected<TexturePtr, std::string>        CreateTexture3D(const Texture3DCreateInfo& createInfo);
-	std::expected<RenderTargetPtr, std::string>   CreateRenderTarget(const std::vector<TexturePtr> colorTextures, TexturePtr depthStencilTexture = nullptr);
+	std::expected<RenderTargetPtr, std::string>   CreateRenderTarget(const RenderTargetCreateInfo& createInfo);
 
 	// RHI Resources Delete
 	void DeleteRHIResource(ShaderProgramPtr& resource);

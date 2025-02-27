@@ -53,11 +53,13 @@ struct Texture final
 //=============================================================================
 struct RenderTarget final
 {
-	UINT                                               numRenderTargets{ 0 };
-	Microsoft::WRL::ComPtr<ID3D11RenderTargetView1>    renderTargetViews[RenderTargetSlotCount];
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>     depthStencilView;
-	//Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> unorderedAccessViews[RenderTargetSlotCount];
-	//uint32_t                                           uavCounters[RenderTargetSlotCount] = { 0 };
+	UINT                                            numRenderTargets{ 0 };
+	TexturePtr                                      renderTargetTextures[RenderTargetSlotCount];
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView1> renderTargetViews[RenderTargetSlotCount];
+	TexturePtr                                      depthStencilTexture;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  depthStencilView;
+	uint32_t                                        width{ 0 };
+	uint32_t                                        height{ 0 };
 };
 //=============================================================================
 inline std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShaderFromFile(const ShaderLoadInfo& loadInfo, const std::string& target)
@@ -781,26 +783,49 @@ std::expected<TexturePtr, std::string> CuteEngineApp::CreateTexture3D(const Text
 	return texture;
 }
 //=============================================================================
-std::expected<RenderTargetPtr, std::string> CuteEngineApp::CreateRenderTarget(const std::vector<TexturePtr> colorTextures, TexturePtr depthStencilTexture)
+std::expected<RenderTargetPtr, std::string> CuteEngineApp::CreateRenderTarget(const RenderTargetCreateInfo& createInfo)
 {
+	// TODO: проверка на валидацию данных в createInfo
+
 	RenderTargetPtr rt = std::make_shared<RenderTarget>();
 
-	rt->numRenderTargets = colorTextures.size();
+	rt->numRenderTargets = createInfo.rtSlotCount;
+	rt->width  = createInfo.width;
+	rt->height = createInfo.height;
 
-	for (size_t i = 0; i < colorTextures.size(); i++)
+	for (size_t i = 0; i < rt->numRenderTargets; i++)
 	{
-		D3D11_RENDER_TARGET_VIEW_DESC1 rtDesc{};
-		rtDesc.Format        = DXGI_FORMAT_UNKNOWN;
-		rtDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+		Texture2DCreateInfo tci;
+		tci.width  = createInfo.width;
+		tci.height = createInfo.height;
+		tci.format = createInfo.colorBuffers[i].format;
+		tci.flags  = TextureFlags::RenderTarget;
+		auto resource = CreateTexture2D(tci);
+		if (!resource.has_value())
+			return std::unexpected(resource.error());
+		rt->renderTargetTextures[i] = resource.value();
 
-		HRESULT result = rhiData::d3dDevice->CreateRenderTargetView1(colorTextures[i]->texture.Get(), &rtDesc, rt->renderTargetViews[i].GetAddressOf());
+		D3D11_RENDER_TARGET_VIEW_DESC1 rtDesc{};
+		rtDesc.Format = DXGI_FORMAT_UNKNOWN;
+		rtDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+		HRESULT result = rhiData::d3dDevice->CreateRenderTargetView1(rt->renderTargetTextures[i]->texture.Get(), &rtDesc, rt->renderTargetViews[i].GetAddressOf());
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateRenderTargetView1() failed: ", result));
 	}
 
-	if (depthStencilTexture)
+	if (createInfo.depthFormat > TexelsFormat::DepthNone)
 	{
+		Texture2DCreateInfo tci;
+		tci.width  = createInfo.width;
+		tci.height = createInfo.height;
+		tci.format = createInfo.depthFormat;
+		tci.flags  = TextureFlags::DepthStencil;
+		auto resource = CreateTexture2D(tci);
+		if (!resource.has_value())
+			return std::unexpected(resource.error());
+		rt->depthStencilTexture = resource.value();
+
 		D3D11_SHADER_RESOURCE_VIEW_DESC depthTextureDesc;
-		depthStencilTexture->dataView->GetDesc(&depthTextureDesc);
+		rt->depthStencilTexture->dataView->GetDesc(&depthTextureDesc);
 
 		DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 		switch (depthTextureDesc.Format)
@@ -817,10 +842,9 @@ std::expected<RenderTargetPtr, std::string> CuteEngineApp::CreateRenderTarget(co
 		dsDesc.Format = depthFormat;
 		dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
-		HRESULT result = rhiData::d3dDevice->CreateDepthStencilView(depthStencilTexture->texture.Get(), &dsDesc, rt->depthStencilView.GetAddressOf());
+		HRESULT result = rhiData::d3dDevice->CreateDepthStencilView(rt->depthStencilTexture->texture.Get(), &dsDesc, rt->depthStencilView.GetAddressOf());
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateDepthStencilView() failed: ", result));
 	}
-
 
 	return rt;
 }

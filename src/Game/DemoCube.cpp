@@ -334,26 +334,9 @@ bool DemoCube::OnInit()
 		m_indexBuffer = resource.value();
 	}
 
-	Texture2DCreateInfo tci;
-	tci.width = 1600;
-	tci.height = 900;
-	tci.flags = TextureFlags::RenderTarget;
-	auto resource = CreateTexture2D(tci);
-	m_rt = resource.value();
-
-	tci.format = TexelsFormat::D32F;
-	tci.flags = TextureFlags::DepthStencil;
-	resource = CreateTexture2D(tci);
-	m_ds = resource.value();
-
-	m_rtv = CreateRenderTarget({ m_rt }, m_ds).value();
-
-
 	RenderTargetCreateInfo rtci;
-	rtci.colorBuffers[0].enable = true;
 	rtci.width = 1600;
 	rtci.height = 900;
-
 	m_rtv = CreateRenderTarget(rtci).value();
 
 	return true;

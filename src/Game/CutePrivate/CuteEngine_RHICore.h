@@ -85,6 +85,7 @@ inline DXGI_FORMAT ConvertToD3D11(TexelsFormat format)
 	case TexelsFormat::RGBA32F:           return DXGI_FORMAT_R32G32B32A32_FLOAT;// RGBA32F
 	case TexelsFormat::R11G11B10F:        return DXGI_FORMAT_R11G11B10_FLOAT; // R11G11B10F
 	case TexelsFormat::UnknownDepth:      return DXGI_FORMAT_UNKNOWN;     // depth formats below
+	case TexelsFormat::DepthNone:         return DXGI_FORMAT_UNKNOWN;     // depth formats below
 	case TexelsFormat::D16:               return DXGI_FORMAT_D16_UNORM;        // D16
 	case TexelsFormat::D24S8:             return DXGI_FORMAT_D24_UNORM_S8_UINT;// D24S8
 	case TexelsFormat::D32F:              return DXGI_FORMAT_D32_FLOAT;        // D32F
