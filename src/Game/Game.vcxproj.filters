@@ -27,6 +27,9 @@
     <ClCompile Include="DemoCube.cpp">
       <Filter>Demo</Filter>
     </ClCompile>
+    <ClCompile Include="CuteRHI.cpp">
+      <Filter>CuteEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -71,6 +74,9 @@
     </ClInclude>
     <ClInclude Include="DemoCube.h">
       <Filter>Demo</Filter>
+    </ClInclude>
+    <ClInclude Include="CuteRHI.h">
+      <Filter>CuteEngine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
