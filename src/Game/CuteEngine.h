@@ -786,7 +786,7 @@ public:
 	void RHIDeviceFlush();
 
 	// RHI Resources Create
-	ShaderProgramPtr LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo, std::string* errorText = nullptr);
+	std::expected<ShaderProgramPtr, std::string>  LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
 	std::expected<PipelineStatePtr, std::string>  CreatePipelineState(const PipelineStateCreateInfo& createInfo);
 	std::expected<SamplerStatePtr, std::string>   CreateSamplerState(const SamplerStateCreateInfo& createInfo);
 	std::expected<BufferPtr, std::string>         CreateBuffer(const BufferCreateInfo& createInfo);

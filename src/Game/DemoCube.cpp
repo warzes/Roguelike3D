@@ -243,9 +243,9 @@ bool DemoCube::OnInit()
 	// Create PipelineState
 	{
 		PipelineStateCreateInfo psci{};
-		psci.rasterizerState.fillMode = FillMode::Solid;
-		psci.rasterizerState.cullMode = CullMode::Back;
-		psci.rasterizerState.counterDirection = CounterDirection::CW;
+		psci.rasterizerState.fillMode                           = FillMode::Solid;
+		psci.rasterizerState.cullMode                           = CullMode::Back;
+		psci.rasterizerState.counterDirection                   = CounterDirection::CW;
 
 		psci.blendState.blendDesc.blendEnabled                  = false;
 		psci.blendState.blendDesc.writeMask                     = ColorWriteMask::All;
@@ -288,7 +288,7 @@ bool DemoCube::OnInit()
 	{
 		ConstantBufferCreateInfo cbci{};
 		cbci.usage = BufferUsage::Default;
-		cbci.size = sizeof(DemoConstantBuffer)/* + 0xf & 0xfffffff0*/;
+		cbci.size  = sizeof(DemoConstantBuffer)/* + 0xf & 0xfffffff0*/;
 		//cbci.cpuAccessFlags = CPUAccessFlags::Write;
 
 		auto resource = CreateConstantBuffer(cbci);
@@ -303,10 +303,10 @@ bool DemoCube::OnInit()
 	// Create VertexBuffer
 	{
 		BufferCreateInfo vbci{};
-		vbci.flags = BufferFlags::VertexBuffer;
-		vbci.size = sizeof(CommonVertex) * verticesSize;
+		vbci.flags      = BufferFlags::VertexBuffer;
+		vbci.size       = sizeof(CommonVertex) * verticesSize;
 		vbci.memoryData = cubeVertices;
-		vbci.stride = sizeof(CommonVertex);
+		vbci.stride     = sizeof(CommonVertex);
 
 		auto resource = CreateBuffer(vbci);
 		if (!resource.has_value())
@@ -320,10 +320,10 @@ bool DemoCube::OnInit()
 	// Create IndexBuffer
 	{
 		BufferCreateInfo ibci{};
-		ibci.flags = BufferFlags::IndexBuffer;
-		ibci.size = sizeof(uint32_t) * indicesSize;
+		ibci.flags      = BufferFlags::IndexBuffer;
+		ibci.size       = sizeof(uint32_t) * indicesSize;
 		ibci.memoryData = cubeIndices;
-		ibci.stride = sizeof(uint32_t);
+		ibci.stride     = sizeof(uint32_t);
 
 		auto resource = CreateBuffer(ibci);
 		if (!resource.has_value())
@@ -335,7 +335,7 @@ bool DemoCube::OnInit()
 	}
 
 	RenderTargetCreateInfo rtci;
-	rtci.width = 1600;
+	rtci.width  = 1600;
 	rtci.height = 900;
 	m_rtv = CreateRenderTarget(rtci).value();
 
