@@ -39,20 +39,20 @@ bool GameApp::OnInit()
 {
 	// Create ShaderProgram
 	{
-		ShaderProgramLoadInfo spli{};
+		rhi::ShaderProgramLoadInfo spli{};
 		spli.vertexShader = { L"shaders.hlsl", "vs_main" };
 		spli.pixelShader =  { L"shaders.hlsl", "ps_main" };
 		spli.inputLayout = { 
 			// float3 position, float3 normal, float2 texcoord, uint3 rotation, float3 color
-			{"POS", 0, DataFormat::RGB32F, 0, 0,                    false},
-			{"NOR", 0, DataFormat::RGB32F, 0, AppendAlignedElement, false},
-			{"TEX", 0, DataFormat::RG32F,  0, AppendAlignedElement, false},
+			{"POS", 0, rhi::DataFormat::RGB32F, 0, 0,                    false},
+			{"NOR", 0, rhi::DataFormat::RGB32F, 0, rhi::AppendAlignedElement, false},
+			{"TEX", 0, rhi::DataFormat::RG32F,  0, rhi::AppendAlignedElement, false},
 
-			{"ROT", 0, DataFormat::RGB32U, 1, AppendAlignedElement, true, 1}, // advance every instance
-			{"COL", 0, DataFormat::RGB32F, 2, AppendAlignedElement, true, 4}, // advance every 4th instance, i.e. every face
+			{"ROT", 0, rhi::DataFormat::RGB32U, 1, rhi::AppendAlignedElement, true, 1}, // advance every instance
+			{"COL", 0, rhi::DataFormat::RGB32F, 2, rhi::AppendAlignedElement, true, 4}, // advance every 4th instance, i.e. every face
 		};
 
-		auto resource = LoadShaderProgram(spli);
+		auto resource = rhi::LoadShaderProgram(spli);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -63,8 +63,8 @@ bool GameApp::OnInit()
 
 	// Create PipelineState
 	{
-		PipelineStateCreateInfo psci{};
-		auto resource = CreatePipelineState(psci);
+		rhi::PipelineStateCreateInfo psci{};
+		auto resource = rhi::CreatePipelineState(psci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -75,12 +75,12 @@ bool GameApp::OnInit()
 
 	// Create SamplerState
 	{
-		SamplerStateCreateInfo ssci{};
-		ssci.filter = TextureFilter::MinMagMip_Point;
-		ssci.addressU = AddressMode::Wrap;
-		ssci.addressV = AddressMode::Wrap;
-		ssci.addressW = AddressMode::Wrap;
-		auto resource = CreateSamplerState(ssci);
+		rhi::SamplerStateCreateInfo ssci{};
+		ssci.filter = rhi::TextureFilter::MinMagMip_Point;
+		ssci.addressU = rhi::AddressMode::Wrap;
+		ssci.addressV = rhi::AddressMode::Wrap;
+		ssci.addressW = rhi::AddressMode::Wrap;
+		auto resource = rhi::CreateSamplerState(ssci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -91,12 +91,12 @@ bool GameApp::OnInit()
 
 	// Create ConstantBuffer
 	{
-		ConstantBufferCreateInfo cbci{};
-		cbci.usage          = BufferUsage::Dynamic;
+		rhi::ConstantBufferCreateInfo cbci{};
+		cbci.usage          = rhi::BufferUsage::Dynamic;
 		cbci.size           = sizeof(Constants) + 0xf & 0xfffffff0;
-		cbci.cpuAccessFlags = CPUAccessFlags::Write;
+		cbci.cpuAccessFlags = rhi::CPUAccessFlags::Write;
 
-		auto resource = CreateConstantBuffer(cbci);
+		auto resource = rhi::CreateConstantBuffer(cbci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -107,13 +107,13 @@ bool GameApp::OnInit()
 
 	// Create VertexBuffer
 	{
-		BufferCreateInfo vbci{};
-		vbci.flags      = BufferFlags::VertexBuffer;
+		rhi::BufferCreateInfo vbci{};
+		vbci.flags      = rhi::BufferFlags::VertexBuffer;
 		vbci.size       = sizeof(VertexData);
 		vbci.memoryData = VertexData;
 		vbci.stride     = 8 * sizeof(float);
 
-		auto resource = CreateBuffer(vbci);
+		auto resource = rhi::CreateBuffer(vbci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -124,13 +124,13 @@ bool GameApp::OnInit()
 
 	// Create InstanceRotationBuffer
 	{
-		BufferCreateInfo vbci{};
-		vbci.flags      = BufferFlags::VertexBuffer;
+		rhi::BufferCreateInfo vbci{};
+		vbci.flags      = rhi::BufferFlags::VertexBuffer;
 		vbci.size       = sizeof(InstanceRotationData);
 		vbci.memoryData = InstanceRotationData;
 		vbci.stride     = 3 * sizeof(float);
 
-		auto resource = CreateBuffer(vbci);
+		auto resource = rhi::CreateBuffer(vbci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -141,13 +141,13 @@ bool GameApp::OnInit()
 
 	// Create InstanceColorBuffer
 	{
-		BufferCreateInfo vbci{};
-		vbci.flags      = BufferFlags::VertexBuffer;
+		rhi::BufferCreateInfo vbci{};
+		vbci.flags      = rhi::BufferFlags::VertexBuffer;
 		vbci.size       = sizeof(InstanceColorData);
 		vbci.memoryData = InstanceColorData;
 		vbci.stride     = 3 * sizeof(float);
 
-		auto resource = CreateBuffer(vbci);
+		auto resource = rhi::CreateBuffer(vbci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -158,13 +158,13 @@ bool GameApp::OnInit()
 
 	// Create IndexBuffer
 	{
-		BufferCreateInfo ibci{};
-		ibci.flags      = BufferFlags::IndexBuffer;
+		rhi::BufferCreateInfo ibci{};
+		ibci.flags      = rhi::BufferFlags::IndexBuffer;
 		ibci.size       = sizeof(IndexData);
 		ibci.memoryData = IndexData;
 		ibci.stride     = sizeof(uint32_t);
 
-		auto resource = CreateBuffer(ibci);
+		auto resource = rhi::CreateBuffer(ibci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -175,13 +175,13 @@ bool GameApp::OnInit()
 
 	// Create Texture2D
 	{
-		Texture2DCreateInfo tci{};
+		rhi::Texture2DCreateInfo tci{};
 		tci.width      = 2;
 		tci.height     = 2;
 		tci.mipCount   = 1;
 		//tci.memoryData = TextureData;
 
-		auto resource = CreateTexture2D(tci);
+		auto resource = rhi::CreateTexture2D(tci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -190,7 +190,7 @@ bool GameApp::OnInit()
 		m_texture = resource.value();
 
 // TODO: доделать загрузку данных при инициализации
-		UpdateTexture(
+		rhi::UpdateTexture(
 			m_texture, 
 			TextureData, 
 			0, 
@@ -217,15 +217,15 @@ bool GameApp::OnInit()
 //=============================================================================
 void GameApp::OnClose()
 {
-	DeleteRHIResource(m_shaderProgram);
-	DeleteRHIResource(m_pipelineState);
-	DeleteRHIResource(m_samplerState);
-	DeleteRHIResource(m_constantBuffer);
-	DeleteRHIResource(m_vertexBuffer);
-	DeleteRHIResource(m_instanceRotationBuffer);
-	DeleteRHIResource(m_instanceColorBuffer);
-	DeleteRHIResource(m_indexBuffer);
-	DeleteRHIResource(m_texture);
+	rhi::DeleteResource(m_shaderProgram);
+	rhi::DeleteResource(m_pipelineState);
+	rhi::DeleteResource(m_samplerState);
+	rhi::DeleteResource(m_constantBuffer);
+	rhi::DeleteResource(m_vertexBuffer);
+	rhi::DeleteResource(m_instanceRotationBuffer);
+	rhi::DeleteResource(m_instanceColorBuffer);
+	rhi::DeleteResource(m_indexBuffer);
+	rhi::DeleteResource(m_texture);
 }
 //=============================================================================
 void GameApp::OnUpdate(double deltaTime)
@@ -234,22 +234,22 @@ void GameApp::OnUpdate(double deltaTime)
 	constants.rotate.y += 0.009f;
 	constants.rotate.z += 0.001f;
 
-	Constants* data = (Constants*)Map(m_constantBuffer, MapType::Write);
+	Constants* data = (Constants*)Map(m_constantBuffer, rhi::MapType::Write);
 	*data = constants;
 	Unmap(m_constantBuffer);
 }
 //=============================================================================
 void GameApp::OnFrame()
 {
-	SetMainFrame(Color{ 0.392156899f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
-	BindShaderProgram(m_shaderProgram);
-	BindPipelineState(m_pipelineState);
-	BindSamplerState(m_samplerState, ShaderType::Pixel, 0);
-	BindConstantBuffer(m_constantBuffer, ShaderType::Vertex, 0);
-	BindVertexBuffers({ m_vertexBuffer, m_instanceRotationBuffer, m_instanceColorBuffer });
-	BindIndexBuffer(m_indexBuffer);
-	BindShaderResource(m_texture, ShaderType::Pixel, 0);
+	rhi::SetMainFrame(rhi::Color{ 0.392156899f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
+	rhi::BindShaderProgram(m_shaderProgram);
+	rhi::BindPipelineState(m_pipelineState);
+	rhi::BindSamplerState(m_samplerState, rhi::ShaderType::Pixel, 0);
+	rhi::BindConstantBuffer(m_constantBuffer, rhi::ShaderType::Vertex, 0);
+	rhi::BindVertexBuffers({ m_vertexBuffer, m_instanceRotationBuffer, m_instanceColorBuffer });
+	rhi::BindIndexBuffer(m_indexBuffer);
+	rhi::BindShaderResource(m_texture, rhi::ShaderType::Pixel, 0);
 	
-	DrawIndexedInstanced(PrimitiveTopology::TriangleList, ARRAYSIZE(IndexData), 24);
+	rhi::DrawIndexedInstanced(rhi::PrimitiveTopology::TriangleList, ARRAYSIZE(IndexData), 24);
 }
 //=============================================================================

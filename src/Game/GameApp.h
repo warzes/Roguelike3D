@@ -9,15 +9,15 @@ public:
 	void OnFrame() final;
 
 private:
-	ShaderProgramPtr  m_shaderProgram{ nullptr };
-	PipelineStatePtr  m_pipelineState{ nullptr };
-	SamplerStatePtr   m_samplerState{ nullptr };
-	ConstantBufferPtr m_constantBuffer{ nullptr };
+	rhi::ShaderProgramPtr  m_shaderProgram{ nullptr };
+	rhi::PipelineStatePtr  m_pipelineState{ nullptr };
+	rhi::SamplerStatePtr   m_samplerState{ nullptr };
+	rhi::ConstantBufferPtr m_constantBuffer{ nullptr };
 
-	BufferPtr         m_vertexBuffer{ nullptr };
-	BufferPtr         m_instanceRotationBuffer{ nullptr };
-	BufferPtr         m_instanceColorBuffer{ nullptr };
-	BufferPtr         m_indexBuffer{ nullptr };
+	rhi::BufferPtr         m_vertexBuffer{ nullptr };
+	rhi::BufferPtr         m_instanceRotationBuffer{ nullptr };
+	rhi::BufferPtr         m_instanceColorBuffer{ nullptr };
+	rhi::BufferPtr         m_indexBuffer{ nullptr };
 
-	TexturePtr        m_texture{ nullptr };
+	rhi::TexturePtr        m_texture{ nullptr };
 };

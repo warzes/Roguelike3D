@@ -218,17 +218,17 @@ bool DemoCube::OnInit()
 		const size_t stride6 = stride5 + 4 * sizeof(uint8_t); // boneWeights
 		const size_t stride7 = stride6 + 4 * sizeof(float);   // color
 
-		ShaderProgramLoadInfo spli{};
+		rhi::ShaderProgramLoadInfo spli{};
 		spli.vertexShader = { L"DemoCube.hlsl", "vs_main" };
 		spli.pixelShader  = { L"DemoCube.hlsl", "ps_main" };
 		spli.inputLayout = {
-			{ "POSITION",    0, DataFormat::RGB32F,  0, stride1 },
-			{ "TEXCOORDA",   0, DataFormat::RG32F,   0, stride2 },
-			{ "TEXCOORDB",   0, DataFormat::RG32F,   0, stride3 },
-			{ "NORMAL",      0, DataFormat::RGB32F,  0, stride4 },
-			{ "BONEIDS",     0, DataFormat::R32U,    0, stride5 },
-			{ "BONEWEIGHTS", 0, DataFormat::RGBA32F, 0, stride6 },
-			{ "VCOLOR",      0, DataFormat::R32U,    0, stride7 },
+			{ "POSITION",    0, rhi::DataFormat::RGB32F,  0, stride1 },
+			{ "TEXCOORDA",   0, rhi::DataFormat::RG32F,   0, stride2 },
+			{ "TEXCOORDB",   0, rhi::DataFormat::RG32F,   0, stride3 },
+			{ "NORMAL",      0, rhi::DataFormat::RGB32F,  0, stride4 },
+			{ "BONEIDS",     0, rhi::DataFormat::R32U,    0, stride5 },
+			{ "BONEWEIGHTS", 0, rhi::DataFormat::RGBA32F, 0, stride6 },
+			{ "VCOLOR",      0, rhi::DataFormat::R32U,    0, stride7 },
 		};
 
 		auto resource = LoadShaderProgram(spli);
@@ -242,38 +242,38 @@ bool DemoCube::OnInit()
 
 	// Create PipelineState
 	{
-		PipelineStateCreateInfo psci{};
-		psci.rasterizerState.fillMode                           = FillMode::Solid;
-		psci.rasterizerState.cullMode                           = CullMode::Back;
-		psci.rasterizerState.counterDirection                   = CounterDirection::CW;
+		rhi::PipelineStateCreateInfo psci{};
+		psci.rasterizerState.fillMode                           = rhi::FillMode::Solid;
+		psci.rasterizerState.cullMode                           = rhi::CullMode::Back;
+		psci.rasterizerState.counterDirection                   = rhi::CounterDirection::CW;
 
 		psci.blendState.blendDesc.blendEnabled                  = false;
-		psci.blendState.blendDesc.writeMask                     = ColorWriteMask::All;
-		psci.blendState.blendDesc.srcBlend                      = BlendFactor::One;
-		psci.blendState.blendDesc.dstBlend                      = BlendFactor::Zero;
-		psci.blendState.blendDesc.blendOp                       = BlendOp::Add;
-		psci.blendState.blendDesc.srcBlendAlpha                 = BlendFactor::One;
-		psci.blendState.blendDesc.dstBlendAlpha                 = BlendFactor::Zero;
-		psci.blendState.blendDesc.blendOpAlpha                  = BlendOp::Add;
+		psci.blendState.blendDesc.writeMask                     = rhi::ColorWriteMask::All;
+		psci.blendState.blendDesc.srcBlend                      = rhi::BlendFactor::One;
+		psci.blendState.blendDesc.dstBlend                      = rhi::BlendFactor::Zero;
+		psci.blendState.blendDesc.blendOp                       = rhi::BlendOp::Add;
+		psci.blendState.blendDesc.srcBlendAlpha                 = rhi::BlendFactor::One;
+		psci.blendState.blendDesc.dstBlendAlpha                 = rhi::BlendFactor::Zero;
+		psci.blendState.blendDesc.blendOpAlpha                  = rhi::BlendOp::Add;
 
 		psci.depthStencilState.depthEnabled                     = true;
-		psci.depthStencilState.writeMask                        = DepthWriteMask::All;
-		psci.depthStencilState.depthFunc                        = DepthFunc::Less;
+		psci.depthStencilState.writeMask                        = rhi::DepthWriteMask::All;
+		psci.depthStencilState.depthFunc                        = rhi::DepthFunc::Less;
 
 		psci.depthStencilState.stencilEnabled                   = false;
 		psci.depthStencilState.stencilRef                       = 0;
 		psci.depthStencilState.stencilReadMask                  = 0;
 		psci.depthStencilState.stencilWriteMask                 = 0;
 
-		psci.depthStencilState.frontFaceStencilDesc.stencilFunc = StencilFunc::Always;
-		psci.depthStencilState.frontFaceStencilDesc.failOp      = StencilOp::Keep;
-		psci.depthStencilState.frontFaceStencilDesc.depthFailOp = StencilOp::Keep;
-		psci.depthStencilState.frontFaceStencilDesc.passOp      = StencilOp::Keep;
+		psci.depthStencilState.frontFaceStencilDesc.stencilFunc = rhi::StencilFunc::Always;
+		psci.depthStencilState.frontFaceStencilDesc.failOp      = rhi::StencilOp::Keep;
+		psci.depthStencilState.frontFaceStencilDesc.depthFailOp = rhi::StencilOp::Keep;
+		psci.depthStencilState.frontFaceStencilDesc.passOp      = rhi::StencilOp::Keep;
 
-		psci.depthStencilState.backFaceStencilDesc.stencilFunc  = StencilFunc::Always;
-		psci.depthStencilState.backFaceStencilDesc.failOp       = StencilOp::Keep;
-		psci.depthStencilState.backFaceStencilDesc.depthFailOp  = StencilOp::Keep;
-		psci.depthStencilState.backFaceStencilDesc.passOp       = StencilOp::Keep;
+		psci.depthStencilState.backFaceStencilDesc.stencilFunc  = rhi::StencilFunc::Always;
+		psci.depthStencilState.backFaceStencilDesc.failOp       = rhi::StencilOp::Keep;
+		psci.depthStencilState.backFaceStencilDesc.depthFailOp  = rhi::StencilOp::Keep;
+		psci.depthStencilState.backFaceStencilDesc.passOp       = rhi::StencilOp::Keep;
 
 		auto resource = CreatePipelineState(psci);
 		if (!resource.has_value())
@@ -286,12 +286,12 @@ bool DemoCube::OnInit()
 
 	// Create ConstantBuffer
 	{
-		ConstantBufferCreateInfo cbci{};
-		cbci.usage = BufferUsage::Default;
+		rhi::ConstantBufferCreateInfo cbci{};
+		cbci.usage = rhi::BufferUsage::Default;
 		cbci.size  = sizeof(DemoConstantBuffer)/* + 0xf & 0xfffffff0*/;
 		//cbci.cpuAccessFlags = CPUAccessFlags::Write;
 
-		auto resource = CreateConstantBuffer(cbci);
+		auto resource = rhi::CreateConstantBuffer(cbci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -302,13 +302,13 @@ bool DemoCube::OnInit()
 
 	// Create VertexBuffer
 	{
-		BufferCreateInfo vbci{};
-		vbci.flags      = BufferFlags::VertexBuffer;
+		rhi::BufferCreateInfo vbci{};
+		vbci.flags      = rhi::BufferFlags::VertexBuffer;
 		vbci.size       = sizeof(CommonVertex) * verticesSize;
 		vbci.memoryData = cubeVertices;
 		vbci.stride     = sizeof(CommonVertex);
 
-		auto resource = CreateBuffer(vbci);
+		auto resource = rhi::CreateBuffer(vbci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -319,13 +319,13 @@ bool DemoCube::OnInit()
 
 	// Create IndexBuffer
 	{
-		BufferCreateInfo ibci{};
-		ibci.flags      = BufferFlags::IndexBuffer;
+		rhi::BufferCreateInfo ibci{};
+		ibci.flags      = rhi::BufferFlags::IndexBuffer;
 		ibci.size       = sizeof(uint32_t) * indicesSize;
 		ibci.memoryData = cubeIndices;
 		ibci.stride     = sizeof(uint32_t);
 
-		auto resource = CreateBuffer(ibci);
+		auto resource = rhi::CreateBuffer(ibci);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -334,21 +334,21 @@ bool DemoCube::OnInit()
 		m_indexBuffer = resource.value();
 	}
 
-	RenderTargetCreateInfo rtci;
+	rhi::RenderTargetCreateInfo rtci;
 	rtci.width  = 1600;
 	rtci.height = 900;
-	m_rtv = CreateRenderTarget(rtci).value();
+	m_rtv = rhi::CreateRenderTarget(rtci).value();
 
 	return true;
 }
 //=============================================================================
 void DemoCube::OnClose()
 {
-	DeleteRHIResource(m_shaderProgram);
-	DeleteRHIResource(m_pipelineState);
-	DeleteRHIResource(m_constantBuffer);
-	DeleteRHIResource(m_vertexBuffer);
-	DeleteRHIResource(m_indexBuffer);
+	rhi::DeleteResource(m_shaderProgram);
+	rhi::DeleteResource(m_pipelineState);
+	rhi::DeleteResource(m_constantBuffer);
+	rhi::DeleteResource(m_vertexBuffer);
+	rhi::DeleteResource(m_indexBuffer);
 }
 //=============================================================================
 void DemoCube::OnUpdate(double deltaTime)
@@ -370,21 +370,21 @@ void DemoCube::OnUpdate(double deltaTime)
 //=============================================================================
 void DemoCube::OnFrame()
 {
-	SetRenderTarget(m_rtv, Color{ 0.9f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
-	BindShaderProgram(m_shaderProgram);
-	BindPipelineState(m_pipelineState);
-	BindConstantBuffer(m_constantBuffer, ShaderType::Vertex, 0);
-	BindVertexBuffer(m_vertexBuffer, 0);
-	BindIndexBuffer(m_indexBuffer);
-	DrawIndexed(PrimitiveTopology::TriangleList, 36, 0, 0);
+	rhi::SetRenderTarget(m_rtv, rhi::Color{ 0.9f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
+	rhi::BindShaderProgram(m_shaderProgram);
+	rhi::BindPipelineState(m_pipelineState);
+	rhi::BindConstantBuffer(m_constantBuffer, rhi::ShaderType::Vertex, 0);
+	rhi::BindVertexBuffer(m_vertexBuffer, 0);
+	rhi::BindIndexBuffer(m_indexBuffer);
+	rhi::DrawIndexed(rhi::PrimitiveTopology::TriangleList, 36, 0, 0);
 
 
-	SetMainFrame(Color{ 0.392156899f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
-	BindShaderProgram(m_shaderProgram);
-	BindPipelineState(m_pipelineState);
-	BindConstantBuffer(m_constantBuffer, ShaderType::Vertex, 0);
-	BindVertexBuffer(m_vertexBuffer, 0);
-	BindIndexBuffer(m_indexBuffer);
-	DrawIndexed(PrimitiveTopology::TriangleList, 36, 0, 0);
+	rhi::SetMainFrame(rhi::Color{ 0.392156899f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
+	rhi::BindShaderProgram(m_shaderProgram);
+	rhi::BindPipelineState(m_pipelineState);
+	rhi::BindConstantBuffer(m_constantBuffer, rhi::ShaderType::Vertex, 0);
+	rhi::BindVertexBuffer(m_vertexBuffer, 0);
+	rhi::BindIndexBuffer(m_indexBuffer);
+	rhi::DrawIndexed(rhi::PrimitiveTopology::TriangleList, 36, 0, 0);
 }
 //=============================================================================

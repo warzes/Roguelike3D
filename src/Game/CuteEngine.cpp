@@ -3,22 +3,86 @@
 #	pragma warning(disable : 4820)
 #endif
 //=============================================================================
+#pragma region [ Header ]
 #include "CuteEngine.h"
-#include "CutePrivate/CuteEngine_Header.h"
+
+#if defined(_MSC_VER)
+#	pragma warning(push, 3)
+#	pragma warning(disable : 4061)
+#	pragma warning(disable : 4365)
+#	pragma warning(disable : 4668)
+#	pragma warning(disable : 5039)
+#endif
+
+#define VC_EXTRALEAN
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#define NOBITMAP
+#define NOGDICAPMASKS
+//#define NOSYSMETRICS
+#define NOMENUS
+#define NOICONS
+#define NOSYSCOMMANDS
+#define NORASTEROPS
+#define OEMRESOURCE
+#define NOATOM
+#define NOCLIPBOARD
+#define NOCTLMGR
+#define NODRAWTEXT
+#define NOKERNEL
+#define NONLS
+#define NOMEMMGR
+#define NOMETAFILE
+#define NOOPENFILE
+#define NOSCROLL
+#define NOSERVICE
+#define NOSOUND
+#define NOTEXTMETRIC
+#define NOWH
+#define NOCOMM
+#define NOKANJI
+#define NOHELP
+#define NOPROFILER
+#define NODEFERWINDOWPOS
+#define NOMCX
+#define NORPC
+#define NOPROXYSTUB
+#define NOIMAGE
+#define NOTAPE
+#define NOGDI
+#define NOWINSTYLE
+#define NOKEYSTATES
+#define NOCOLOR
+#define NOMB
+//#define NOWINOFFSETS
+#define NOCRYPT
+#define NOIME
+
+#include <winsdkver.h>
+#define _WIN32_WINNT 0x0A00 // Windows 10
+#include <sdkddkver.h>
+#include <Windows.h>
+#include <shellapi.h>
+
+#include <imgui/imgui.h>
+
+#if defined(_MSC_VER)
+#	pragma warning(pop)
+#endif
 #if defined(_DEBUG)
 #	ifndef DBG_NEW
 #		define DBG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
 #		define new DBG_NEW
 #	endif
 #endif  // _DEBUG
-#include "CutePrivate/CuteEngine_Window.h"
-#include "CutePrivate/CuteEngine_RHICore.h"
-#include "CutePrivate/CuteEngine_RHIDevice.h"
-#include "CutePrivate/CuteEngine_RHIStateCache.h"
-#include "CutePrivate/CuteEngine_RHIResources.h"
 #if defined(_MSC_VER)
 #	pragma warning(pop)
 #endif
+#pragma endregion
+//=============================================================================
+#pragma region [ Window ]
+#include "CutePrivate/CuteEngine_Window.h"
+#pragma endregion
 //=============================================================================
 CuteEngineApp* thisCuteEngineApp{ nullptr };
 constexpr int TARGET_FPS = 60;
@@ -36,7 +100,6 @@ namespace engineData
 }
 //=============================================================================
 bool init(const CuteEngineCreateInfo& createInfo);
-bool initImGui();
 void close();
 bool isShouldClose();
 double getCurrentTime();
@@ -77,7 +140,7 @@ void CuteEngineApp::Run()
 				// Resize
 				if (windowData::isResized)
 				{
-					if (!ResizeRHI(windowData::width, windowData::height))
+					if (!rhi::Resize(windowData::width, windowData::height))
 						break;
 
 					OnWindowResize(windowData::width, windowData::height);
@@ -86,11 +149,6 @@ void CuteEngineApp::Run()
 
 				// Update
 				{
-					// Start the Dear ImGui frame
-					ImGui_ImplDX11_NewFrame();
-					ImGui_ImplWin32_NewFrame();
-					ImGui::NewFrame();
-
 					OnUpdate(engineData::deltaTime);
 				}
 
@@ -103,28 +161,9 @@ void CuteEngineApp::Run()
 
 				// Frame
 				{
-					bool show_demo_window = true;
-					if (show_demo_window)
-						ImGui::ShowDemoWindow(&show_demo_window);
-
-					ImGui::Begin("Hello, world!");
-					ImGui::Text("This is some useful text.");
-					ImGui::SameLine();
-					ImGui::Text("2This is some useful text.");
-					ImGui::End();
-
-					ImGui::Render();
-
-					rhiData::d3dContext->ClearRenderTargetView(rhiData::renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
-					rhiData::d3dContext->ClearDepthStencilView(rhiData::depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-					rhiData::d3dContext->OMSetRenderTargets(1, rhiData::renderTargetView.GetAddressOf(), rhiData::depthStencilView.Get());
-					rhiData::d3dContext->RSSetViewports(1, &rhiData::viewport);
-
+					rhi::BeginFrame();	
 					OnFrame();
-
-					ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-					PresentRHI();
+					rhi::EndFrame();
 				}
 			}
 		}
@@ -146,12 +185,6 @@ bool init(const CuteEngineCreateInfo& createInfo)
 {
 	auto& windowCI = createInfo.window;
 	auto& rhiCI = createInfo.rhi;
-
-	if (!DirectX::XMVerifyCPUSupport())
-		return false;
-
-	if (FAILED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED)))
-		return false;
 
 	LARGE_INTEGER frequency;
 	if (!QueryPerformanceFrequency(&frequency))
@@ -177,69 +210,16 @@ bool init(const CuteEngineCreateInfo& createInfo)
 	if (!InitWindow(windowCI.width, windowCI.height, windowCI.title, windowFlags))
 		return false;
 
-	CreateRHIFlags rhiFlags = 0;
-	if (rhiCI.vsync) rhiFlags |= rhi_vsync;
-
-	if (!InitRHI(rhiFlags))
+	if (!rhi::Create(windowData::hwnd, windowData::width, windowData::height, rhiCI.vsync))
 		return false;
-
-	if (!initImGui())
-	{
-		Fatal("initImGui() return false");
-		return false;
-	}
 
 	engineData::shouldClose = false;
 	return true;
 }
 //=============================================================================
-bool initImGui()
-{
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsLight();
-
-	// Setup Platform/Renderer backends
-	if (!ImGui_ImplWin32_Init(windowData::hwnd))
-		return false;
-	if (!ImGui_ImplDX11_Init(rhiData::d3dDevice.Get(), rhiData::d3dContext.Get()))
-		return false;
-
-	// Load Fonts
-	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-	// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-	// - If the file cannot be loaded, the function will return a nullptr. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-	// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-	// - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-	// - Read 'docs/FONTS.md' for more instructions and details.
-	// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-	//io.Fonts->AddFontDefault();
-	//io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-	//IM_ASSERT(font != nullptr);
-
-	return true;
-}
-//=============================================================================
 void close()
 {
-	if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().BackendPlatformUserData != nullptr)
-	{
-		ImGui_ImplDX11_Shutdown();
-		ImGui_ImplWin32_Shutdown();
-		ImGui::DestroyContext();
-	}
-
-	CloseRHI();
+	rhi::Destroy();
 	EndWindow();
 	thisCuteEngineApp = nullptr;
 	engineData::shouldClose = true;
