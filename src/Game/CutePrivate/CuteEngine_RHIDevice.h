@@ -65,13 +65,22 @@ void CloseRHI()
 	using namespace rhiData;
 
 	if (d3dContext) d3dContext->OMSetRenderTargets(0, nullptr, nullptr);
-	if (swapChain) swapChain->SetFullscreenState(FALSE, nullptr);
+	if (swapChain)  swapChain->SetFullscreenState(FALSE, nullptr);
 
 	depthStencilView.Reset();
 	renderTargetView.Reset();
 	swapChain.Reset();
 	d3dDebugAnnotation.Reset();
 	d3dContext.Reset();
+
+#if defined(_DEBUG)
+	ComPtr<ID3D11Debug> debugDevice;
+	if (SUCCEEDED(d3dDevice.As(&debugDevice)))
+	{
+		debugDevice->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+	}
+	debugDevice.Reset();
+#endif
 	d3dDevice.Reset();
 
 #if defined(_DEBUG)
