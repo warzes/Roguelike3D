@@ -42,16 +42,7 @@
     <ClInclude Include="GameApp.h">
       <Filter>Game</Filter>
     </ClInclude>
-    <ClInclude Include="CutePrivate\CuteEngine_Header.h">
-      <Filter>CuteEngine\CutePrivate</Filter>
-    </ClInclude>
     <ClInclude Include="CutePrivate\CuteEngine_Window.h">
-      <Filter>CuteEngine\CutePrivate</Filter>
-    </ClInclude>
-    <ClInclude Include="CutePrivate\CuteEngine_RHIDevice.h">
-      <Filter>CuteEngine\CutePrivate</Filter>
-    </ClInclude>
-    <ClInclude Include="CutePrivate\CuteEngine_RHIResources.h">
       <Filter>CuteEngine\CutePrivate</Filter>
     </ClInclude>
     <ClInclude Include="CuteUtility.h">
@@ -63,14 +54,8 @@
     <ClInclude Include="Log.h">
       <Filter>CuteOther</Filter>
     </ClInclude>
-    <ClInclude Include="CutePrivate\CuteEngine_RHICore.h">
-      <Filter>CuteEngine\CutePrivate</Filter>
-    </ClInclude>
     <ClInclude Include="HighResolutionTimer.h">
       <Filter>CuteOther</Filter>
-    </ClInclude>
-    <ClInclude Include="CutePrivate\CuteEngine_RHIStateCache.h">
-      <Filter>CuteEngine\CutePrivate</Filter>
     </ClInclude>
     <ClInclude Include="DemoCube.h">
       <Filter>Demo</Filter>

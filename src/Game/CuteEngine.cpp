@@ -210,7 +210,7 @@ bool init(const CuteEngineCreateInfo& createInfo)
 	if (!InitWindow(windowCI.width, windowCI.height, windowCI.title, windowFlags))
 		return false;
 
-	if (!rhi::Create(windowData::hwnd, windowData::width, windowData::height, rhiCI.vsync))
+	if (!rhi::Setup(windowData::hwnd, windowData::width, windowData::height, rhiCI.vsync))
 		return false;
 
 	engineData::shouldClose = false;
@@ -219,7 +219,7 @@ bool init(const CuteEngineCreateInfo& createInfo)
 //=============================================================================
 void close()
 {
-	rhi::Destroy();
+	rhi::Shutdown();
 	EndWindow();
 	thisCuteEngineApp = nullptr;
 	engineData::shouldClose = true;

@@ -1,4 +1,6 @@
 #include "CuteRHI.h"
+//=============================================================================
+#pragma region [ Header ]
 
 #if defined(_MSC_VER)
 #	pragma warning(push, 3)
@@ -73,19 +75,27 @@
 #if defined(_MSC_VER)
 #	pragma warning(pop)
 #endif
+
+#pragma endregion
 //=============================================================================
+#pragma region [ Lib ]
+
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #if defined(_DEBUG)
 #	pragma comment(lib, "dxguid.lib")
 #endif
 #pragma comment(lib, "d3dcompiler.lib")
-//=============================================================================
+
 extern "C"
 {
 	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
+
+#pragma endregion
+//=============================================================================
+#pragma region [ ConvertToD3D11 ]
 //=============================================================================
 inline DXGI_FORMAT ConvertToD3D11(rhi::DataFormat format)
 {
@@ -341,44 +351,10 @@ inline D3D11_PRIMITIVE_TOPOLOGY ConvertToD3D11(rhi::PrimitiveTopology topology)
 	default: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	}
 }
+
+#pragma endregion
 //=============================================================================
-#define DX_ERR_STR(str,hr) std::string(str + std::string(HRToString(hr)) + ".\n\tFile: " + std::string(__FILE__) + ", Line: " + std::to_string(__LINE__))
-#define DX_ERR(str,hr) rhi::Fatal(DX_ERR_STR(str, hr))
-//=============================================================================
-namespace rhi
-{
-	using Microsoft::WRL::ComPtr;
-
-	ComPtr<ID3D11Device5>             d3dDevice;
-	ComPtr<ID3D11DeviceContext4>      d3dContext;
-	ComPtr<ID3DUserDefinedAnnotation> d3dDebugAnnotation;
-
-	ComPtr<IDXGISwapChain4>           swapChain;
-	DXGI_FORMAT                       backBufferFormat{ };
-	DXGI_COLOR_SPACE_TYPE             colorSpace{};
-	uint32_t                          backBufferWidth{ 0 };
-	uint32_t                          backBufferHeight{ 0 };
-	D3D11_VIEWPORT                    viewport{};
-
-	ComPtr<ID3D11RenderTargetView>    renderTargetView;
-	ComPtr<ID3D11DepthStencilView>    depthStencilView;
-	const DXGI_FORMAT                 depthBufferFormat{ DXGI_FORMAT_D24_UNORM_S8_UINT };
-	const UINT                        backBufferCount{ 2 };
-	bool                              vsync{ false };
-	bool                              supportAllowTearing{ false };
-
-	bool                              shouldClose{ true };
-}
-//=============================================================================
-namespace stateCache
-{
-	void Clear();
-
-	ID3D11Buffer* vertexBuffer[rhi::MaxVertexBuffers] = { nullptr };
-	UINT          vertexBufferStride[rhi::MaxVertexBuffers] = { 0 };
-	UINT          vertexBufferOffset[rhi::MaxVertexBuffers] = { 0 };
-	uint32_t      currentFreeVertexBuffer = 0;
-} // namespace stateCache
+#pragma region [ Resource Type ]
 //=============================================================================
 struct rhi::ShaderProgram final
 {
@@ -441,6 +417,49 @@ struct rhi::RenderTarget final
 	uint32_t                                        width{ 0 };
 	uint32_t                                        height{ 0 };
 };
+#pragma endregion
+//=============================================================================
+#pragma region [ Global Vars ]
+//=============================================================================
+namespace rhi
+{
+	using Microsoft::WRL::ComPtr;
+
+	ComPtr<ID3D11Device5>             d3dDevice;
+	ComPtr<ID3D11DeviceContext4>      d3dContext;
+	ComPtr<ID3DUserDefinedAnnotation> d3dDebugAnnotation;
+
+	ComPtr<IDXGISwapChain4>           swapChain;
+	DXGI_FORMAT                       backBufferFormat{ };
+	DXGI_COLOR_SPACE_TYPE             colorSpace{};
+	uint32_t                          backBufferWidth{ 0 };
+	uint32_t                          backBufferHeight{ 0 };
+	D3D11_VIEWPORT                    viewport{};
+
+	ComPtr<ID3D11RenderTargetView>    renderTargetView;
+	ComPtr<ID3D11DepthStencilView>    depthStencilView;
+	const DXGI_FORMAT                 depthBufferFormat{ DXGI_FORMAT_D24_UNORM_S8_UINT };
+	const UINT                        backBufferCount{ 2 };
+	bool                              vsync{ false };
+	bool                              supportAllowTearing{ false };
+
+	bool                              shouldClose{ true };
+}
+//=============================================================================
+namespace stateCache
+{
+	void Clear();
+
+	ID3D11Buffer* vertexBuffer[rhi::MaxVertexBuffers] = { nullptr };
+	UINT          vertexBufferStride[rhi::MaxVertexBuffers] = { 0 };
+	UINT          vertexBufferOffset[rhi::MaxVertexBuffers] = { 0 };
+	uint32_t      currentFreeVertexBuffer = 0;
+} // namespace stateCache
+//=============================================================================
+#pragma endregion
+//=============================================================================
+#define DX_ERR_STR(str,hr) std::string(str + std::string(HRToString(hr)) + ".\n\tFile: " + std::string(__FILE__) + ", Line: " + std::to_string(__LINE__))
+#define DX_ERR(str,hr) rhi::Fatal(DX_ERR_STR(str, hr))
 //=============================================================================
 bool setBackBufferSize(uint32_t width, uint32_t height)
 {
@@ -617,17 +636,17 @@ bool createSwapChain(HWND hwnd, Microsoft::WRL::ComPtr<IDXGIFactory6> DXGIFactor
 	backBufferFormat = cSwapChainFormat[(uint32_t)swapChainFormat];
 	colorSpace = cColorSpace[(uint32_t)swapChainFormat];
 
-	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-	swapChainDesc.Width = backBufferWidth;
-	swapChainDesc.Height = backBufferHeight;
-	swapChainDesc.Format = backBufferFormat;
-	swapChainDesc.SampleDesc = { 1, 0 };
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
+	swapChainDesc.Width       = backBufferWidth;
+	swapChainDesc.Height      = backBufferHeight;
+	swapChainDesc.Format      = backBufferFormat;
+	swapChainDesc.SampleDesc  = { 1, 0 };
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.BufferCount = backBufferCount;
-	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-	swapChainDesc.Flags = supportAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+	swapChainDesc.Scaling     = DXGI_SCALING_STRETCH;
+	swapChainDesc.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapChainDesc.AlphaMode   = DXGI_ALPHA_MODE_IGNORE;
+	swapChainDesc.Flags       = supportAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsSwapChainDesc = {};
 	fsSwapChainDesc.Windowed = TRUE;
@@ -754,7 +773,7 @@ void rhi::Fatal(const std::string& error)
 	shouldClose = true;
 }
 //=============================================================================
-bool rhi::Create(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vSync)
+bool rhi::Setup(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vSync)
 {
 	if (!DirectX::XMVerifyCPUSupport())
 	{
@@ -789,7 +808,7 @@ bool rhi::Create(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vSy
 	return true;
 }
 //=============================================================================
-void rhi::Destroy()
+void rhi::Shutdown()
 {
 	if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().BackendPlatformUserData != nullptr)
 	{

@@ -462,8 +462,10 @@ namespace rhi
 	inline bool IsCompressedFormat(TexelsFormat format) { return format < TexelsFormat::UnknownCompressed; }
 	inline bool IsDepthFormat(TexelsFormat format) { return format > TexelsFormat::UnknownDepth; }
 
-	bool Create(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vsync);
-	void Destroy();
+	// setup and misc functions
+тут
+	bool Setup(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vsync);
+	void Shutdown();
 	bool IsValid();
 	void BeginFrame();
 	void EndFrame();
