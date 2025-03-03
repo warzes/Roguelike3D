@@ -210,7 +210,7 @@ bool init(const CuteEngineCreateInfo& createInfo)
 	if (!InitWindow(windowCI.width, windowCI.height, windowCI.title, windowFlags))
 		return false;
 
-	if (!rhi::Setup(windowData::hwnd, windowData::width, windowData::height, rhiCI.vsync))
+	if (!rhi::Setup(windowData::hwnd, windowData::width, windowData::height, rhiCI.vsync, rhiCI.enableImGui))
 		return false;
 
 	engineData::shouldClose = false;

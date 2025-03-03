@@ -445,6 +445,8 @@ namespace rhi
 	bool                              supportAllowTearing{ false };
 
 	bool                              shouldClose{ true };
+
+	bool                              enableImGui{ true };
 }
 //=============================================================================
 namespace stateCache
@@ -755,6 +757,15 @@ bool initImGui(void* hwnd)
 	return true;
 }
 //=============================================================================
+void renderUI()
+{
+	ImGui::Begin("Hello, world!");
+	ImGui::Text("This is some useful text.");
+	ImGui::SameLine();
+	ImGui::Text("2This is some useful text.");
+	ImGui::End();
+}
+//=============================================================================
 void rhi::Print(const std::string& message)
 {
 	// TODO: пользовательская функция
@@ -774,8 +785,9 @@ void rhi::Fatal(const std::string& error)
 	shouldClose = true;
 }
 //=============================================================================
-bool rhi::Setup(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vSync)
+bool rhi::Setup(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vSync, bool enableImGui)
 {
+	rhi::enableImGui = enableImGui;
 	if (!DirectX::XMVerifyCPUSupport())
 	{
 		Fatal("DirectX::XMVerifyCPUSupport() failed.");
@@ -799,7 +811,7 @@ bool rhi::Setup(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vSyn
 	if (!createSwapChain((HWND)hwnd, DXGIFactory)) return false;
 	if (!createRenderTargetView())                 return false;
 
-	if (!initImGui(hwnd))
+	if (rhi::enableImGui && !initImGui(hwnd))
 	{
 		Fatal("initImGui() return false");
 		return false;
@@ -855,33 +867,22 @@ bool rhi::IsValid()
 //=============================================================================
 void rhi::BeginFrame()
 {
-	// Start the Dear ImGui frame
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
-	bool show_demo_window = true;
-	if (show_demo_window)
-		ImGui::ShowDemoWindow(&show_demo_window);
-
-	ImGui::Begin("Hello, world!");
-	ImGui::Text("This is some useful text.");
-	ImGui::SameLine();
-	ImGui::Text("2This is some useful text.");
-	ImGui::End();
-
-	ImGui::Render();
-
-	rhi::d3dContext->ClearRenderTargetView(rhi::renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
-	rhi::d3dContext->ClearDepthStencilView(rhi::depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	rhi::d3dContext->OMSetRenderTargets(1, rhi::renderTargetView.GetAddressOf(), rhi::depthStencilView.Get());
-	rhi::d3dContext->RSSetViewports(1, &rhi::viewport);
+	if (rhi::enableImGui)
+	{
+		ImGui_ImplWin32_NewFrame();
+		ImGui_ImplDX11_NewFrame();
+		ImGui::NewFrame();
+	}
 }
 //=============================================================================
 void rhi::EndFrame()
 {
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
+	if (rhi::enableImGui)
+	{
+		renderUI();
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	}
 	const UINT syncInterval = vsync ? 1 : 0;
 	const UINT presentFlags = supportAllowTearing ? DXGI_PRESENT_ALLOW_TEARING : 0;
 	HRESULT result = swapChain->Present(syncInterval, presentFlags);

@@ -63,23 +63,25 @@ void Fatal(const std::string& error);
 
 namespace Input
 {
-	enum MouseButton
+	struct MousePosition final
 	{
-		MOUSE_BUTTON_1 = 0,
-		MOUSE_BUTTON_2 = 1,
-		MOUSE_BUTTON_3 = 2,
-		MOUSE_BUTTON_4 = 3,
-		MOUSE_BUTTON_5 = 4,
-		MOUSE_BUTTON_6 = 5,
-		MOUSE_BUTTON_7 = 6,
-		MOUSE_BUTTON_8 = 7,
+		int x{ 0 };
+		int y{ 0 };
+	};
 
-		MOUSE_BUTTON_LAST = MOUSE_BUTTON_8,
-		MOUSE_BUTTON_LEFT = MOUSE_BUTTON_1,
-		MOUSE_BUTTON_RIGHT = MOUSE_BUTTON_2,
-		MOUSE_BUTTON_MIDDLE = MOUSE_BUTTON_3,
+	enum class MouseMode : uint8_t
+	{
+		Absolute,
+		Relative
+	};
 
-		MOUSE_BUTTONS_MAX = 8,
+	enum class MouseButton : uint8_t
+	{
+		Left,
+		Right,
+		Middle,
+		xButton1,
+		xButton2
 	};
 
 	enum Key
@@ -235,6 +237,7 @@ struct CuteEngineCreateInfo final
 	struct RHI
 	{
 		bool              vsync{ false };
+		bool              enableImGui{ true };
 	} rhi;
 };
 
@@ -294,9 +297,19 @@ public:
 	[[nodiscard]] float    GetWindowAspect() const;
 
 	// Input
+	bool IsMouseDown(Input::MouseButton button) const;
+	bool IsMousePressed(Input::MouseButton button) const;
+	bool IsMouseReleased(Input::MouseButton button) const;
+	Input::MousePosition GetMousePosition() const;
+	void SetMouseMode(Input::MouseMode mode) const;
+	int GetScrollWheelValue() const;
+	void ResetScrollWheelValue() const;
+	bool IsMouseVisible() const;
+	void SetMouseVisible(bool visible) const;
+
 	bool IsKeyDown(uint32_t keyCode) const;
 	bool IsKeyPressed(uint32_t keyCode) const;
-	bool IsKeyReleased(uint32_t keyCode) const;	
+	bool IsKeyReleased(uint32_t keyCode) const;
 };
 
 #pragma endregion

@@ -24,7 +24,27 @@ namespace windowData
 
 	bool      isKeyDown[VK_OEM_CLEAR] = {};
 	bool      isPreviousKeyDown[VK_OEM_CLEAR] = {};
-}
+} // namespace windowData
+//=============================================================================
+namespace mouseData
+{
+	Input::MouseMode mode = Input::MouseMode::Absolute;
+
+	int              lastX{ 0 };
+	int              lastY{ 0 };
+	int              relativeX{ INT32_MAX };
+	int              relativeY{ INT32_MAX };
+
+	bool             leftButton{ false };
+	bool             middleButton{ false };
+	bool             rightButton{ false };
+	bool             xButton1{ false };
+	bool             xButton2{ false };
+	int              scrollWheelValue{ 0 };
+
+	bool             inFocus{ true };
+	bool             autoReset{ true };
+} // namespace mouseData
 //=============================================================================
 enum CreateWindowFlag
 {
@@ -75,6 +95,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			break;
+		case WM_ACTIVATE:
 		case WM_ACTIVATEAPP:
 			if (wParam)
 			{
@@ -280,6 +301,20 @@ bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, Create
 	windowData::height = static_cast<uint32_t>(windowRect.bottom - windowRect.top);
 	windowData::widthInWindowMode = windowData::width;
 	windowData::heightInWindowMode = windowData::height;
+
+	// init mouse
+	{
+		RAWINPUTDEVICE Rid;
+		Rid.usUsagePage = 0x1 /* HID_USAGE_PAGE_GENERIC */;
+		Rid.usUsage     = 0x2 /* HID_USAGE_GENERIC_MOUSE */;
+		Rid.dwFlags     = RIDEV_INPUTSINK;
+		Rid.hwndTarget  = windowData::hwnd;
+		if (!RegisterRawInputDevices(&Rid, 1, sizeof(RAWINPUTDEVICE)))
+		{
+			Fatal("RegisterRawInputDevices");
+			return false;
+		}
+	}
 
 	resetKeyBindings();
 	windowData::isResized = false;

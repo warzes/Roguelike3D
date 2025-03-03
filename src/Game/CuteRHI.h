@@ -463,7 +463,7 @@ namespace rhi
 	inline bool IsDepthFormat(TexelsFormat format) { return format > TexelsFormat::UnknownDepth; }
 
 	// Setup and misc functions
-	bool Setup(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vsync);
+	bool Setup(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vsync, bool enableImGui);
 	void Shutdown();
 	bool IsValid();
 	void BeginFrame();
