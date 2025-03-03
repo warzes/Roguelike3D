@@ -1,4 +1,4 @@
-#include "CuteRHI.h"
+п»ї#include "CuteRHI.h"
 //=============================================================================
 #pragma region [ Header ]
 
@@ -9,6 +9,8 @@
 #	pragma warning(disable : 4668)
 #	pragma warning(disable : 5039)
 #endif
+
+#include <cassert>
 
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
@@ -125,7 +127,7 @@ inline DXGI_FORMAT ConvertToD3D11(rhi::DataFormat format)
 	case DataFormat::RGBA32U:    return DXGI_FORMAT_R32G32B32A32_UINT;
 	case DataFormat::RGBA32F:    return DXGI_FORMAT_R32G32B32A32_FLOAT;
 	case DataFormat::R11G11B10F: return DXGI_FORMAT_R11G11B10_FLOAT;
-	default:                     return DXGI_FORMAT_UNKNOWN;
+	default: assert(false);      return DXGI_FORMAT_UNKNOWN;
 	}
 }
 //=============================================================================
@@ -170,7 +172,7 @@ inline DXGI_FORMAT ConvertToD3D11(rhi::TexelsFormat format)
 	case TexelsFormat::D16:               return DXGI_FORMAT_D16_UNORM;        // D16
 	case TexelsFormat::D24S8:             return DXGI_FORMAT_D24_UNORM_S8_UINT;// D24S8
 	case TexelsFormat::D32F:              return DXGI_FORMAT_D32_FLOAT;        // D32F
-	default:                              return DXGI_FORMAT_UNKNOWN;
+	default: assert(false);               return DXGI_FORMAT_UNKNOWN;
 	}
 }
 //=============================================================================
@@ -181,7 +183,7 @@ inline D3D11_FILL_MODE ConvertToD3D11(rhi::FillMode fillMode)
 	{
 	case FillMode::Solid:     return D3D11_FILL_SOLID;
 	case FillMode::Wireframe: return D3D11_FILL_WIREFRAME;
-	default:                  return D3D11_FILL_SOLID;
+	default: assert(false);   return D3D11_FILL_SOLID;
 	}
 }
 //=============================================================================
@@ -190,10 +192,10 @@ inline D3D11_CULL_MODE ConvertToD3D11(rhi::CullMode cullMode)
 	using namespace rhi;
 	switch (cullMode)
 	{
-	case CullMode::Back:  return D3D11_CULL_BACK;
-	case CullMode::Front: return D3D11_CULL_FRONT;
-	case CullMode::None:  return D3D11_CULL_NONE;
-	default:              return D3D11_CULL_BACK;
+	case CullMode::Back:    return D3D11_CULL_BACK;
+	case CullMode::Front:   return D3D11_CULL_FRONT;
+	case CullMode::None:    return D3D11_CULL_NONE;
+	default: assert(false); return D3D11_CULL_BACK;
 	}
 }
 //=============================================================================
@@ -211,7 +213,7 @@ inline D3D11_FILTER ConvertToD3D11(rhi::TextureFilter filter)
 	case TextureFilter::MinMag_Linear_Mip_Point:         return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
 	case TextureFilter::MinMagMip_Linear:                return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	case TextureFilter::Anisotropic:                     return D3D11_FILTER_ANISOTROPIC;
-	default: return D3D11_FILTER_MIN_MAG_MIP_POINT;
+	default: assert(false);                              return D3D11_FILTER_MIN_MAG_MIP_POINT;
 	}
 }
 //=============================================================================
@@ -224,7 +226,7 @@ inline D3D11_TEXTURE_ADDRESS_MODE ConvertToD3D11(rhi::AddressMode mode)
 	case AddressMode::Mirror: return D3D11_TEXTURE_ADDRESS_MIRROR;
 	case AddressMode::Clamp:  return D3D11_TEXTURE_ADDRESS_CLAMP;
 	case AddressMode::Border: return D3D11_TEXTURE_ADDRESS_BORDER;
-	default:                  return D3D11_TEXTURE_ADDRESS_WRAP;
+	default: assert(false);   return D3D11_TEXTURE_ADDRESS_WRAP;
 	}
 }
 //=============================================================================
@@ -241,7 +243,7 @@ inline D3D11_COMPARISON_FUNC ConvertToD3D11(rhi::ComparisonFunc func)
 	case ComparisonFunc::GreaterEqual: return D3D11_COMPARISON_GREATER_EQUAL;
 	case ComparisonFunc::Equal:        return D3D11_COMPARISON_EQUAL;
 	case ComparisonFunc::NotEqual:     return D3D11_COMPARISON_NOT_EQUAL;
-	default:                           return D3D11_COMPARISON_ALWAYS;
+	default: assert(false);            return D3D11_COMPARISON_ALWAYS;
 	}
 }
 //=============================================================================
@@ -252,7 +254,7 @@ inline D3D11_DEPTH_WRITE_MASK ConvertToD3D11(rhi::DepthWriteMask mask)
 	{
 	case DepthWriteMask::Zero: return D3D11_DEPTH_WRITE_MASK_ZERO;
 	case DepthWriteMask::All:  return D3D11_DEPTH_WRITE_MASK_ALL;
-	default:                   return D3D11_DEPTH_WRITE_MASK_ZERO;
+	default: assert(false);    return D3D11_DEPTH_WRITE_MASK_ZERO;
 	}
 }
 //=============================================================================
@@ -266,7 +268,7 @@ inline D3D11_STENCIL_OP ConvertToD3D11(rhi::StencilOp op)
 	case StencilOp::Replace:   return D3D11_STENCIL_OP_REPLACE;
 	case StencilOp::Increment: return D3D11_STENCIL_OP_INCR;
 	case StencilOp::Decrement: return D3D11_STENCIL_OP_DECR;
-	default:                   return D3D11_STENCIL_OP_KEEP;
+	default: assert(false);    return D3D11_STENCIL_OP_KEEP;
 	}
 }
 //=============================================================================
@@ -279,7 +281,7 @@ inline D3D11_USAGE ConvertToD3D11(rhi::BufferUsage usage)
 	case BufferUsage::Immutable: return D3D11_USAGE_IMMUTABLE;
 	case BufferUsage::Dynamic:   return D3D11_USAGE_DYNAMIC;
 	case BufferUsage::Staging:   return D3D11_USAGE_STAGING;
-	default:                     return D3D11_USAGE_DEFAULT;
+	default: assert(false);      return D3D11_USAGE_DEFAULT;
 	}
 }
 //=============================================================================
@@ -292,7 +294,7 @@ inline UINT ConvertToD3D11(rhi::CPUAccessFlags flags)
 	case CPUAccessFlags::Write:     return D3D11_CPU_ACCESS_WRITE;
 	case CPUAccessFlags::Read:      return D3D11_CPU_ACCESS_READ;
 	case CPUAccessFlags::WriteRead: return D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
-	default:                        return 0;
+	default: assert(false);         return 0;
 	}
 }
 //=============================================================================
@@ -301,9 +303,9 @@ inline D3D11_MAP ConvertToD3D11(rhi::MapType type)
 	using namespace rhi;
 	switch (type)
 	{
-	case MapType::Read:  return D3D11_MAP_READ;
-	case MapType::Write: return D3D11_MAP_WRITE_DISCARD;
-	default:             return D3D11_MAP_READ; // Значение по умолчанию
+	case MapType::Read:     return D3D11_MAP_READ;
+	case MapType::Write:    return D3D11_MAP_WRITE_DISCARD;
+	default: assert(false); return D3D11_MAP_READ; // Р—РЅР°С‡РµРЅРёРµ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 	}
 }
 //=============================================================================
@@ -322,7 +324,7 @@ inline D3D11_BLEND ConvertToD3D11(rhi::BlendFactor type)
 	case BlendFactor::DstColor:         return D3D11_BLEND_DEST_COLOR;
 	case BlendFactor::OneMinusSrcColor: return D3D11_BLEND_INV_SRC_COLOR;
 	case BlendFactor::OneMinusDstColor: return D3D11_BLEND_INV_DEST_COLOR;
-	default:                            return D3D11_BLEND_ONE;
+	default: assert(false);             return D3D11_BLEND_ONE;
 	}
 }
 //=============================================================================
@@ -336,7 +338,7 @@ inline D3D11_BLEND_OP ConvertToD3D11(rhi::BlendOp type)
 	case BlendOp::RevSubtract: return D3D11_BLEND_OP_REV_SUBTRACT;
 	case BlendOp::Min:         return D3D11_BLEND_OP_MIN;
 	case BlendOp::Max:         return D3D11_BLEND_OP_MAX;
-	default:                   return D3D11_BLEND_OP_ADD;
+	default: assert(false);    return D3D11_BLEND_OP_ADD;
 	}
 }
 //=============================================================================
@@ -348,10 +350,9 @@ inline D3D11_PRIMITIVE_TOPOLOGY ConvertToD3D11(rhi::PrimitiveTopology topology)
 	case PrimitiveTopology::TriangleList:  return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	case PrimitiveTopology::TriangleStrip: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 	case PrimitiveTopology::PointList:     return D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
-	default: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	default: assert(false);                return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	}
 }
-
 #pragma endregion
 //=============================================================================
 #pragma region [ Resource Type ]
@@ -756,19 +757,19 @@ bool initImGui(void* hwnd)
 //=============================================================================
 void rhi::Print(const std::string& message)
 {
-	// TODO: пользовательская функция
+	// TODO: РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєР°СЏ С„СѓРЅРєС†РёСЏ
 	puts(message.c_str());
 }
 //=============================================================================
 void rhi::Print(const std::wstring& message)
 {
-	// TODO: пользовательская функция
+	// TODO: РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєР°СЏ С„СѓРЅРєС†РёСЏ
 	_putws(message.c_str());
 }
 //=============================================================================
 void rhi::Fatal(const std::string& error)
 {
-	// TODO: пользовательская функция
+	// TODO: РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєР°СЏ С„СѓРЅРєС†РёСЏ
 	puts(("FATAL: " + error).c_str());
 	shouldClose = true;
 }
@@ -1109,7 +1110,7 @@ std::expected<rhi::ShaderProgramPtr, std::string> rhi::LoadShaderProgram(const S
 			{
 				if (loadInfo.inputLayout.empty())
 				{
-					// TODO: сделать получение из шейдера если не введены данные
+					// TODO: СЃРґРµР»Р°С‚СЊ РїРѕР»СѓС‡РµРЅРёРµ РёР· С€РµР№РґРµСЂР° РµСЃР»Рё РЅРµ РІРІРµРґРµРЅС‹ РґР°РЅРЅС‹Рµ
 				}
 				else
 				{
@@ -1324,8 +1325,6 @@ std::expected<rhi::SamplerStatePtr, std::string> rhi::CreateSamplerState(const S
 //=============================================================================
 std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateInfo& createInfo)
 {
-	BufferPtr buffer = std::make_shared<Buffer>();
-
 	D3D11_USAGE bufferUsage = D3D11_USAGE_IMMUTABLE;
 	UINT        bufferCPUFlags = 0;
 	UINT        bufferBindFlag = 0;
@@ -1377,16 +1376,17 @@ std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateI
 		isIndirect = true;
 
 	D3D11_BUFFER_DESC bufferDesc = { 0 };
-	bufferDesc.ByteWidth = static_cast<UINT>(createInfo.size);
-	bufferDesc.Usage = bufferUsage;
-	bufferDesc.BindFlags = bufferBindFlag;
-	bufferDesc.CPUAccessFlags = bufferCPUFlags;
-	bufferDesc.MiscFlags = bufferMiscFlag;
+	bufferDesc.ByteWidth           = static_cast<UINT>(createInfo.size);
+	bufferDesc.Usage               = bufferUsage;
+	bufferDesc.BindFlags           = bufferBindFlag;
+	bufferDesc.CPUAccessFlags      = bufferCPUFlags;
+	bufferDesc.MiscFlags           = bufferMiscFlag;
 	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.stride);
 
 	D3D11_SUBRESOURCE_DATA bufferData = { 0 };
 	bufferData.pSysMem = createInfo.memoryData;
 
+	BufferPtr buffer = std::make_shared<Buffer>();
 	HRESULT result = rhi::d3dDevice->CreateBuffer(&bufferDesc, (createInfo.memoryData == nullptr) ? nullptr : &bufferData, &buffer->buffer);
 	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateBuffer() failed: ", result));
 
@@ -1464,7 +1464,7 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture1D(const Texture1D
 	texture->type = TextureType::Texture1D;
 
 	UINT        bindFlags = D3D11_BIND_SHADER_RESOURCE;
-	D3D11_USAGE usageFlags = D3D11_USAGE_DEFAULT; // TODO: а еще есть D3D11_USAGE_IMMUTABLE, сделать
+	D3D11_USAGE usageFlags = D3D11_USAGE_DEFAULT; // TODO: Р° РµС‰Рµ РµСЃС‚СЊ D3D11_USAGE_IMMUTABLE, СЃРґРµР»Р°С‚СЊ
 	UINT        cpuAccess = 0;
 	bool        isStaging = false;
 	bool        isUAV = false;
@@ -1498,7 +1498,7 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture1D(const Texture1D
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 
-	// TODO: доделать загрузку данных при инициализации
+	// TODO: РґРѕРґРµР»Р°С‚СЊ Р·Р°РіСЂСѓР·РєСѓ РґР°РЅРЅС‹С… РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 
 	Microsoft::WRL::ComPtr<ID3D11Texture1D> textureRef;
 	HRESULT result = rhi::d3dDevice->CreateTexture1D(&textureDesc, nullptr, &textureRef);
@@ -1536,7 +1536,7 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture2D(const Texture2D
 	texture->type = TextureType::Texture2D;
 
 	UINT        bindFlags = D3D11_BIND_SHADER_RESOURCE;
-	D3D11_USAGE usageFlags = D3D11_USAGE_DEFAULT; // TODO: а еще есть D3D11_USAGE_IMMUTABLE, сделать
+	D3D11_USAGE usageFlags = D3D11_USAGE_DEFAULT; // TODO: Р° РµС‰Рµ РµСЃС‚СЊ D3D11_USAGE_IMMUTABLE, СЃРґРµР»Р°С‚СЊ
 	UINT        cpuAccess = 0;
 	bool        isStaging = false;
 	bool        isUAV = false;
@@ -1598,8 +1598,8 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture2D(const Texture2D
 
 	//D3D11_SUBRESOURCE_DATA textureData{};
 	//textureData.pSysMem = createInfo.memoryData;
-	//textureData.SysMemPitch = 2 * sizeof(UINT); // texture is 2 pixels wide, 4 bytes per pixel // TODO: доделать
-	// TODO: доделать загрузку данных при инициализации
+	//textureData.SysMemPitch = 2 * sizeof(UINT); // texture is 2 pixels wide, 4 bytes per pixel // TODO: РґРѕРґРµР»Р°С‚СЊ
+	// TODO: РґРѕРґРµР»Р°С‚СЊ Р·Р°РіСЂСѓР·РєСѓ РґР°РЅРЅС‹С… РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D1> textureRef;
 	HRESULT result = rhi::d3dDevice->CreateTexture2D1(&textureDesc, nullptr, &textureRef);
@@ -1671,7 +1671,7 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture3D(const Texture3D
 	textureDesc.CPUAccessFlags = cpuAccess;
 	textureDesc.MiscFlags = 0;
 
-	// TODO: доделать загрузку данных при инициализации
+	// TODO: РґРѕРґРµР»Р°С‚СЊ Р·Р°РіСЂСѓР·РєСѓ РґР°РЅРЅС‹С… РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 
 	Microsoft::WRL::ComPtr<ID3D11Texture3D1> textureRef;
 	HRESULT result = rhi::d3dDevice->CreateTexture3D1(&textureDesc, nullptr, &textureRef);
@@ -1704,7 +1704,7 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture3D(const Texture3D
 //=============================================================================
 std::expected<rhi::RenderTargetPtr, std::string> rhi::CreateRenderTarget(const RenderTargetCreateInfo& createInfo)
 {
-	// TODO: проверка на валидацию данных в createInfo
+	// TODO: РїСЂРѕРІРµСЂРєР° РЅР° РІР°Р»РёРґР°С†РёСЋ РґР°РЅРЅС‹С… РІ createInfo
 
 	RenderTargetPtr rt = std::make_shared<RenderTarget>();
 
@@ -1976,7 +1976,7 @@ void rhi::BindVertexBuffers(const std::vector<BufferPtr>& resources)
 //=============================================================================
 void rhi::BindIndexBuffer(BufferPtr resource)
 {
-	rhi::d3dContext->IASetIndexBuffer(resource->buffer.Get(), DXGI_FORMAT_R32_UINT, 0); // TODO: DXGI_FORMAT_R32_UINT должно передаваться
+	rhi::d3dContext->IASetIndexBuffer(resource->buffer.Get(), DXGI_FORMAT_R32_UINT, 0); // TODO: DXGI_FORMAT_R32_UINT РґРѕР»Р¶РЅРѕ РїРµСЂРµРґР°РІР°С‚СЊСЃСЏ
 }
 //=============================================================================
 void rhi::SetRenderTarget(RenderTargetPtr rt, const std::optional<Color>& clearColor, const std::optional<float>& clearDepth, const std::optional<uint8_t>& clearStencil)
@@ -2003,7 +2003,7 @@ void rhi::SetRenderTarget(RenderTargetPtr rt, const std::optional<Color>& clearC
 	{
 		uint8_t stencil = clearStencil.has_value() ? clearStencil.value() : 0;
 		rhi::d3dContext->ClearDepthStencilView(rt->depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, clearDepth.value(), stencil);
-		// TODO: переделать так чтобы можно было очищать что-то одно - дефбуфер или стенсил
+		// TODO: РїРµСЂРµРґРµР»Р°С‚СЊ С‚Р°Рє С‡С‚РѕР±С‹ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РѕС‡РёС‰Р°С‚СЊ С‡С‚Рѕ-С‚Рѕ РѕРґРЅРѕ - РґРµС„Р±СѓС„РµСЂ РёР»Рё СЃС‚РµРЅСЃРёР»
 	}
 
 	rhi::d3dContext->OMSetRenderTargets(rt->numRenderTargets, rtv, dsv);

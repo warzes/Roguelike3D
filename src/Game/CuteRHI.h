@@ -359,7 +359,7 @@ namespace rhi
 	struct BufferCreateInfo final
 	{
 		uint32_t flags{ 0 };
-		void* memoryData{ nullptr };
+		void*    memoryData{ nullptr };
 		size_t   size{ 0 };
 		size_t   stride{ 0 };
 	};
@@ -462,17 +462,17 @@ namespace rhi
 	inline bool IsCompressedFormat(TexelsFormat format) { return format < TexelsFormat::UnknownCompressed; }
 	inline bool IsDepthFormat(TexelsFormat format) { return format > TexelsFormat::UnknownDepth; }
 
-	// setup and misc functions
-тут
+	// Setup and misc functions
 	bool Setup(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vsync);
 	void Shutdown();
 	bool IsValid();
 	void BeginFrame();
 	void EndFrame();
 	bool Resize(uint32_t width, uint32_t height);
-
 	void BeginPerfEvent(const wchar_t* name);
 	void EndPerfEvent();
+
+	// Rendering functions
 	void SetMainFrame(const std::optional<Color>& clearColor, const std::optional<float>& clearDepth, const std::optional<uint8_t>& clearStencil);
 
 	void Draw(PrimitiveTopology topology, uint32_t vertexCount, uint32_t startVertexLocation);
@@ -503,7 +503,7 @@ namespace rhi
 		resource.reset();
 	}
 
-	// RHI Resources Mod
+	// RHI Resources Updating
 	void ClearBufferRW(BufferPtr buffer, uint32_t value);
 	void ClearBufferRW(BufferPtr buffer, float value);
 	void* Map(BufferPtr buffer, MapType type);
@@ -531,7 +531,7 @@ namespace rhi
 	);
 	void CopyResource(TexturePtr src, TexturePtr dst);
 
-	// RHI Resources Bind
+	// RHI Resources Binding
 	void BindShaderProgram(ShaderProgramPtr resource);
 	void BindPipelineState(PipelineStatePtr resource);
 	void BindSamplerState(SamplerStatePtr resource, ShaderType shaderType, uint32_t slot);
