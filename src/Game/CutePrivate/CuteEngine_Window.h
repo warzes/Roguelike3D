@@ -2,6 +2,9 @@
 //=============================================================================
 extern CuteEngineApp* thisCuteEngineApp;
 //=============================================================================
+struct handleCloser { void operator()(HANDLE h) noexcept { if (h) ::CloseHandle(h); } };
+using ScopedHandle = std::unique_ptr<void, handleCloser>;
+//=============================================================================
 namespace windowData
 {
 	constexpr const auto windowClassName = L"Cute Window Class";
@@ -28,8 +31,21 @@ namespace windowData
 //=============================================================================
 namespace mouseData
 {
+	void Reset()
+	{
+		x = y = lastX = lastY = 0;
+		relativeX = relativeY = INT32_MAX;
+		leftButton = middleButton = rightButton = false;
+		xButton1 = xButton2 = false;
+		scrollWheelValue = 0;
+		inFocus = true;
+		autoReset = true;
+	}
+
 	Input::MouseMode mode = Input::MouseMode::Absolute;
 
+	int              x{ 0 };
+	int              y{ 0 };
 	int              lastX{ 0 };
 	int              lastY{ 0 };
 	int              relativeX{ INT32_MAX };
@@ -80,6 +96,11 @@ void updateKeyBinding(uint32_t message, uint32_t keyCode)
 	windowData::isKeyDown[keyCode] = is_down;
 }
 //=============================================================================
+void clipToWindow()
+{
+#error
+}
+//=============================================================================
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
 	if (message == WM_DESTROY) [[unlikely]]
@@ -90,6 +111,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 	if (thisCuteEngineApp) [[likely]]
 	{
+
 		switch (message)
 		{
 		case WM_DESTROY:
@@ -99,10 +121,25 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case WM_ACTIVATEAPP:
 			if (wParam)
 			{
+				mouseData::inFocus = true;
+				if (mouseData::mode == Input::MouseMode::Relative)
+				{
+					mouseData::x = mouseData::y = 0;
+					::ShowCursor(FALSE);
+					clipToWindow();
+				}
 				//game->OnActivated();
 			}
 			else
 			{
+				const int scrollWheel = mouseData::scrollWheelValue;
+				mouseData::Reset();
+				mouseData::scrollWheelValue = scrollWheel;
+				if (mouseData::mode == Input::MouseMode::Relative)
+				{
+					::ClipCursor(nullptr);
+				}
+				mouseData::inFocus = false;
 				//game->OnDeactivated();
 			}
 			break;
@@ -161,6 +198,33 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// A menu is active and the user presses a key that does not correspond to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
 			return MAKELRESULT(0, 1/*MNC_CLOSE*/);
 
+		case WM_INPUT:
+			if (mouseData::inFocus && mouseData::mode == Input::MouseMode::Relative)
+			{
+				RAWINPUT raw;
+				UINT rawSize = sizeof(raw);
+				const UINT resultData = GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &raw, &rawSize, sizeof(RAWINPUTHEADER));
+				if (resultData == UINT(-1))
+				{
+					Fatal("GetRawInputData() failed");
+					return 0;
+				}
+
+				if (raw.header.dwType == RIM_TYPEMOUSE)
+				{
+					if (!(raw.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE))
+					{
+						mouseData::x += raw.data.mouse.lLastX;
+						mouseData::y += raw.data.mouse.lLastY;
+					}
+					else if (raw.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP)
+					{
+						// This is used to make Remote Desktop sessons work
+					}
+				}
+			}
+
+			break;
 		case WM_CHAR:
 		case WM_SETCURSOR:
 		case WM_DEVICECHANGE:
@@ -181,7 +245,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 				if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
 					return true;
 			}
-				
 
 			break;
 
@@ -383,6 +446,8 @@ float CuteEngineApp::GetWindowAspect() const
 {
 	return static_cast<float>(GetWindowWidth()) / static_cast<float>(GetWindowHeight());
 }
+
+
 //=============================================================================
 bool CuteEngineApp::IsKeyDown(uint32_t keyCode) const
 {
