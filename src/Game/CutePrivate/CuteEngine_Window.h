@@ -24,9 +24,6 @@ namespace windowData
 
 	void (*dropCallback)(char const*, uint32_t, void*) = nullptr;
 	void*     callbackData = nullptr;
-
-	bool      isKeyDown[VK_OEM_CLEAR] = {};
-	bool      isPreviousKeyDown[VK_OEM_CLEAR] = {};
 } // namespace windowData
 //=============================================================================
 namespace mouseData
@@ -49,6 +46,11 @@ namespace mouseData
 
 } // namespace mouseData
 //=============================================================================
+namespace keyboardData
+{
+	Input::KeyboardState state{};
+} // namespace keyboardData
+//=============================================================================
 enum CreateWindowFlag
 {
 	MaximizeWindow = 1 << 0,
@@ -58,30 +60,7 @@ enum CreateWindowFlag
 };
 typedef uint32_t CreateWindowFlags;
 //=============================================================================
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-//=============================================================================
-void resetKeyBindings()
-{
-	for (uint32_t i = 0; i < ARRAYSIZE(windowData::isKeyDown); ++i)
-		windowData::isKeyDown[i] = false;
-}
-//=============================================================================
-void updateKeyBinding(uint32_t message, uint32_t keyCode)
-{
-	bool is_down;
-	switch (message)
-	{
-	case WM_KEYUP: case WM_SYSKEYUP:
-		is_down = false;
-		break;
-	case WM_KEYDOWN: case WM_SYSKEYDOWN:
-		is_down = true;
-		break;
-	default:
-		return;
-	}
-	windowData::isKeyDown[keyCode] = is_down;
-}
+IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 //=============================================================================
 void clipToWindow()
 {
@@ -198,7 +177,7 @@ void mouseProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 			const int scrollWheel = mouseData::state.scrollWheelValue;
 			memset(&mouseData::state, 0, sizeof(Input::MouseState));
 			mouseData::state.scrollWheelValue = scrollWheel;
- 
+
 			if (mouseData::mode == Input::MouseMode::Relative)
 			{
 				ClipCursor(nullptr);
@@ -340,6 +319,95 @@ void mouseProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 	}
 }
 //=============================================================================
+void keyboardReset()
+{
+	memset(&keyboardData::state, 0, sizeof(Input::KeyboardState));
+}
+//=============================================================================
+namespace
+{
+	inline void keyDown(int key, Input::KeyboardState& state) noexcept
+	{
+		if (key < 0 || key > 0xfe)
+			return;
+
+		auto ptr = reinterpret_cast<uint32_t*>(&state);
+
+		const unsigned int bf = 1u << (key & 0x1f);
+		ptr[(key >> 5)] |= bf;
+	}
+
+	inline void keyUp(int key, Input::KeyboardState& state) noexcept
+	{
+		if (key < 0 || key > 0xfe)
+			return;
+
+		auto ptr = reinterpret_cast<uint32_t*>(&state);
+
+		const unsigned int bf = 1u << (key & 0x1f);
+		ptr[(key >> 5)] &= ~bf;
+	}
+}
+//=============================================================================
+void keyboardProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
+{
+	bool down = false;
+
+	switch (message)
+	{
+	case WM_ACTIVATE:
+	case WM_ACTIVATEAPP:
+		keyboardReset();
+		return;
+
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
+		down = true;
+		break;
+
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+		break;
+
+	default:
+		return;
+	}
+
+	int vk = LOWORD(wParam);
+	// We want to distinguish left and right shift/ctrl/alt keys
+	switch (vk)
+	{
+	case VK_SHIFT:
+	case VK_CONTROL:
+	case VK_MENU:
+	{
+		if (vk == VK_SHIFT && !down)
+		{
+			// Workaround to ensure left vs. right shift get cleared when both were pressed at same time
+			keyUp(VK_LSHIFT, keyboardData::state);
+			keyUp(VK_RSHIFT, keyboardData::state);
+		}
+
+		bool isExtendedKey = (HIWORD(lParam) & KF_EXTENDED) == KF_EXTENDED;
+		int scanCode = LOBYTE(HIWORD(lParam)) | (isExtendedKey ? 0xe000 : 0);
+		vk = LOWORD(MapVirtualKeyW(static_cast<UINT>(scanCode), MAPVK_VSC_TO_VK_EX));
+	}
+	break;
+
+	default:
+		break;
+	}
+
+	if (down)
+	{
+		keyDown(vk, keyboardData::state);
+	}
+	else
+	{
+		keyUp(vk, keyboardData::state);
+	}
+}
+//=============================================================================
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
 	if (message == WM_DESTROY) [[unlikely]]
@@ -351,7 +419,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 	if (thisCuteEngineApp) [[likely]]
 	{
 		mouseProcessMessage(message, wParam, lParam);
-
+		keyboardProcessMessage(message, wParam, lParam);
 
 		switch (message)
 		{
@@ -371,7 +439,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			break;
 
 		case WM_KILLFOCUS:
-			resetKeyBindings();
 			break;
 
 		case WM_DROPFILES:
@@ -436,8 +503,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case WM_RBUTTONDOWN: case WM_RBUTTONDBLCLK:
 		case WM_MBUTTONDOWN: case WM_MBUTTONDBLCLK:
 		case WM_XBUTTONDOWN: case WM_XBUTTONDBLCLK:
-			if (wParam < ARRAYSIZE(windowData::isKeyDown))
-				updateKeyBinding(message, (uint32_t)wParam);
 
 			if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().BackendPlatformUserData != nullptr)
 			{
@@ -564,8 +629,10 @@ bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, Create
 	windowData::widthInWindowMode = windowData::width;
 	windowData::heightInWindowMode = windowData::height;
 
-	// init mouse
+	// init input
 	{
+		keyboardData::state = {};
+
 		mouseData::state = {};
 		mouseData::mode = Input::MouseMode::Absolute;
 		mouseData::lastX = 0;
@@ -600,7 +667,6 @@ bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, Create
 		}
 	}
 
-	resetKeyBindings();
 	windowData::isResized = false;
 	windowData::isMinimized = false;
 	windowData::isMaximized = (flags & MaximizeWindow) != 0;
@@ -619,7 +685,6 @@ void EndWindow()
 //=============================================================================
 void PollEvent()
 {
-	memcpy(windowData::isPreviousKeyDown, windowData::isKeyDown, sizeof(windowData::isKeyDown)); // TODO: оптимизировать
 	while (PeekMessage(&windowData::msg, nullptr, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&windowData::msg);
@@ -779,18 +844,8 @@ void CuteEngineApp::SetMouseVisible(bool visible) const
 	}
 }
 //=============================================================================
-bool CuteEngineApp::IsKeyDown(uint32_t keyCode) const
+Input::KeyboardState CuteEngineApp::GetKeyboardState() const
 {
-	return (keyCode < ARRAYSIZE(windowData::isKeyDown) ? windowData::isKeyDown[keyCode] : false);
-}
-//=============================================================================
-bool CuteEngineApp::IsKeyPressed(uint32_t keyCode) const
-{
-	return (keyCode < ARRAYSIZE(windowData::isKeyDown) ? windowData::isKeyDown[keyCode] && !windowData::isPreviousKeyDown[keyCode] : false);
-}
-//=============================================================================
-bool CuteEngineApp::IsKeyReleased(uint32_t keyCode) const
-{
-	return (keyCode < ARRAYSIZE(windowData::isKeyDown) ? !windowData::isKeyDown[keyCode] && windowData::isPreviousKeyDown[keyCode] : false);
+	return keyboardData::state;
 }
 //=============================================================================
