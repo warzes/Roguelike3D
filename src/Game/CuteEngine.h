@@ -64,16 +64,29 @@ void Fatal(const std::string& error);
 
 namespace Input
 {
-	struct MousePosition final
-	{
-		int x{ 0 };
-		int y{ 0 };
-	};
-
 	enum class MouseMode : uint8_t
 	{
 		Absolute,
 		Relative
+	};
+
+	struct MouseState final
+	{
+		bool      leftButton;
+		bool      middleButton;
+		bool      rightButton;
+		bool      xButton1;
+		bool      xButton2;
+		int       x;
+		int       y;
+		int       scrollWheelValue;
+		MouseMode positionMode;
+	};
+
+	struct MousePosition final
+	{
+		int x{ 0 };
+		int y{ 0 };
 	};
 
 	enum class MouseButton : uint8_t
@@ -298,15 +311,23 @@ public:
 	[[nodiscard]] float    GetWindowAspect() const;
 
 	// Input
+	Input::MouseState GetMouseState() const;        // Retrieve the current state of the mouse
+	void ResetScrollWheelValue() const;             // Resets the accumulated scroll wheel value
+	void SetMouseMode(Input::MouseMode mode) const; // Sets mouse mode (defaults to absolute)
+	bool IsMouseVisible() const;
+	void SetMouseVisible(bool visible) const;
+
+
+
+
 	bool IsMouseDown(Input::MouseButton button) const;
 	bool IsMousePressed(Input::MouseButton button) const;
 	bool IsMouseReleased(Input::MouseButton button) const;
 	Input::MousePosition GetMousePosition() const;
-	void SetMouseMode(Input::MouseMode mode) const;
+
 	int GetScrollWheelValue() const;
-	void ResetScrollWheelValue() const;
-	bool IsMouseVisible() const;
-	void SetMouseVisible(bool visible) const;
+
+
 
 	bool IsKeyDown(uint32_t keyCode) const;
 	bool IsKeyPressed(uint32_t keyCode) const;

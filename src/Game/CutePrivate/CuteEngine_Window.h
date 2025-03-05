@@ -31,35 +31,22 @@ namespace windowData
 //=============================================================================
 namespace mouseData
 {
-	void Reset()
-	{
-		x = y = lastX = lastY = 0;
-		relativeX = relativeY = INT32_MAX;
-		leftButton = middleButton = rightButton = false;
-		xButton1 = xButton2 = false;
-		scrollWheelValue = 0;
-		inFocus = true;
-		autoReset = true;
-	}
+	Input::MouseMode  mode = Input::MouseMode::Absolute;
+	Input::MouseState state{};
 
-	Input::MouseMode mode = Input::MouseMode::Absolute;
+	ScopedHandle      scrollWheelValue;
+	ScopedHandle      relativeRead;
+	ScopedHandle      absoluteMode;
+	ScopedHandle      relativeMode;
 
-	int              x{ 0 };
-	int              y{ 0 };
-	int              lastX{ 0 };
-	int              lastY{ 0 };
-	int              relativeX{ INT32_MAX };
-	int              relativeY{ INT32_MAX };
+	int               lastX{ 0 };
+	int               lastY{ 0 };
+	int               relativeX{ INT32_MAX };
+	int               relativeY{ INT32_MAX };
 
-	bool             leftButton{ false };
-	bool             middleButton{ false };
-	bool             rightButton{ false };
-	bool             xButton1{ false };
-	bool             xButton2{ false };
-	int              scrollWheelValue{ 0 };
+	bool              inFocus{ true };
+	bool              autoReset{ true };
 
-	bool             inFocus{ true };
-	bool             autoReset{ true };
 } // namespace mouseData
 //=============================================================================
 enum CreateWindowFlag
@@ -98,7 +85,259 @@ void updateKeyBinding(uint32_t message, uint32_t keyCode)
 //=============================================================================
 void clipToWindow()
 {
-#error
+	RECT rect = {};
+	std::ignore = ::GetClientRect(windowData::hwnd, &rect);
+
+	POINT ul;
+	ul.x = rect.left;
+	ul.y = rect.top;
+
+	POINT lr;
+	lr.x = rect.right;
+	lr.y = rect.bottom;
+
+	std::ignore = ::MapWindowPoints(windowData::hwnd, nullptr, &ul, 1);
+	std::ignore = ::MapWindowPoints(windowData::hwnd, nullptr, &lr, 1);
+
+	rect.left = ul.x;
+	rect.top = ul.y;
+
+	rect.right = lr.x;
+	rect.bottom = lr.y;
+
+	::ClipCursor(&rect);
+}
+//=============================================================================
+void mouseProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
+{
+	// First handle any pending scroll wheel reset event.
+	switch (WaitForSingleObjectEx(mouseData::scrollWheelValue.get(), 0, FALSE))
+	{
+	default:
+	case WAIT_TIMEOUT:
+		break;
+
+	case WAIT_OBJECT_0:
+		mouseData::state.scrollWheelValue = 0;
+		ResetEvent(mouseData::scrollWheelValue.get());
+		break;
+
+	case WAIT_FAILED:
+		Fatal("WaitForMultipleObjectsEx");
+		return;
+	}
+
+	// Next handle mode change events.
+	HANDLE events[2] = { mouseData::absoluteMode.get(), mouseData::relativeMode.get() };
+	switch (WaitForMultipleObjectsEx(static_cast<DWORD>(std::size(events)), events, FALSE, 0, FALSE))
+	{
+	default:
+	case WAIT_TIMEOUT:
+		break;
+
+	case WAIT_OBJECT_0:
+	{
+		mouseData::mode = Input::MouseMode::Absolute;
+		ClipCursor(nullptr);
+
+		POINT point;
+		point.x = mouseData::lastX;
+		point.y = mouseData::lastY;
+
+		// We show the cursor before moving it to support Remote Desktop
+		ShowCursor(TRUE);
+
+		if (MapWindowPoints(windowData::hwnd, nullptr, &point, 1))
+		{
+			SetCursorPos(point.x, point.y);
+		}
+		mouseData::state.x = mouseData::lastX;
+		mouseData::state.y = mouseData::lastY;
+	}
+	break;
+
+	case (WAIT_OBJECT_0 + 1):
+	{
+		ResetEvent(mouseData::relativeRead.get());
+
+		mouseData::mode = Input::MouseMode::Relative;
+		mouseData::state.x = mouseData::state.y = 0;
+		mouseData::relativeX = INT32_MAX;
+		mouseData::relativeY = INT32_MAX;
+
+		ShowCursor(FALSE);
+
+		clipToWindow();
+	}
+	break;
+
+	case WAIT_FAILED:
+		Fatal("WaitForMultipleObjectsEx");
+		return;
+	}
+
+	switch (message)
+	{
+	case WM_ACTIVATE:
+	case WM_ACTIVATEAPP:
+		if (wParam)
+		{
+			mouseData::inFocus = true;
+
+			if (mouseData::mode == Input::MouseMode::Relative)
+			{
+				mouseData::state.x = mouseData::state.y = 0;
+
+				ShowCursor(FALSE);
+
+				clipToWindow();
+			}
+		}
+		else
+		{
+			const int scrollWheel = mouseData::state.scrollWheelValue;
+			memset(&mouseData::state, 0, sizeof(Input::MouseState));
+			mouseData::state.scrollWheelValue = scrollWheel;
+ 
+			if (mouseData::mode == Input::MouseMode::Relative)
+			{
+				ClipCursor(nullptr);
+			}
+
+			mouseData::inFocus = false;
+		}
+		return;
+
+	case WM_INPUT:
+		if (mouseData::inFocus && mouseData::mode == Input::MouseMode::Relative)
+		{
+			RAWINPUT raw;
+			UINT rawSize = sizeof(raw);
+
+			const UINT resultData = GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &raw, &rawSize, sizeof(RAWINPUTHEADER));
+			if (resultData == UINT(-1))
+			{
+				Fatal("GetRawInputData");
+				return;
+			}
+
+			if (raw.header.dwType == RIM_TYPEMOUSE)
+			{
+				if (!(raw.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE))
+				{
+					mouseData::state.x += raw.data.mouse.lLastX;
+					mouseData::state.y += raw.data.mouse.lLastY;
+
+					ResetEvent(mouseData::relativeRead.get());
+				}
+				else if (raw.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP)
+				{
+					// This is used to make Remote Desktop sessons work
+					const int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+					const int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+					const auto x = static_cast<int>((float(raw.data.mouse.lLastX) / 65535.0f) * float(width));
+					const auto y = static_cast<int>((float(raw.data.mouse.lLastY) / 65535.0f) * float(height));
+
+					if (mouseData::relativeX == INT32_MAX)
+					{
+						mouseData::state.x = mouseData::state.y = 0;
+					}
+					else
+					{
+						mouseData::state.x = x - mouseData::relativeX;
+						mouseData::state.y = y - mouseData::relativeY;
+					}
+
+					mouseData::relativeX = x;
+					mouseData::relativeY = y;
+
+					ResetEvent(mouseData::relativeRead.get());
+				}
+			}
+		}
+		return;
+
+	case WM_MOUSEMOVE:
+		break;
+
+	case WM_LBUTTONDOWN:
+		mouseData::state.leftButton = true;
+		break;
+
+	case WM_LBUTTONUP:
+		mouseData::state.leftButton = false;
+		break;
+
+	case WM_RBUTTONDOWN:
+		mouseData::state.rightButton = true;
+		break;
+
+	case WM_RBUTTONUP:
+		mouseData::state.rightButton = false;
+		break;
+
+	case WM_MBUTTONDOWN:
+		mouseData::state.middleButton = true;
+		break;
+
+	case WM_MBUTTONUP:
+		mouseData::state.middleButton = false;
+		break;
+
+	case WM_MOUSEWHEEL:
+		mouseData::state.scrollWheelValue += GET_WHEEL_DELTA_WPARAM(wParam);
+		return;
+
+	case WM_XBUTTONDOWN:
+		switch (GET_XBUTTON_WPARAM(wParam))
+		{
+		case XBUTTON1:
+			mouseData::state.xButton1 = true;
+			break;
+
+		case XBUTTON2:
+			mouseData::state.xButton2 = true;
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case WM_XBUTTONUP:
+		switch (GET_XBUTTON_WPARAM(wParam))
+		{
+		case XBUTTON1:
+			mouseData::state.xButton1 = false;
+			break;
+
+		case XBUTTON2:
+			mouseData::state.xButton2 = false;
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case WM_MOUSEHOVER:
+		break;
+
+	default:
+		// Not a mouse message, so exit
+		return;
+	}
+
+	if (mouseData::mode == Input::MouseMode::Absolute)
+	{
+		// All mouse messages provide a new pointer position
+		const int xPos = static_cast<short>(LOWORD(lParam)); // GET_X_LPARAM(lParam);
+		const int yPos = static_cast<short>(HIWORD(lParam)); // GET_Y_LPARAM(lParam);
+
+		mouseData::state.x = mouseData::lastX = xPos;
+		mouseData::state.y = mouseData::lastY = yPos;
+	}
 }
 //=============================================================================
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
@@ -111,6 +350,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 	if (thisCuteEngineApp) [[likely]]
 	{
+		mouseProcessMessage(message, wParam, lParam);
+
 
 		switch (message)
 		{
@@ -121,25 +362,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case WM_ACTIVATEAPP:
 			if (wParam)
 			{
-				mouseData::inFocus = true;
-				if (mouseData::mode == Input::MouseMode::Relative)
-				{
-					mouseData::x = mouseData::y = 0;
-					::ShowCursor(FALSE);
-					clipToWindow();
-				}
 				//game->OnActivated();
 			}
 			else
 			{
-				const int scrollWheel = mouseData::scrollWheelValue;
-				mouseData::Reset();
-				mouseData::scrollWheelValue = scrollWheel;
-				if (mouseData::mode == Input::MouseMode::Relative)
-				{
-					::ClipCursor(nullptr);
-				}
-				mouseData::inFocus = false;
 				//game->OnDeactivated();
 			}
 			break;
@@ -198,33 +424,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// A menu is active and the user presses a key that does not correspond to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
 			return MAKELRESULT(0, 1/*MNC_CLOSE*/);
 
-		case WM_INPUT:
-			if (mouseData::inFocus && mouseData::mode == Input::MouseMode::Relative)
-			{
-				RAWINPUT raw;
-				UINT rawSize = sizeof(raw);
-				const UINT resultData = GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &raw, &rawSize, sizeof(RAWINPUTHEADER));
-				if (resultData == UINT(-1))
-				{
-					Fatal("GetRawInputData() failed");
-					return 0;
-				}
-
-				if (raw.header.dwType == RIM_TYPEMOUSE)
-				{
-					if (!(raw.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE))
-					{
-						mouseData::x += raw.data.mouse.lLastX;
-						mouseData::y += raw.data.mouse.lLastY;
-					}
-					else if (raw.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP)
-					{
-						// This is used to make Remote Desktop sessons work
-					}
-				}
-			}
-
-			break;
 		case WM_CHAR:
 		case WM_SETCURSOR:
 		case WM_DEVICECHANGE:
@@ -367,6 +566,28 @@ bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, Create
 
 	// init mouse
 	{
+		mouseData::state = {};
+		mouseData::mode = Input::MouseMode::Absolute;
+		mouseData::lastX = 0;
+		mouseData::lastY = 0;
+		mouseData::relativeX = INT32_MAX;
+		mouseData::relativeY = INT32_MAX;
+		mouseData::inFocus = true;
+		mouseData::autoReset = true;
+
+		mouseData::scrollWheelValue.reset(CreateEventEx(nullptr, nullptr, CREATE_EVENT_MANUAL_RESET, EVENT_MODIFY_STATE | SYNCHRONIZE));
+		mouseData::relativeRead.reset(CreateEventEx(nullptr, nullptr, CREATE_EVENT_MANUAL_RESET, EVENT_MODIFY_STATE | SYNCHRONIZE));
+		mouseData::absoluteMode.reset(CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE));
+		mouseData::relativeMode.reset(CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE));
+		if (!mouseData::scrollWheelValue
+			|| !mouseData::relativeRead
+			|| !mouseData::absoluteMode
+			|| !mouseData::relativeMode)
+		{
+			Fatal("CreateEventEx");
+			return false;
+		}
+
 		RAWINPUTDEVICE Rid;
 		Rid.usUsagePage = 0x1 /* HID_USAGE_PAGE_GENERIC */;
 		Rid.usUsage     = 0x2 /* HID_USAGE_GENERIC_MOUSE */;
@@ -412,6 +633,16 @@ void PollEvent()
 	}
 }
 //=============================================================================
+void EndOfInputFrame()
+{
+	mouseData::autoReset = false;
+
+	if (mouseData::mode == Input::MouseMode::Relative)
+	{
+		mouseData::state.x = mouseData::state.y = 0;
+	}
+}
+//=============================================================================
 void CuteEngineApp::SetWindowTitle(std::wstring_view title)
 {
 	if (!SetWindowTextW(windowData::hwnd, title.data()))
@@ -446,8 +677,107 @@ float CuteEngineApp::GetWindowAspect() const
 {
 	return static_cast<float>(GetWindowWidth()) / static_cast<float>(GetWindowHeight());
 }
+//=============================================================================
+Input::MouseState CuteEngineApp::GetMouseState() const
+{
+	Input::MouseState state;
+	memcpy(&state, &mouseData::state, sizeof(Input::MouseState));
+	state.positionMode = mouseData::mode;
 
+	DWORD result = WaitForSingleObjectEx(mouseData::scrollWheelValue.get(), 0, FALSE);
+	if (result == WAIT_FAILED)
+	{
+		Fatal("WaitForSingleObjectEx");
+		return {};
+	}
 
+	if (result == WAIT_OBJECT_0)
+	{
+		state.scrollWheelValue = 0;
+	}
+
+	if (state.positionMode == Input::MouseMode::Relative)
+	{
+		result = WaitForSingleObjectEx(mouseData::relativeRead.get(), 0, FALSE);
+
+		if (result == WAIT_FAILED)
+		{
+			Fatal("WaitForSingleObjectEx");
+			return {};
+		}
+
+		if (result == WAIT_OBJECT_0)
+		{
+			state.x = state.y = 0;
+		}
+		else
+		{
+			SetEvent(mouseData::relativeRead.get());
+		}
+
+		if (mouseData::autoReset)
+		{
+			mouseData::state.x = mouseData::state.y = 0;
+		}
+	}
+
+	return state;
+}
+//=============================================================================
+void CuteEngineApp::ResetScrollWheelValue() const
+{
+	SetEvent(mouseData::scrollWheelValue.get());
+}
+//=============================================================================
+void CuteEngineApp::SetMouseMode(Input::MouseMode mode) const
+{
+	if (mouseData::mode == mode)
+		return;
+
+	SetEvent((mode == Input::MouseMode::Absolute) ? mouseData::absoluteMode.get() : mouseData::relativeMode.get());
+
+	// Send a WM_HOVER as a way to 'kick' the message processing even if the mouse is still.
+	TRACKMOUSEEVENT tme;
+	tme.cbSize = sizeof(tme);
+	tme.dwFlags = TME_HOVER;
+	tme.hwndTrack = windowData::hwnd;
+	tme.dwHoverTime = 1;
+	if (!TrackMouseEvent(&tme))
+	{
+		Fatal("TrackMouseEvent");
+	}
+}
+//=============================================================================
+bool CuteEngineApp::IsMouseVisible() const
+{
+	if (mouseData::mode == Input::MouseMode::Relative)
+		return false;
+
+	CURSORINFO info = { sizeof(CURSORINFO), 0, nullptr, {} };
+	if (!GetCursorInfo(&info))
+		return false;
+
+	return (info.flags & CURSOR_SHOWING) != 0;
+}
+//=============================================================================
+void CuteEngineApp::SetMouseVisible(bool visible) const
+{
+	if (mouseData::mode == Input::MouseMode::Relative)
+		return;
+
+	CURSORINFO info = { sizeof(CURSORINFO), 0, nullptr, {} };
+	if (!GetCursorInfo(&info))
+	{
+		Fatal("GetCursorInfo");
+		return;
+	}
+
+	const bool isvisible = (info.flags & CURSOR_SHOWING) != 0;
+	if (isvisible != visible)
+	{
+		::ShowCursor(visible);
+	}
+}
 //=============================================================================
 bool CuteEngineApp::IsKeyDown(uint32_t keyCode) const
 {

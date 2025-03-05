@@ -134,6 +134,7 @@ void CuteEngineApp::Run()
 
 			while (!isShouldClose())
 			{
+				// Begin frame
 				computeTimer();
 				PollEvent();
 
@@ -161,10 +162,13 @@ void CuteEngineApp::Run()
 
 				// Frame
 				{
-					rhi::BeginFrame();	
+					rhi::BeginFrame();
 					OnFrame();
 					rhi::EndFrame();
 				}
+
+				// End frame
+				EndOfInputFrame();
 			}
 		}
 		else
