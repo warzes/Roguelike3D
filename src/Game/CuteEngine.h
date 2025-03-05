@@ -572,7 +572,7 @@ public:
 	[[nodiscard]] float    GetWindowAspect() const;
 
 	// Mouse
-	Input::MouseState GetMouseState() const;        // Retrieve the current state of the mouse
+	const Input::MouseState& GetMouseState() const; // Retrieve the current state of the mouse
 	void ResetScrollWheelValue() const;             // Resets the accumulated scroll wheel value
 	void SetMouseMode(Input::MouseMode mode) const; // Sets mouse mode (defaults to absolute)
 	bool IsMouseVisible() const;
@@ -580,7 +580,7 @@ public:
 
 	// Keyboard
 	
-	Input::KeyboardState GetKeyboardState() const;  // Retrieve the current state of the keyboard
+	const Input::KeyboardState& GetKeyboardState() const; // Retrieve the current state of the keyboard
 
 	bool IsMouseDown(Input::MouseButton button) const;
 	bool IsMousePressed(Input::MouseButton button) const;

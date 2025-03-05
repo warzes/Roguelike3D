@@ -30,6 +30,7 @@ namespace mouseData
 {
 	Input::MouseMode  mode = Input::MouseMode::Absolute;
 	Input::MouseState state{};
+	Input::MouseState currentState{};
 
 	ScopedHandle      scrollWheelValue;
 	ScopedHandle      relativeRead;
@@ -316,6 +317,49 @@ void mouseProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
 		mouseData::state.x = mouseData::lastX = xPos;
 		mouseData::state.y = mouseData::lastY = yPos;
+	}
+}
+//=============================================================================
+void currentMouseState()
+{
+	memcpy(&mouseData::currentState, &mouseData::state, sizeof(Input::MouseState));
+	mouseData::currentState.positionMode = mouseData::mode;
+
+	DWORD result = WaitForSingleObjectEx(mouseData::scrollWheelValue.get(), 0, FALSE);
+	if (result == WAIT_FAILED)
+	{
+		Fatal("WaitForSingleObjectEx");
+		return;
+	}
+
+	if (result == WAIT_OBJECT_0)
+	{
+		mouseData::currentState.scrollWheelValue = 0;
+	}
+
+	if (mouseData::currentState.positionMode == Input::MouseMode::Relative)
+	{
+		result = WaitForSingleObjectEx(mouseData::relativeRead.get(), 0, FALSE);
+
+		if (result == WAIT_FAILED)
+		{
+			Fatal("WaitForSingleObjectEx");
+			return;
+		}
+
+		if (result == WAIT_OBJECT_0)
+		{
+			mouseData::currentState.x = mouseData::currentState.y = 0;
+		}
+		else
+		{
+			SetEvent(mouseData::relativeRead.get());
+		}
+
+		if (mouseData::autoReset)
+		{
+			mouseData::state.x = mouseData::state.y = 0;
+		}
 	}
 }
 //=============================================================================
@@ -696,6 +740,7 @@ void PollEvent()
 			break;
 		}
 	}
+	currentMouseState();
 }
 //=============================================================================
 void EndOfInputFrame()
@@ -743,50 +788,9 @@ float CuteEngineApp::GetWindowAspect() const
 	return static_cast<float>(GetWindowWidth()) / static_cast<float>(GetWindowHeight());
 }
 //=============================================================================
-Input::MouseState CuteEngineApp::GetMouseState() const
+const Input::MouseState& CuteEngineApp::GetMouseState() const
 {
-	Input::MouseState state;
-	memcpy(&state, &mouseData::state, sizeof(Input::MouseState));
-	state.positionMode = mouseData::mode;
-
-	DWORD result = WaitForSingleObjectEx(mouseData::scrollWheelValue.get(), 0, FALSE);
-	if (result == WAIT_FAILED)
-	{
-		Fatal("WaitForSingleObjectEx");
-		return {};
-	}
-
-	if (result == WAIT_OBJECT_0)
-	{
-		state.scrollWheelValue = 0;
-	}
-
-	if (state.positionMode == Input::MouseMode::Relative)
-	{
-		result = WaitForSingleObjectEx(mouseData::relativeRead.get(), 0, FALSE);
-
-		if (result == WAIT_FAILED)
-		{
-			Fatal("WaitForSingleObjectEx");
-			return {};
-		}
-
-		if (result == WAIT_OBJECT_0)
-		{
-			state.x = state.y = 0;
-		}
-		else
-		{
-			SetEvent(mouseData::relativeRead.get());
-		}
-
-		if (mouseData::autoReset)
-		{
-			mouseData::state.x = mouseData::state.y = 0;
-		}
-	}
-
-	return state;
+	return mouseData::currentState;
 }
 //=============================================================================
 void CuteEngineApp::ResetScrollWheelValue() const
@@ -844,7 +848,7 @@ void CuteEngineApp::SetMouseVisible(bool visible) const
 	}
 }
 //=============================================================================
-Input::KeyboardState CuteEngineApp::GetKeyboardState() const
+const Input::KeyboardState& CuteEngineApp::GetKeyboardState() const
 {
 	return keyboardData::state;
 }
