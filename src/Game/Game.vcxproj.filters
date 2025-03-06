@@ -24,7 +24,7 @@
     <ClCompile Include="HighResolutionTimer.cpp">
       <Filter>CuteOther</Filter>
     </ClCompile>
-    <ClCompile Include="DemoCube.cpp">
+    <ClCompile Include="001_DemoCube.cpp">
       <Filter>Demo</Filter>
     </ClCompile>
     <ClCompile Include="CuteRHI.cpp">
@@ -35,6 +35,9 @@
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>CuteOther</Filter>
+    </ClCompile>
+    <ClCompile Include="002_TexturedCube.cpp">
+      <Filter>Demo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -63,7 +66,7 @@
     <ClInclude Include="HighResolutionTimer.h">
       <Filter>CuteOther</Filter>
     </ClInclude>
-    <ClInclude Include="DemoCube.h">
+    <ClInclude Include="001_DemoCube.h">
       <Filter>Demo</Filter>
     </ClInclude>
     <ClInclude Include="CuteRHI.h">
@@ -77,6 +80,9 @@
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>CuteOther</Filter>
+    </ClInclude>
+    <ClInclude Include="002_TexturedCube.h">
+      <Filter>Demo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

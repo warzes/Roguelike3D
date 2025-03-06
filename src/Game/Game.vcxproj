@@ -95,13 +95,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="002_TexturedCube.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CuteMath.cpp" />
     <ClCompile Include="CuteRHI.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="DemoCube.cpp" />
+    <ClCompile Include="001_DemoCube.cpp" />
     <ClCompile Include="CuteEngine.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -122,10 +123,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="002_TexturedCube.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CuteMath.h" />
     <ClInclude Include="CuteRHI.h" />
-    <ClInclude Include="DemoCube.h" />
+    <ClInclude Include="001_DemoCube.h" />
     <ClInclude Include="CuteEngine.h" />
     <ClInclude Include="CuteEngineMath.h" />
     <ClInclude Include="CutePrivate\CuteEngine_Window.h" />

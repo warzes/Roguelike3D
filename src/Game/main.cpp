@@ -1,7 +1,7 @@
 ﻿#include "stdafx.h"
 #include "GameApp.h"
 // Demo
-#include "DemoCube.h"
+#include "001_DemoCube.h"
 //=============================================================================
 #if defined(_MSC_VER)
 #	pragma comment( lib, "3rdparty.lib" )
