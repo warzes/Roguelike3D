@@ -109,20 +109,23 @@ void Camera::UpdateMatrices()
 	}
 }
 
-void Camera::Update()
+void Camera::Update(CuteEngineApp* app)
 {
-	if (input::IsButtonDown(input::Button::MOUSE_RIGHT) == false)
+	// TODO: вместо SetVisible испоользовать вариант SetMouseMode
+
+	if (app->IsMouseUp(Input::MouseButton::Right))
 	{
-		input::SetCursorVisibility(true);
+		app->SetMouseMode(Input::MouseMode::Absolute);
+		//app->SetMouseVisible(true);
 		UpdateMatrices();
 		return;
 	}
-
-	input::SetCursorVisibility(false);
+	app->SetMouseMode(Input::MouseMode::Relative);
+	//app->SetMouseVisible(false);
 
 	// Update rotation
 	constexpr float rotation_velocity = 0.005f;
-	Vec2 mouse_delta = input::GetMousePosDelta();
+	auto mouse_delta = app->GetMousePosition();
 	if (mouse_delta.x != 0.0f || mouse_delta.y != 0.0f)
 	{
 		float pitch_delta = mouse_delta.y * rotation_velocity;
@@ -140,36 +143,36 @@ void Camera::Update()
 	// Update translation
 	constexpr float max_translation_velocity = 2.0f;
 	Vec3 movement_dir = Vec3::ZERO;
-	if (input::IsKeyDown(SDL_KeyCode::SDLK_w))
+	if (app->IsKeyDown(Input::W))
 	{
 		movement_dir.z = 1.0f;
 	}
-	else if (input::IsKeyDown(SDL_KeyCode::SDLK_s))
+	else if (app->IsKeyDown(Input::S))
 	{
 		movement_dir.z = -1.0f;
 	}
 
-	if (input::IsKeyDown(SDL_KeyCode::SDLK_d))
+	if (app->IsKeyDown(Input::D))
 	{
 		movement_dir.x = 1.0f;
 	}
-	else if (input::IsKeyDown(SDL_KeyCode::SDLK_a))
+	else if (app->IsKeyDown(Input::A))
 	{
 		movement_dir.x = -1.0f;
 	}
 
-	if (input::IsKeyDown(SDL_KeyCode::SDLK_SPACE))
+	if (app->IsKeyDown(Input::Space))
 	{
 		movement_dir.y = 1.0f;
 	}
-	else if (input::IsKeyDown(SDL_KeyCode::SDLK_LCTRL))
+	else if (app->IsKeyDown(Input::LeftControl))
 	{
 		movement_dir.y = -1.0f;
 	}
 
 	if (movement_dir != Vec3::ZERO)
 	{
-		float delta_time = BaseApplication::Get()->GetTimestep();
+		float delta_time = app->GetDeltaTime();
 		pos_ = pos_ + delta_time * max_translation_velocity * movement_dir.x * right_;
 		pos_ = pos_ + delta_time * max_translation_velocity * movement_dir.y * up_;
 		pos_ = pos_ + delta_time * max_translation_velocity * movement_dir.z * forward_;

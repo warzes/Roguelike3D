@@ -2,6 +2,8 @@
 
 #include "CuteMath.h"
 
+class CuteEngineApp;
+
 class Camera
 {
 public:
@@ -57,7 +59,7 @@ public:
 
 	void UpdateMatrices();
 
-	void Update();
+	void Update(CuteEngineApp* app);
 
 	inline static const Vec3 DEFAULT_POS = Vec3::ZERO;
 	inline static const float DEFAULT_ASPECT_RATIO = 16.0f / 9.0f;
