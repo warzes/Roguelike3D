@@ -144,7 +144,7 @@ void CuteEngineApp::Run()
 					if (!rhi::Resize(windowData::width, windowData::height))
 						break;
 
-					OnWindowResize(windowData::width, windowData::height);
+					OnWindowSizeChanged(windowData::width, windowData::height);
 					windowData::isResized = false;
 				}
 
@@ -183,6 +183,11 @@ void CuteEngineApp::Run()
 void CuteEngineApp::Exit()
 {
 	engineData::shouldClose = true;
+}
+//=============================================================================
+double CuteEngineApp::GetDeltaTime() const
+{
+	return engineData::deltaTime;
 }
 //=============================================================================
 bool init(const CuteEngineCreateInfo& createInfo)

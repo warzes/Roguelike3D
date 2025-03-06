@@ -468,7 +468,7 @@ bool setBackBufferSize(uint32_t width, uint32_t height)
 {
 	if (rhi::backBufferWidth == width && rhi::backBufferHeight == height) return false;
 
-	rhi::backBufferWidth = std::max(width, 1u);
+	rhi::backBufferWidth  = std::max(width, 1u);
 	rhi::backBufferHeight = std::max(height, 1u);
 	rhi::viewport = { 0.0f, 0.0f, static_cast<float>(rhi::backBufferWidth), static_cast<float>(rhi::backBufferHeight), 0.f, 1.f };
 

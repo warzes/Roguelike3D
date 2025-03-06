@@ -70,19 +70,6 @@ namespace Input
 		Relative
 	};
 
-	struct MouseState final
-	{
-		bool      leftButton;
-		bool      middleButton;
-		bool      rightButton;
-		bool      xButton1;
-		bool      xButton2;
-		int       x;
-		int       y;
-		int       scrollWheelValue;
-		MouseMode positionMode;
-	};
-
 	struct MousePosition final
 	{
 		int x{ 0 };
@@ -530,9 +517,13 @@ public:
 	virtual void OnFrame() {}
 
 	// Window Events
-	virtual void OnWindowResize(
+	virtual void OnWindowSizeChanged(
 		[[maybe_unused]] uint32_t width, 
 		[[maybe_unused]] uint32_t height) {}
+	virtual void OnActivated() {}
+	virtual void OnDeactivated() {}
+	virtual void OnSuspending() {}
+	virtual void OnResuming() {}
 
 	// Mouse Events
 	virtual bool OnMouseMove(
@@ -557,6 +548,11 @@ public:
 
 class CuteEngineApp : protected ICuteEngineApp
 {
+	friend void suspending();
+	friend void resuming();
+	friend void windowSizeChanged(uint32_t, uint32_t);
+	friend void activated();
+	friend void deactivated();
 public:
 	void Run();
 
@@ -571,22 +567,32 @@ public:
 	[[nodiscard]] uint32_t GetWindowHeight() const;
 	[[nodiscard]] float    GetWindowAspect() const;
 
+	[[nodiscard]] double   GetDeltaTime() const;
+
 	// Mouse
-	const Input::MouseState& GetMouseState() const; // Retrieve the current state of the mouse
+
 	void ResetScrollWheelValue() const;             // Resets the accumulated scroll wheel value
+	int GetScrollWheelValue() const;
+
 	void SetMouseMode(Input::MouseMode mode) const; // Sets mouse mode (defaults to absolute)
+	Input::MouseMode GetMouseMode() const;
+
 	bool IsMouseVisible() const;
-	void SetMouseVisible(bool visible) const;      // Cursor visibility
+	void SetMouseVisible(bool visible) const;
+
+	bool IsMouseUp(Input::MouseButton button) const;
+	bool IsMouseDown(Input::MouseButton button) const;
+	bool IsMousePressed(Input::MouseButton button) const;
+	bool IsMouseReleased(Input::MouseButton button) const;
+	Input::MousePosition GetMousePosition() const;
 
 	// Keyboard
 	
 	const Input::KeyboardState& GetKeyboardState() const; // Retrieve the current state of the keyboard
 
-	bool IsMouseDown(Input::MouseButton button) const;
-	bool IsMousePressed(Input::MouseButton button) const;
-	bool IsMouseReleased(Input::MouseButton button) const;
-	Input::MousePosition GetMousePosition() const;
-	int GetScrollWheelValue() const;
+	
+
+
 
 	bool IsKeyDown(uint32_t keyCode) const;
 	bool IsKeyPressed(uint32_t keyCode) const;

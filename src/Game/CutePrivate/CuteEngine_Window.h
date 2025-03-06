@@ -5,6 +5,27 @@ extern CuteEngineApp* thisCuteEngineApp;
 struct handleCloser { void operator()(HANDLE h) noexcept { if (h) ::CloseHandle(h); } };
 using ScopedHandle = std::unique_ptr<void, handleCloser>;
 //=============================================================================
+struct MouseState final
+{
+	bool             leftButton{ false };
+	bool             middleButton{ false };
+	bool             rightButton{ false };
+	bool             xButton1{ false };
+	bool             xButton2{ false };
+	int              x{ 0 };
+	int              y{ 0 };
+	int              scrollWheelValue{ 0 };
+	Input::MouseMode positionMode{ Input::MouseMode::Absolute };
+};
+//=============================================================================
+enum ButtonState : uint32_t
+{
+	UP = 0,       // Button is up
+	HELD = 1,     // Button is held down
+	RELEASED = 2, // Button was just released
+	PRESSED = 3,  // Buton was just pressed
+};
+//=============================================================================
 namespace windowData
 {
 	constexpr const auto windowClassName = L"Cute Window Class";
@@ -18,32 +39,41 @@ namespace windowData
 	MSG       msg{};
 	bool      isCloseRequested{ true };
 	bool      isResized{ false };
+	bool      isSizemove{ false };
+	bool      isSuspend{ false };
 	bool      isMinimized{ false };
 	bool      isMaximized{ false };
 	bool      fullScreen{ false };
 
-	void (*dropCallback)(char const*, uint32_t, void*) = nullptr;
+	void      (*dropCallback)(char const*, uint32_t, void*) = nullptr;
 	void*     callbackData = nullptr;
 } // namespace windowData
 //=============================================================================
 namespace mouseData
 {
-	Input::MouseMode  mode = Input::MouseMode::Absolute;
-	Input::MouseState state{};
-	Input::MouseState currentState{};
+	Input::MouseMode mode = Input::MouseMode::Absolute;
+	MouseState       state{};
+	MouseState       currentState{};
+	MouseState       lastState{};
 
-	ScopedHandle      scrollWheelValue;
-	ScopedHandle      relativeRead;
-	ScopedHandle      absoluteMode;
-	ScopedHandle      relativeMode;
+	ButtonState      leftButton;
+	ButtonState      middleButton;
+	ButtonState      rightButton;
+	ButtonState      xButton1;
+	ButtonState      xButton2;
 
-	int               lastX{ 0 };
-	int               lastY{ 0 };
-	int               relativeX{ INT32_MAX };
-	int               relativeY{ INT32_MAX };
+	ScopedHandle     scrollWheelValue;
+	ScopedHandle     relativeRead;
+	ScopedHandle     absoluteMode;
+	ScopedHandle     relativeMode;
 
-	bool              inFocus{ true };
-	bool              autoReset{ true };
+	int              lastX{ 0 };
+	int              lastY{ 0 };
+	int              relativeX{ INT32_MAX };
+	int              relativeY{ INT32_MAX };
+
+	bool             inFocus{ true };
+	bool             autoReset{ true };
 
 } // namespace mouseData
 //=============================================================================
@@ -176,7 +206,7 @@ void mouseProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 		else
 		{
 			const int scrollWheel = mouseData::state.scrollWheelValue;
-			memset(&mouseData::state, 0, sizeof(Input::MouseState));
+			memset(&mouseData::state, 0, sizeof(MouseState));
 			mouseData::state.scrollWheelValue = scrollWheel;
 
 			if (mouseData::mode == Input::MouseMode::Relative)
@@ -322,7 +352,7 @@ void mouseProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 //=============================================================================
 void currentMouseState()
 {
-	memcpy(&mouseData::currentState, &mouseData::state, sizeof(Input::MouseState));
+	memcpy(&mouseData::currentState, &mouseData::state, sizeof(MouseState));
 	mouseData::currentState.positionMode = mouseData::mode;
 
 	DWORD result = WaitForSingleObjectEx(mouseData::scrollWheelValue.get(), 0, FALSE);
@@ -361,6 +391,24 @@ void currentMouseState()
 			mouseData::state.x = mouseData::state.y = 0;
 		}
 	}
+
+#define UPDATE_BUTTON_STATE(field) mouseData::field = static_cast<ButtonState>( ( !!mouseData::currentState.field ) | ( ( !!mouseData::currentState.field ^ !!mouseData::lastState.field ) << 1 ) )
+
+	UPDATE_BUTTON_STATE(leftButton);
+
+	assert((!mouseData::currentState.leftButton && !mouseData::lastState.leftButton) == (mouseData::leftButton == UP));
+	assert((mouseData::currentState.leftButton && mouseData::lastState.leftButton) == (mouseData::leftButton == HELD));
+	assert((!mouseData::currentState.leftButton && mouseData::lastState.leftButton) == (mouseData::leftButton == RELEASED));
+	assert((mouseData::currentState.leftButton && !mouseData::lastState.leftButton) == (mouseData::leftButton == PRESSED));
+
+	UPDATE_BUTTON_STATE(middleButton);
+	UPDATE_BUTTON_STATE(rightButton);
+	UPDATE_BUTTON_STATE(xButton1);
+	UPDATE_BUTTON_STATE(xButton2);
+
+	mouseData::lastState = mouseData::currentState;
+
+#undef UPDATE_BUTTON_STATE
 }
 //=============================================================================
 void keyboardReset()
@@ -452,6 +500,34 @@ void keyboardProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 	}
 }
 //=============================================================================
+void suspending()
+{
+	thisCuteEngineApp->OnSuspending();
+}
+//=============================================================================
+void resuming()
+{
+	thisCuteEngineApp->OnResuming();
+}
+//=============================================================================
+void windowSizeChanged(uint32_t width, uint32_t height)
+{
+	windowData::isResized = true;
+	windowData::width = width;
+	windowData::height = height;
+	thisCuteEngineApp->OnWindowSizeChanged(width, height);
+}
+//=============================================================================
+void activated()
+{
+	thisCuteEngineApp->OnActivated();
+}
+//=============================================================================
+void deactivated()
+{
+	thisCuteEngineApp->OnDeactivated();
+}
+//=============================================================================
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
 	if (message == WM_DESTROY) [[unlikely]]
@@ -465,6 +541,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		mouseProcessMessage(message, wParam, lParam);
 		keyboardProcessMessage(message, wParam, lParam);
 
+		if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().BackendPlatformUserData != nullptr)
+		{
+			ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam);
+		}
+
 		switch (message)
 		{
 		case WM_DESTROY:
@@ -474,11 +555,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case WM_ACTIVATEAPP:
 			if (wParam)
 			{
-				//game->OnActivated();
+				activated();
 			}
 			else
 			{
-				//game->OnDeactivated();
+				deactivated();
 			}
 			break;
 
@@ -507,16 +588,42 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		break;
 
 		case WM_SIZE:
-			windowData::isMinimized = IsIconic(hwnd);
 			windowData::isMaximized = IsZoomed(hwnd);
 
-			if (wParam != SIZE_MINIMIZED)
+			if (wParam == SIZE_MINIMIZED)
 			{
-				windowData::isResized = true;
-				windowData::width = static_cast<uint32_t>(LOWORD(lParam));
-				windowData::height = static_cast<uint32_t>(HIWORD(lParam));
+				if (!windowData::isMinimized)
+				{
+					windowData::isMinimized = true;
+					if (!windowData::isSuspend)
+						suspending();
+					windowData::isSuspend = true;
+				}
 			}
+			else if (windowData::isMinimized)
+			{
+				windowData::isMinimized = false;
+				if (windowData::isSuspend)
+					resuming();
+				windowData::isSuspend = false;
+			}
+			else if (!windowData::isSizemove)
+			{
+				windowSizeChanged(static_cast<uint32_t>(LOWORD(lParam)), static_cast<uint32_t>(HIWORD(lParam)));
+			}
+			break;
 
+		case WM_ENTERSIZEMOVE:
+			windowData::isSizemove = true;
+			break;
+
+		case WM_EXITSIZEMOVE:
+			windowData::isSizemove = false;
+			{
+				RECT rc;
+				GetClientRect(hwnd, &rc);
+				windowSizeChanged(rc.right - rc.left, rc.bottom - rc.top);
+			}
 			break;
 
 		case WM_GETMINMAXINFO:
@@ -528,6 +635,29 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			}
 			break;
 
+		case WM_POWERBROADCAST:
+			switch (wParam)
+			{
+			case PBT_APMQUERYSUSPEND:
+				if (!windowData::isSuspend)
+					suspending();
+				windowData::isSuspend = true;
+				return TRUE;
+
+			case PBT_APMRESUMESUSPEND:
+				if (!windowData::isMinimized)
+				{
+					if (windowData::isSuspend)
+						resuming();
+					windowData::isSuspend = false;
+				}
+				return TRUE;
+
+			default:
+				break;
+			}
+			break;
+
 		case WM_MOUSEACTIVATE:
 			// Когда вы нажимаете на кнопку активации окна, мы хотим, чтобы мышь игнорировала его.
 			return MA_ACTIVATEANDEAT;
@@ -535,57 +665,36 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// A menu is active and the user presses a key that does not correspond to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
 			return MAKELRESULT(0, 1/*MNC_CLOSE*/);
 
-		case WM_CHAR:
-		case WM_SETCURSOR:
-		case WM_DEVICECHANGE:
-		case WM_KEYUP: case WM_SYSKEYUP:
-		case WM_KEYDOWN: case WM_SYSKEYDOWN:
-		case WM_LBUTTONUP: case WM_RBUTTONUP:
-		case WM_MBUTTONUP: case WM_XBUTTONUP:
-		case WM_MOUSEWHEEL: case WM_MOUSEHWHEEL:
-		case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
-		case WM_RBUTTONDOWN: case WM_RBUTTONDBLCLK:
-		case WM_MBUTTONDOWN: case WM_MBUTTONDBLCLK:
-		case WM_XBUTTONDOWN: case WM_XBUTTONDBLCLK:
-
-			if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().BackendPlatformUserData != nullptr)
+		case WM_SYSKEYDOWN:
+			if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
 			{
-				if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
-					return true;
+				// Implements the classic ALT+ENTER fullscreen toggle
+				if (windowData::fullScreen)
+				{
+					SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+					SetWindowLongPtr(hwnd, GWL_EXSTYLE, 0);
+
+					int width = windowData::widthInWindowMode;
+					int height = windowData::heightInWindowMode;
+
+					ShowWindow(hwnd, SW_SHOWNORMAL);
+					SetWindowPos(hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+				}
+				else
+				{
+					windowData::widthInWindowMode = windowData::width;
+					windowData::heightInWindowMode = windowData::height;
+					SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP);
+					SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOPMOST);
+
+					SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+					ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+				}
+
+				windowData::fullScreen = !windowData::fullScreen;
 			}
-
 			break;
-
-		//case WM_SYSKEYDOWN:
-		//	if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
-		//	{
-		//		// Implements the classic ALT+ENTER fullscreen toggle
-		//		/*if (thisWindowSystem->m_fullScreen)
-		//		{
-		//			SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-		//			SetWindowLongPtr(hwnd, GWL_EXSTYLE, 0);
-
-		//			int width = thisWindowSystem->m_widthInWindowMode;
-		//			int height = thisWindowSystem->m_heightInWindowMode;
-
-		//			ShowWindow(hwnd, SW_SHOWNORMAL);
-		//			SetWindowPos(hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-		//		}
-		//		else
-		//		{
-		//			thisWindowSystem->m_widthInWindowMode = thisWindowSystem->m_width;
-		//			thisWindowSystem->m_heightInWindowMode = thisWindowSystem->m_height;
-		//			SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP);
-		//			SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-
-		//			SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-
-		//			ShowWindow(hwnd, SW_SHOWMAXIMIZED);
-		//		}
-
-		//		thisWindowSystem->m_fullScreen = !thisWindowSystem->m_fullScreen;*/
-		//	}
-		//	break;
 		}
 	}
 	return DefWindowProc(hwnd, message, wParam, lParam);
@@ -593,6 +702,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 //=============================================================================
 bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, CreateWindowFlags flags)
 {
+	if (width == 0)  width = 800;
+	if (height == 0) height = 600;
+
 	windowData::isCloseRequested = true;
 	windowData::fullScreen = (flags & FullscreenWindow) != 0;
 	windowData::handleInstance = GetModuleHandle(nullptr);
@@ -712,6 +824,8 @@ bool InitWindow(uint32_t width, uint32_t height, std::wstring_view title, Create
 	}
 
 	windowData::isResized = false;
+	windowData::isSizemove = false;
+	windowData::isSuspend = false;
 	windowData::isMinimized = false;
 	windowData::isMaximized = (flags & MaximizeWindow) != 0;
 	windowData::isCloseRequested = false;
@@ -788,14 +902,14 @@ float CuteEngineApp::GetWindowAspect() const
 	return static_cast<float>(GetWindowWidth()) / static_cast<float>(GetWindowHeight());
 }
 //=============================================================================
-const Input::MouseState& CuteEngineApp::GetMouseState() const
-{
-	return mouseData::currentState;
-}
-//=============================================================================
 void CuteEngineApp::ResetScrollWheelValue() const
 {
 	SetEvent(mouseData::scrollWheelValue.get());
+}
+//=============================================================================
+int CuteEngineApp::GetScrollWheelValue() const
+{
+	return mouseData::currentState.scrollWheelValue;
 }
 //=============================================================================
 void CuteEngineApp::SetMouseMode(Input::MouseMode mode) const
@@ -815,6 +929,11 @@ void CuteEngineApp::SetMouseMode(Input::MouseMode mode) const
 	{
 		Fatal("TrackMouseEvent");
 	}
+}
+//=============================================================================
+Input::MouseMode CuteEngineApp::GetMouseMode() const
+{
+	return mouseData::currentState.positionMode;
 }
 //=============================================================================
 bool CuteEngineApp::IsMouseVisible() const
@@ -846,6 +965,43 @@ void CuteEngineApp::SetMouseVisible(bool visible) const
 	{
 		::ShowCursor(visible);
 	}
+}
+//=============================================================================
+ButtonState isMouseState(Input::MouseButton button)
+{
+	switch (button)
+	{
+	case Input::MouseButton::Left:     return mouseData::leftButton;
+	case Input::MouseButton::Right:    return mouseData::rightButton;
+	case Input::MouseButton::Middle:   return mouseData::middleButton;
+	case Input::MouseButton::xButton1: return mouseData::xButton1;
+	case Input::MouseButton::xButton2: return mouseData::xButton2;
+	}
+}
+//=============================================================================
+bool CuteEngineApp::IsMouseUp(Input::MouseButton button) const
+{
+	return isMouseState(button) == ButtonState::UP || isMouseState(button) == ButtonState::RELEASED;
+}
+//=============================================================================
+bool CuteEngineApp::IsMouseDown(Input::MouseButton button) const
+{
+	return isMouseState(button) == ButtonState::HELD || isMouseState(button) == ButtonState::PRESSED;
+}
+//=============================================================================
+bool CuteEngineApp::IsMousePressed(Input::MouseButton button) const
+{
+	return isMouseState(button) == ButtonState::PRESSED;
+}
+//=============================================================================
+bool CuteEngineApp::IsMouseReleased(Input::MouseButton button) const
+{
+	return isMouseState(button) == ButtonState::RELEASED;
+}
+//=============================================================================
+Input::MousePosition CuteEngineApp::GetMousePosition() const
+{
+	return { mouseData::currentState.x, mouseData::currentState.y };
 }
 //=============================================================================
 const Input::KeyboardState& CuteEngineApp::GetKeyboardState() const
