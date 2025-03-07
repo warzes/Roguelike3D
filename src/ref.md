@@ -6,3 +6,6 @@ https://lisyarus.github.io/blog/posts/gltf-animation.html - скелетная �
 https://enkimute.github.io/LookMaNoMatrices/
 https://jglrxavpok.github.io/2023/11/12/recreating-nanite-the-plan.html
 https://www.gamemath.com/book/ - книга по математике
+
+https://fire-face.com/personal/water/index.html - вода
+https://github.com/3deric/retro_terrain
