@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#include "Camera.h"
+
+
 class TexturedCube final : public CuteEngineApp
 {
 public:
@@ -18,7 +21,7 @@ private:
 	rhi::BufferPtr         m_vertexBuffer{ nullptr };
 	rhi::BufferPtr         m_indexBuffer{ nullptr };
 
-	rhi::TexturePtr m_rt;
-	rhi::TexturePtr m_ds;
-	rhi::RenderTargetPtr m_rtv;
+	Camera                 m_camera;
+	rhi::TexturePtr        m_texture;
+	rhi::SamplerStatePtr   m_samplerState{ nullptr };
 };

@@ -245,7 +245,7 @@ bool DemoCube::OnInit()
 		rhi::PipelineStateCreateInfo psci{};
 		psci.rasterizerState.fillMode                           = rhi::FillMode::Solid;
 		psci.rasterizerState.cullMode                           = rhi::CullMode::Back;
-		psci.rasterizerState.counterDirection                   = rhi::CounterDirection::CW;
+		psci.rasterizerState.frontCounterClockwise              = true;
 
 		psci.blendState.blendDesc.blendEnabled                  = false;
 		psci.blendState.blendDesc.writeMask                     = rhi::ColorWriteMask::All;

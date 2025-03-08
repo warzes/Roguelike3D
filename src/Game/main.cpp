@@ -2,6 +2,7 @@
 #include "GameApp.h"
 // Demo
 #include "001_DemoCube.h"
+#include "002_TexturedCube.h"
 //=============================================================================
 #if defined(_MSC_VER)
 #	pragma comment( lib, "3rdparty.lib" )
@@ -15,8 +16,8 @@ int main(
 	//GameApp app;
 
 	// Demo
-	DemoCube app;
-
+	//DemoCube app;
+	TexturedCube app;
 	app.Run();
 }
 //=============================================================================

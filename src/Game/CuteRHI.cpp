@@ -1213,18 +1213,18 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 		const auto& state = createInfo.rasterizerState;
 
 		D3D11_RASTERIZER_DESC2 rasterizerDesc{};
-		rasterizerDesc.FillMode = ConvertToD3D11(state.fillMode);
-		rasterizerDesc.CullMode = ConvertToD3D11(state.cullMode);
-		rasterizerDesc.FrontCounterClockwise = state.counterDirection == CounterDirection::CW ? TRUE : FALSE;
-		rasterizerDesc.DepthBias = 0;
-		rasterizerDesc.DepthBiasClamp = 0.0f;
-		rasterizerDesc.SlopeScaledDepthBias = 0.0f;
-		rasterizerDesc.DepthClipEnable = TRUE;
-		rasterizerDesc.ScissorEnable = FALSE;
-		rasterizerDesc.MultisampleEnable = FALSE;
+		rasterizerDesc.FillMode              = ConvertToD3D11(state.fillMode);
+		rasterizerDesc.CullMode              = ConvertToD3D11(state.cullMode);
+		rasterizerDesc.FrontCounterClockwise = state.frontCounterClockwise ? TRUE : FALSE;
+		rasterizerDesc.DepthBias             = 0;
+		rasterizerDesc.DepthBiasClamp        = 0.0f;
+		rasterizerDesc.SlopeScaledDepthBias  = 0.0f;
+		rasterizerDesc.DepthClipEnable       = TRUE;
+		rasterizerDesc.ScissorEnable         = FALSE;
+		rasterizerDesc.MultisampleEnable     = FALSE;
 		rasterizerDesc.AntialiasedLineEnable = FALSE;
-		rasterizerDesc.ForcedSampleCount = 0;
-		rasterizerDesc.ConservativeRaster = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+		rasterizerDesc.ForcedSampleCount     = 0;
+		rasterizerDesc.ConservativeRaster    = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
 		HRESULT result = rhi::d3dDevice->CreateRasterizerState2(&rasterizerDesc, &pipelineState->rasterizerState);
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateRasterizerState2() failed: ", result));
@@ -1235,18 +1235,18 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 		const auto& state = createInfo.blendState;
 
 		D3D11_BLEND_DESC1 blendDesc = { 0 };
-		blendDesc.AlphaToCoverageEnable = state.alphaToCoverageEnabled;
+		blendDesc.AlphaToCoverageEnable  = state.alphaToCoverageEnabled;
 		blendDesc.IndependentBlendEnable = state.separateBlendEnabled;
 
 		//if (state.blendDesc.blendEnabled) {
-		blendDesc.RenderTarget[0].BlendEnable = state.blendDesc.blendEnabled;
+		blendDesc.RenderTarget[0].BlendEnable           = state.blendDesc.blendEnabled;
 		blendDesc.RenderTarget[0].RenderTargetWriteMask = static_cast<UINT8>(state.renderTargetBlendDesc[0].writeMask);
-		blendDesc.RenderTarget[0].SrcBlend = ConvertToD3D11(state.blendDesc.srcBlend);
-		blendDesc.RenderTarget[0].DestBlend = ConvertToD3D11(state.blendDesc.dstBlend);
-		blendDesc.RenderTarget[0].BlendOp = ConvertToD3D11(state.blendDesc.blendOp);
-		blendDesc.RenderTarget[0].SrcBlendAlpha = ConvertToD3D11(state.blendDesc.srcBlendAlpha);
-		blendDesc.RenderTarget[0].DestBlendAlpha = ConvertToD3D11(state.blendDesc.dstBlendAlpha);
-		blendDesc.RenderTarget[0].BlendOpAlpha = ConvertToD3D11(state.blendDesc.blendOpAlpha);
+		blendDesc.RenderTarget[0].SrcBlend              = ConvertToD3D11(state.blendDesc.srcBlend);
+		blendDesc.RenderTarget[0].DestBlend             = ConvertToD3D11(state.blendDesc.dstBlend);
+		blendDesc.RenderTarget[0].BlendOp               = ConvertToD3D11(state.blendDesc.blendOp);
+		blendDesc.RenderTarget[0].SrcBlendAlpha         = ConvertToD3D11(state.blendDesc.srcBlendAlpha);
+		blendDesc.RenderTarget[0].DestBlendAlpha        = ConvertToD3D11(state.blendDesc.dstBlendAlpha);
+		blendDesc.RenderTarget[0].BlendOpAlpha          = ConvertToD3D11(state.blendDesc.blendOpAlpha);
 		//}
 		// TODO: D3D11_RENDER_TARGET_BLEND_DESC1::LogicOp and D3D11_RENDER_TARGET_BLEND_DESC1::LogicOpEnable
 
@@ -1254,14 +1254,14 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 		{
 			for (size_t i = 0; i < 8; ++i)
 			{
-				blendDesc.RenderTarget[i].BlendEnable = state.renderTargetBlendDesc[i].blendEnabled;
+				blendDesc.RenderTarget[i].BlendEnable           = state.renderTargetBlendDesc[i].blendEnabled;
 				blendDesc.RenderTarget[i].RenderTargetWriteMask = static_cast<UINT8>(state.renderTargetBlendDesc[i].writeMask);
-				blendDesc.RenderTarget[i].SrcBlend = ConvertToD3D11(state.renderTargetBlendDesc[i].srcBlend);
-				blendDesc.RenderTarget[i].DestBlend = ConvertToD3D11(state.renderTargetBlendDesc[i].dstBlend);
-				blendDesc.RenderTarget[i].BlendOp = ConvertToD3D11(state.renderTargetBlendDesc[i].blendOp);
-				blendDesc.RenderTarget[i].SrcBlendAlpha = ConvertToD3D11(state.renderTargetBlendDesc[i].srcBlendAlpha);
-				blendDesc.RenderTarget[i].DestBlendAlpha = ConvertToD3D11(state.renderTargetBlendDesc[i].dstBlendAlpha);
-				blendDesc.RenderTarget[i].BlendOpAlpha = ConvertToD3D11(state.renderTargetBlendDesc[i].blendOpAlpha);
+				blendDesc.RenderTarget[i].SrcBlend              = ConvertToD3D11(state.renderTargetBlendDesc[i].srcBlend);
+				blendDesc.RenderTarget[i].DestBlend             = ConvertToD3D11(state.renderTargetBlendDesc[i].dstBlend);
+				blendDesc.RenderTarget[i].BlendOp               = ConvertToD3D11(state.renderTargetBlendDesc[i].blendOp);
+				blendDesc.RenderTarget[i].SrcBlendAlpha         = ConvertToD3D11(state.renderTargetBlendDesc[i].srcBlendAlpha);
+				blendDesc.RenderTarget[i].DestBlendAlpha        = ConvertToD3D11(state.renderTargetBlendDesc[i].dstBlendAlpha);
+				blendDesc.RenderTarget[i].BlendOpAlpha          = ConvertToD3D11(state.renderTargetBlendDesc[i].blendOpAlpha);
 				// TODO: D3D11_RENDER_TARGET_BLEND_DESC1::LogicOp and D3D11_RENDER_TARGET_BLEND_DESC1::LogicOpEnable
 			}
 		}
@@ -1274,21 +1274,21 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 	{
 		const auto& state = createInfo.depthStencilState;
 
-		D3D11_DEPTH_STENCIL_DESC depthStencilDesc{};
-		depthStencilDesc.DepthEnable = state.depthEnabled;
-		depthStencilDesc.DepthWriteMask = ConvertToD3D11(state.writeMask);
-		depthStencilDesc.DepthFunc = ConvertToD3D11(state.depthFunc);
-		depthStencilDesc.StencilEnable = state.stencilEnabled;
-		depthStencilDesc.StencilReadMask = state.stencilReadMask;
-		depthStencilDesc.StencilWriteMask = state.stencilWriteMask;
-		depthStencilDesc.FrontFace.StencilFunc = ConvertToD3D11(state.frontFaceStencilDesc.stencilFunc);
-		depthStencilDesc.FrontFace.StencilFailOp = ConvertToD3D11(state.frontFaceStencilDesc.failOp);
+		D3D11_DEPTH_STENCIL_DESC depthStencilDesc = { 0 };
+		depthStencilDesc.DepthEnable                  = state.depthEnabled;
+		depthStencilDesc.DepthWriteMask               = ConvertToD3D11(state.writeMask);
+		depthStencilDesc.DepthFunc                    = ConvertToD3D11(state.depthFunc);
+		depthStencilDesc.StencilEnable                = state.stencilEnabled;
+		depthStencilDesc.StencilReadMask              = state.stencilReadMask;
+		depthStencilDesc.StencilWriteMask             = state.stencilWriteMask;
+		depthStencilDesc.FrontFace.StencilFunc        = ConvertToD3D11(state.frontFaceStencilDesc.stencilFunc);
+		depthStencilDesc.FrontFace.StencilFailOp      = ConvertToD3D11(state.frontFaceStencilDesc.failOp);
 		depthStencilDesc.FrontFace.StencilDepthFailOp = ConvertToD3D11(state.frontFaceStencilDesc.depthFailOp);
-		depthStencilDesc.FrontFace.StencilPassOp = ConvertToD3D11(state.frontFaceStencilDesc.passOp);
-		depthStencilDesc.BackFace.StencilFunc = ConvertToD3D11(state.backFaceStencilDesc.stencilFunc);
-		depthStencilDesc.BackFace.StencilFailOp = ConvertToD3D11(state.backFaceStencilDesc.failOp);
-		depthStencilDesc.BackFace.StencilDepthFailOp = ConvertToD3D11(state.backFaceStencilDesc.depthFailOp);
-		depthStencilDesc.BackFace.StencilPassOp = ConvertToD3D11(state.backFaceStencilDesc.passOp);
+		depthStencilDesc.FrontFace.StencilPassOp      = ConvertToD3D11(state.frontFaceStencilDesc.passOp);
+		depthStencilDesc.BackFace.StencilFunc         = ConvertToD3D11(state.backFaceStencilDesc.stencilFunc);
+		depthStencilDesc.BackFace.StencilFailOp       = ConvertToD3D11(state.backFaceStencilDesc.failOp);
+		depthStencilDesc.BackFace.StencilDepthFailOp  = ConvertToD3D11(state.backFaceStencilDesc.depthFailOp);
+		depthStencilDesc.BackFace.StencilPassOp       = ConvertToD3D11(state.backFaceStencilDesc.passOp);
 
 		HRESULT result = rhi::d3dDevice->CreateDepthStencilState(&depthStencilDesc, &pipelineState->depthStencilState);
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateDepthStencilState() failed: ", result));

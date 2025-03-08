@@ -84,6 +84,9 @@
     <ClInclude Include="002_TexturedCube.h">
       <Filter>Demo</Filter>
     </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>CuteOther</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CuteEngine">

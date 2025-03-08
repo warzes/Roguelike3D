@@ -9,3 +9,6 @@ https://www.gamemath.com/book/ - книга по математике
 
 https://fire-face.com/personal/water/index.html - вода
 https://github.com/3deric/retro_terrain
+
+https://paminerva.github.io/docs/LearnVulkan/01.A-Hello-Window
+https://github.com/axodox/Win32Tutorial/tree/master

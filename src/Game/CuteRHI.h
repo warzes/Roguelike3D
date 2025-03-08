@@ -112,12 +112,6 @@ namespace rhi
 		None,
 	};
 
-	enum class CounterDirection : size_t
-	{
-		CW,
-		CCW,
-	};
-
 	enum class BlendFactor : uint8_t
 	{
 		Zero,
@@ -287,9 +281,9 @@ namespace rhi
 
 	struct RasterizerStateDescriptor final
 	{
-		FillMode         fillMode = FillMode::Solid;
-		CullMode         cullMode = CullMode::Back;
-		CounterDirection counterDirection = CounterDirection::CCW;
+		FillMode fillMode = FillMode::Solid;
+		CullMode cullMode = CullMode::Back;
+		bool     frontCounterClockwise{ false };
 	};
 
 	struct BlendStateDescriptor final
@@ -304,11 +298,11 @@ namespace rhi
 
 	struct DepthStencilStateDescriptor final
 	{
-		bool           depthEnabled = true;
-		DepthWriteMask writeMask = DepthWriteMask::All;
-		DepthFunc      depthFunc = DepthFunc::Less;
+		bool           depthEnabled{ true };
+		DepthWriteMask writeMask{ DepthWriteMask::All };
+		DepthFunc      depthFunc{ DepthFunc::Less };
 
-		bool           stencilEnabled = false;
+		bool           stencilEnabled{ false };
 		uint32_t       stencilRef{ 0 };
 		uint8_t        stencilReadMask{ 0xff };
 		uint8_t        stencilWriteMask{ 0xff };
