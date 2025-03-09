@@ -3,6 +3,7 @@
 // Demo
 #include "001_DemoCube.h"
 #include "002_TexturedCube.h"
+#include "003_Mesh.h"
 //=============================================================================
 #if defined(_MSC_VER)
 #	pragma comment( lib, "3rdparty.lib" )
@@ -17,7 +18,8 @@ int main(
 
 	// Demo
 	//DemoCube app;
-	TexturedCube app;
+	//TexturedCube app;
+	MeshDemo app;
 	app.Run();
 }
 //=============================================================================

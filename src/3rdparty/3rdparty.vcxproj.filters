@@ -78,4 +78,10 @@
     <ClInclude Include="miniz.h" />
     <ClInclude Include="DXError.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="assimp-vc143-mt.exp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="assimp-vc143-mt.lib" />
+  </ItemGroup>
 </Project>

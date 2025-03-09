@@ -118,6 +118,12 @@
     <ClInclude Include="stb\stb_truetype.h" />
     <ClInclude Include="tinyexr.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="assimp-vc143-mt.exp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="assimp-vc143-mt.lib" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

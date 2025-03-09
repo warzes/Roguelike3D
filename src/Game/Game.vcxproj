@@ -96,6 +96,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="002_TexturedCube.cpp" />
+    <ClCompile Include="003_Mesh.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CuteMath.cpp" />
     <ClCompile Include="CuteRHI.cpp">
@@ -121,9 +122,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="002_TexturedCube.h" />
+    <ClInclude Include="003_Mesh.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CuteMath.h" />
     <ClInclude Include="CuteRHI.h" />
@@ -138,6 +141,7 @@
     <ClInclude Include="Image.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
