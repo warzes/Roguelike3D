@@ -464,6 +464,34 @@ namespace stateCache
 #define DX_ERR_STR(str,hr) std::string(str + std::string(HRToString(hr)) + ".\n\tFile: " + std::string(__FILE__) + ", Line: " + std::to_string(__LINE__))
 #define DX_ERR(str,hr) rhi::Fatal(DX_ERR_STR(str, hr))
 //=============================================================================
+uint32_t formatStride(rhi::TexelsFormat format)
+{
+	switch (format) {
+	case rhi::TexelsFormat::R8:      return 1;
+	case rhi::TexelsFormat::R16:     return 2;
+	case rhi::TexelsFormat::R16F:    return 2;
+	case rhi::TexelsFormat::R32I:    return 4;
+	case rhi::TexelsFormat::R32U:    return 4;
+	case rhi::TexelsFormat::R32F:    return 4;
+	case rhi::TexelsFormat::RG8:     return 2;
+	case rhi::TexelsFormat::RG16:    return 4;
+	case rhi::TexelsFormat::RG16F:   return 4;
+	case rhi::TexelsFormat::RG32I:   return 8;
+	case rhi::TexelsFormat::RG32U:   return 8;
+	case rhi::TexelsFormat::RG32F:   return 8;
+	case rhi::TexelsFormat::RGB32I:  return 12; 
+	case rhi::TexelsFormat::RGB32U:  return 12;
+	case rhi::TexelsFormat::RGB32F:  return 12;
+	case rhi::TexelsFormat::RGBA8:   return 4;
+	case rhi::TexelsFormat::RGBA16:  return 8;
+	case rhi::TexelsFormat::RGBA16F: return 8;
+	case rhi::TexelsFormat::RGBA32I: return 16;
+	case rhi::TexelsFormat::RGBA32U: return 16;
+	case rhi::TexelsFormat::RGBA32F: return 16;
+	default: { return 0; } break; // unsupported
+	}
+};
+//=============================================================================
 bool setBackBufferSize(uint32_t width, uint32_t height)
 {
 	if (rhi::backBufferWidth == width && rhi::backBufferHeight == height) return false;
@@ -1586,24 +1614,25 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture2D(const Texture2D
 	}
 
 	D3D11_TEXTURE2D_DESC1 textureDesc = { 0 };
-	textureDesc.Width = createInfo.width;
-	textureDesc.Height = createInfo.height;
-	textureDesc.MipLevels = createInfo.mipCount;
-	textureDesc.ArraySize = 1;
-	textureDesc.Format = textureFormat;
-	textureDesc.SampleDesc = { 1, 0 };
-	textureDesc.Usage = usageFlags;
-	textureDesc.BindFlags = bindFlags;
+	textureDesc.Width          = createInfo.width;
+	textureDesc.Height         = createInfo.height;
+	textureDesc.MipLevels      = createInfo.mipCount;
+	textureDesc.ArraySize      = 1;
+	textureDesc.Format         = textureFormat;
+	textureDesc.SampleDesc     = { 1, 0 };
+	textureDesc.Usage          = usageFlags;
+	textureDesc.BindFlags      = bindFlags;
 	textureDesc.CPUAccessFlags = cpuAccess;
-	textureDesc.MiscFlags = 0;
+	textureDesc.MiscFlags      = 0;
 
-	//D3D11_SUBRESOURCE_DATA textureData{};
-	//textureData.pSysMem = createInfo.memoryData;
-	//textureData.SysMemPitch = 2 * sizeof(UINT); // texture is 2 pixels wide, 4 bytes per pixel // TODO: доделать
-	// TODO: доделать загрузку данных при инициализации
+	const uint32_t imagePitch = createInfo.width * formatStride(createInfo.format);
+
+	D3D11_SUBRESOURCE_DATA textureData{};
+	textureData.pSysMem     = createInfo.memoryData;
+	textureData.SysMemPitch = imagePitch;
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D1> textureRef;
-	HRESULT result = rhi::d3dDevice->CreateTexture2D1(&textureDesc, nullptr, &textureRef);
+	HRESULT result = rhi::d3dDevice->CreateTexture2D1(&textureDesc, createInfo.memoryData ? &textureData : nullptr, &textureRef);
 	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateTexture2D1() failed: ", result));
 	texture->texture = textureRef;
 

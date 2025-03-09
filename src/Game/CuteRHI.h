@@ -372,8 +372,7 @@ namespace rhi
 		uint32_t     mipCount{ 1 };
 		TexelsFormat format{ TexelsFormat::RGBA8 };
 		uint32_t     flags{ 0 };
-		void* memoryData{ nullptr };
-		size_t       size{ 0 };
+		void*        memoryData{ nullptr };
 	};
 
 	struct Texture2DCreateInfo final
@@ -383,8 +382,7 @@ namespace rhi
 		uint32_t     mipCount{ 1 };
 		TexelsFormat format{ TexelsFormat::RGBA8 };
 		uint32_t     flags{ 0 };
-		void* memoryData{ nullptr };
-		size_t       memorySize{ 0 };
+		void*        memoryData{ nullptr };
 	};
 
 	struct Texture3DCreateInfo final
@@ -395,8 +393,7 @@ namespace rhi
 		uint32_t     mipCount{ 1 };
 		TexelsFormat format{ TexelsFormat::RGBA8 };
 		uint32_t     flags{ 0 };
-		void* memoryData{ nullptr };
-		size_t       size{ 0 };
+		void*        memoryData{ nullptr };
 	};
 
 	struct TextureArrayCreateInfo final

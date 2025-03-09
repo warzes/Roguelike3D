@@ -195,24 +195,7 @@ bool TexturedCube::OnInit()
 		tci.width = texWidth;
 		tci.height = texHeight;
 		tci.mipCount = 1;
-		//tci.memoryData = TextureData;
-		/*
-		D3D11_TEXTURE2D_DESC texture_desc = {};
-		texture_desc.Width = tex_width;
-		texture_desc.Height = tex_height;
-		texture_desc.MipLevels = 1;
-		texture_desc.ArraySize = 1;
-		texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-		texture_desc.SampleDesc.Count = 1;
-		texture_desc.SampleDesc.Quality = 0;
-		texture_desc.Usage = D3D11_USAGE_IMMUTABLE;
-		texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    
-		D3D11_SUBRESOURCE_DATA texture_subresource_data = {};
-		texture_subresource_data.pSysMem = tex_data;
-		texture_subresource_data.SysMemPitch = image_pitch;
-		DX11_VERIFY(gfx::device->CreateTexture2D(&texture_desc, &texture_subresource_data, &texture_));		
-		*/
+		tci.memoryData = texData;
 
 		auto resource = rhi::CreateTexture2D(tci);
 		if (!resource.has_value())
@@ -221,17 +204,6 @@ bool TexturedCube::OnInit()
 			return false;
 		}
 		m_texture = resource.value();
-
-		// TODO: доделать загрузку данных при инициализации
-		rhi::UpdateTexture(
-			m_texture,
-			texData,
-			0,
-			0, texWidth,
-			0, texHeight,
-			0, 1,
-			imagePitch, // Размер строки в байтах (ширина текстуры * количество байт на пиксель), для данного примера textureData.SysMemPitch = 2 * sizeof(UINT);
-			0);    // Размер среза в байтах (для 2D текстур обычно 0)
 
 		stbi_image_free(texData);
 	}
