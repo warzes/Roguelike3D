@@ -3,7 +3,6 @@
 #include "Vertex.h"
 #include "Transform.h"
 #include <stb/stb_image.h>
-#include <fstream>
 //=============================================================================
 namespace
 {

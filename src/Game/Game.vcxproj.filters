@@ -45,6 +45,9 @@
     <ClCompile Include="003_Mesh.cpp">
       <Filter>Demo</Filter>
     </ClCompile>
+    <ClCompile Include="004_Model.cpp">
+      <Filter>Demo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -97,6 +100,9 @@
       <Filter>CuteOther</Filter>
     </ClInclude>
     <ClInclude Include="003_Mesh.h">
+      <Filter>Demo</Filter>
+    </ClInclude>
+    <ClInclude Include="004_Model.h">
       <Filter>Demo</Filter>
     </ClInclude>
   </ItemGroup>
