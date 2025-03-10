@@ -3,6 +3,7 @@
 #include "Vertex.h"
 #include "Transform.h"
 #include <stb/stb_image.h>
+#include <fstream>
 //=============================================================================
 namespace
 {
@@ -11,16 +12,24 @@ namespace
 		Mat4 matWorld;
 	};
 
+	struct CBufferPerView
+	{
+		Mat4 mat_view;
+		Mat4 mat_inv_view;
+		Mat4 mat_view_projection;
+		Mat4 mat_inv_view_projection;
+		Vec4 pos_camera_ws;
+	};
+
 	struct MeshData final
 	{
 		static std::shared_ptr<MeshData> LoadFromFile(const std::string& asset_path);
 
 		void Bind();
 
-		rhi::BufferPtr pos;
-		rhi::BufferPtr uv;
-		rhi::BufferPtr normals;
+		rhi::BufferPtr vertexBuffer;
 		rhi::BufferPtr indexBuffer;
+		uint32_t       indexCount;
 	};
 
 	struct Mesh final
@@ -34,7 +43,6 @@ namespace
 		Transform transform;
 
 		std::shared_ptr<MeshData> meshData;
-		//std::shared_ptr<Material> material;
 
 		CBufferPerObject perObjectData;
 		rhi::ConstantBufferPtr cbufferPerObject;
@@ -42,100 +50,143 @@ namespace
 		std::string name;
 	};
 
+	Mesh mesh;
+	CBufferPerView perViewData;
 
-
-
-	VertexPosUV cube_textured_vertices_[4 * 6] =
+	std::shared_ptr<MeshData> MeshData::LoadFromFile(const std::string& asset_path)
 	{
-		// front
-		{ Vec3(-1.0f, -1.0f,  -1.0f), Vec2(0.0f, 1.0f) },
-		{ Vec3(-1.0f,  1.0f,  -1.0f), Vec2(0.0f, 0.0f) },
-		{ Vec3(1.0f,  1.0f,   -1.0f), Vec2(1.0f, 0.0f) },
-		{ Vec3(1.0f, -1.0f,   -1.0f), Vec2(1.0f, 1.0f) },
+		Print("Loading mesh: " + asset_path);
 
-		// back
-		{ Vec3(-1.0f, -1.0f, 1.0f), Vec2(1.0f, 1.0f) },
-		{ Vec3(1.0f, -1.0f, 1.0f), Vec2(0.0f, 1.0f) },
-		{ Vec3(1.0f,  1.0f, 1.0f), Vec2(0.0f, 0.0f) },
-		{ Vec3(-1.0f,  1.0f, 1.0f), Vec2(1.0f, 0.0f) },
+		std::shared_ptr<MeshData> mesh_data = std::make_shared<MeshData>();
 
-		// top
-		{ Vec3(-1.0f, 1.0f, -1.0f), Vec2(0.0f, 1.0f) },
-		{ Vec3(-1.0f, 1.0f,  1.0f), Vec2(0.0f, 0.0f) },
-		{ Vec3(1.0f, 1.0f,  1.0f),  Vec2(1.0f, 0.0f) },
-		{ Vec3(1.0f, 1.0f, -1.0f),  Vec2(1.0f, 1.0f) },
+		std::vector<uint32_t> indices;
+		std::vector<VertexPosUVNormals> vertexData;
 
-		// bottom
-		{ Vec3(-1.0f, -1.0f, -1.0f), Vec2(1.0f, 1.0f) },
-		{ Vec3(1.0f, -1.0f, -1.0f),  Vec2(0.0f, 1.0f) },
-		{ Vec3(1.0f, -1.0f,  1.0f),  Vec2(0.0f, 0.0f) },
-		{ Vec3(-1.0f, -1.0f,  1.0f), Vec2(1.0f, 0.0f) },
+		Assimp::Importer importer;
 
-		// left
-		{ Vec3(-1.0f, -1.0f,  1.0f), Vec2(0.0f, 1.0f) },
-		{ Vec3(-1.0f,  1.0f,  1.0f), Vec2(0.0f, 0.0f) },
-		{ Vec3(-1.0f,  1.0f, -1.0f), Vec2(1.0f, 0.0f) },
-		{ Vec3(-1.0f, -1.0f, -1.0f), Vec2(1.0f, 1.0f) },
+		uint32_t importer_flags = aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast;
+		const aiScene* scene = importer.ReadFile(asset_path, importer_flags);
 
-		// right
-		{ Vec3(1.0f, -1.0f, -1.0f), Vec2(0.0f, 1.0f) },
-		{ Vec3(1.0f,  1.0f, -1.0f), Vec2(0.0f, 0.0f) },
-		{ Vec3(1.0f,  1.0f,  1.0f), Vec2(1.0f, 0.0f) },
-		{ Vec3(1.0f, -1.0f,  1.0f), Vec2(1.0f, 1.0f) }
-	};
+		if (!scene)
+		{
+			Fatal(importer.GetErrorString());
+		}
+		assert(scene != nullptr, "Failed to load mesh from file: {}", asset_path);
 
-	uint32_t cube_tex_indices_[2 * 3 * 6] = {
-		// front
-		0,  1,  2,
-		0,  2,  3,
+		for (uint32_t mesh_idx = 0; mesh_idx < scene->mNumMeshes; ++mesh_idx)
+		{
+			aiMesh* mesh = scene->mMeshes[mesh_idx];
+			for (uint32_t vertex_id = 0; vertex_id < mesh->mNumVertices; ++vertex_id)
+			{
+				const aiVector3D& vertex = mesh->mVertices[vertex_id];
+				const aiVector3D& normal = mesh->HasNormals() ? mesh->mNormals[vertex_id] : aiVector3D(0.0f, 0.0f, 0.0f);
+				const aiVector3D& uv = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][vertex_id] : aiVector3D(0.0f, 0.0f, 0.0f);
 
-		// back
-		4,  5,  6,
-		4,  6,  7,
+				VertexPosUVNormals v;
+				v.pos    = { vertex.x, vertex.y, vertex.z };
+				v.normal = { normal.x, normal.y, normal.z };
+				v.uv     = { uv.x, uv.y };
 
-		// top
-		8,  9, 10,
-		8, 10, 11,
+				vertexData.push_back(v);
+			}
 
-		// bottom
-		12, 13, 14,
-		12, 14, 15,
+			for (uint32_t i = 0; i < mesh->mNumFaces; ++i)
+			{
+				const aiFace& face = mesh->mFaces[i];
+				assert(face.mNumIndices == 3);
+				indices.push_back(face.mIndices[0]);
+				indices.push_back(face.mIndices[1]);
+				indices.push_back(face.mIndices[2]);
+			}
+		}
 
-		// left
-		16, 17, 18,
-		16, 18, 19,
+		rhi::BufferCreateInfo vbci{};
+		vbci.flags = rhi::BufferFlags::VertexBuffer;
+		vbci.size = sizeof(VertexPosUVNormals) * vertexData.size();
+		vbci.memoryData = vertexData.data();
+		vbci.stride = sizeof(VertexPosUVNormals);
 
-		// right
-		20, 21, 22,
-		20, 22, 23
-	};
+		auto resourcevb = rhi::CreateBuffer(vbci);
+		if (!resourcevb.has_value())
+		{
+			Fatal(resourcevb.error());
+			return nullptr;
+		}
+		mesh_data->vertexBuffer = resourcevb.value();
 
-	struct CBufferPerCube final
+		rhi::BufferCreateInfo ibci{};
+		ibci.flags = rhi::BufferFlags::IndexBuffer;
+		ibci.size = sizeof(uint32_t) * indices.size();
+		ibci.memoryData = indices.data();
+		ibci.stride = sizeof(uint32_t);
+
+		auto resourceib = rhi::CreateBuffer(ibci);
+		if (!resourceib.has_value())
+		{
+			Fatal(resourceib.error());
+			return nullptr;
+		}
+		mesh_data->indexBuffer = resourceib.value();
+
+		mesh_data->indexCount = indices.size();
+
+		return mesh_data;
+	}
+
+	void MeshData::Bind()
 	{
-		Mat4 wvp;
-		float alpha = 0.0f;
-		float padding[3];
-	};
+		rhi::BindVertexBuffer(vertexBuffer, 0);
+		rhi::BindIndexBuffer(indexBuffer);
+	}
 
-	CBufferPerCube per_object_data_;
+	void Mesh::Update(float dt)
+	{
+		Quat rot = transform.GetWorldRotation() * Quat::FromAxisAngle(Vec3::UP, MathUtils::DegToRad(40.5f) * dt);
+		rot.Normalize();
+		transform.SetWorldRotation(rot);
+		perObjectData.matWorld = transform.GetWorldMatrix().Transpose();
+	}
+
+	void Mesh::Bind()
+	{
+		meshData->Bind();
+
+		if (cbufferPerObject == nullptr)
+		{
+			rhi::ConstantBufferCreateInfo cbci{};
+			cbci.usage = rhi::BufferUsage::Default;
+			cbci.size = sizeof(CBufferPerObject)/* + 0xf & 0xfffffff0*/;
+
+			auto resource = rhi::CreateConstantBuffer(cbci);
+			if (!resource.has_value())
+			{
+				Fatal(resource.error());
+				return;
+			}
+			cbufferPerObject = resource.value();
+		}
+
+		rhi::UpdateBuffer(cbufferPerObject, &perObjectData);
+		static constexpr int CBUFFER_PER_OBJECT_SLOT = 1;
+		rhi::BindConstantBuffer(cbufferPerObject, rhi::ShaderType::Vertex, CBUFFER_PER_OBJECT_SLOT);
+		rhi::BindConstantBuffer(cbufferPerObject, rhi::ShaderType::Pixel, CBUFFER_PER_OBJECT_SLOT);
+	}
+
+	void Mesh::Render()
+	{
+		Bind();
+		rhi::DrawIndexed(rhi::PrimitiveTopology::TriangleList, meshData->indexCount, 0, 0);
+	}
 }
 //=============================================================================
 bool MeshDemo::OnInit()
 {
 	// Create ShaderProgram
 	{
-		const size_t stride1 = 0;                             // Position
-		const size_t stride2 = stride1 + 3 * sizeof(float);   // uv0
-		const size_t stride3 = stride2 + 2 * sizeof(float);   // uv1
-		const size_t stride4 = stride3 + 2 * sizeof(float);   // normal
-		const size_t stride5 = stride4 + 3 * sizeof(float);   // boneIDs
-		const size_t stride6 = stride5 + 4 * sizeof(uint8_t); // boneWeights
-		const size_t stride7 = stride6 + 4 * sizeof(float);   // color
-
 		rhi::ShaderProgramLoadInfo spli{};
-		spli.vertexShader = { L"TexturedCube.hlsl", "vs_main" };
-		spli.pixelShader = { L"TexturedCube.hlsl", "ps_main" };
-		spli.inputLayout = VertexPosUV::Layout;
+		spli.vertexShader = { L"shaders/meshDemo_vs.hlsl", "Main" };
+		spli.pixelShader  = { L"shaders/meshDemo_ps.hlsl", "Main" };
+		spli.inputLayout  = VertexPosUVNormals::Layout;
 
 		auto resource = LoadShaderProgram(spli);
 		if (!resource.has_value())
@@ -158,15 +209,6 @@ bool MeshDemo::OnInit()
 		psci.rasterizerState.cullMode = rhi::CullMode::Back;
 		psci.rasterizerState.frontCounterClockwise = false;
 
-		psci.blendState.blendDesc.blendEnabled = true;
-		psci.blendState.blendDesc.srcBlend = rhi::BlendFactor::SrcAlpha;
-		psci.blendState.blendDesc.dstBlend = rhi::BlendFactor::OneMinusSrcAlpha;
-		psci.blendState.blendDesc.blendOp = rhi::BlendOp::Add;
-		psci.blendState.blendDesc.srcBlendAlpha = rhi::BlendFactor::One;
-		psci.blendState.blendDesc.dstBlendAlpha = rhi::BlendFactor::One;
-		psci.blendState.blendDesc.blendOpAlpha = rhi::BlendOp::Add;
-		psci.blendState.blendDesc.writeMask = rhi::ColorWriteMask::All;
-
 		auto resource = CreatePipelineState(psci);
 		if (!resource.has_value())
 		{
@@ -176,59 +218,11 @@ bool MeshDemo::OnInit()
 		m_pipelineState = resource.value();
 	}
 
-	// Create ConstantBuffer
-	{
-		rhi::ConstantBufferCreateInfo cbci{};
-		cbci.usage = rhi::BufferUsage::Default;
-		cbci.size = sizeof(CBufferPerCube)/* + 0xf & 0xfffffff0*/;
-
-		auto resource = rhi::CreateConstantBuffer(cbci);
-		if (!resource.has_value())
-		{
-			Fatal(resource.error());
-			return false;
-		}
-		m_constantBuffer = resource.value();
-	}
-
-	// Create VertexBuffer
-	{
-		rhi::BufferCreateInfo vbci{};
-		vbci.flags = rhi::BufferFlags::VertexBuffer;
-		vbci.size = sizeof(VertexPosUV) * _countof(cube_textured_vertices_);
-		vbci.memoryData = cube_textured_vertices_;
-		vbci.stride = sizeof(VertexPosUV);
-
-		auto resource = rhi::CreateBuffer(vbci);
-		if (!resource.has_value())
-		{
-			Fatal(resource.error());
-			return false;
-		}
-		m_vertexBuffer = resource.value();
-	}
-
-	// Create IndexBuffer
-	{
-		rhi::BufferCreateInfo ibci{};
-		ibci.flags = rhi::BufferFlags::IndexBuffer;
-		ibci.size = sizeof(uint32_t) * _countof(cube_tex_indices_);
-		ibci.memoryData = cube_tex_indices_;
-		ibci.stride = sizeof(uint32_t);
-
-		auto resource = rhi::CreateBuffer(ibci);
-		if (!resource.has_value())
-		{
-			Fatal(resource.error());
-			return false;
-		}
-		m_indexBuffer = resource.value();
-	}
 
 	// Create Texture2D
 	{
 		int texWidth, texHeight, texChannels;
-		stbi_uc* texData = stbi_load("test_texture.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		stbi_uc* texData = stbi_load("textures/BOSS_texture_final.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		int imagePitch = texWidth * 4 * sizeof(uint8_t);
 
 		rhi::Texture2DCreateInfo tci{};
@@ -252,9 +246,9 @@ bool MeshDemo::OnInit()
 	{
 		rhi::SamplerStateCreateInfo ssci{};
 		ssci.filter = rhi::TextureFilter::MinMagMip_Linear;
-		ssci.addressU = rhi::AddressMode::Clamp;
-		ssci.addressV = rhi::AddressMode::Clamp;
-		ssci.addressW = rhi::AddressMode::Clamp;
+		ssci.addressU = rhi::AddressMode::Wrap;
+		ssci.addressV = rhi::AddressMode::Wrap;
+		ssci.addressW = rhi::AddressMode::Wrap;
 		auto resource = rhi::CreateSamplerState(ssci);
 		if (!resource.has_value())
 		{
@@ -264,7 +258,26 @@ bool MeshDemo::OnInit()
 		m_samplerState = resource.value();
 	}
 
-	m_camera = Camera(Vec3(0.0f, 0.0f, -10.0f), GetWindowAspect(), MathUtils::DegToRad(45.0f), 0.1f, 1000.0f);
+	// Create ConstantBuffer
+	{
+		rhi::ConstantBufferCreateInfo cbci{};
+		cbci.usage = rhi::BufferUsage::Default;
+		cbci.size = sizeof(CBufferPerView)/* + 0xf & 0xfffffff0*/;
+
+		auto resource = rhi::CreateConstantBuffer(cbci);
+		if (!resource.has_value())
+		{
+			Fatal(resource.error());
+			return false;
+		}
+		m_cbufferPerView = resource.value();
+	}
+
+	mesh.meshData = MeshData::LoadFromFile("meshes/BOSS_model_final.fbx");
+	mesh.transform.SetWorldTranslation({ 0.0f, -1.0f, 0.0f });
+
+	m_camera = Camera(Vec3(0.0f, 5.0f, -10.0f), GetWindowAspect(), MathUtils::DegToRad(45.0f), .1f, 1000.0f);
+	m_camera.LookAt(Vec3(0.0f, 0.0f, 0.0f) + Vec3(0.0f, 2.0f, 0.0f));
 
 	return true;
 }
@@ -273,25 +286,17 @@ void MeshDemo::OnClose()
 {
 	rhi::DeleteResource(m_shaderProgram);
 	rhi::DeleteResource(m_pipelineState);
-	rhi::DeleteResource(m_constantBuffer);
-	rhi::DeleteResource(m_vertexBuffer);
-	rhi::DeleteResource(m_indexBuffer);
+	rhi::DeleteResource(m_cbufferPerView);
 	rhi::DeleteResource(m_texture);
 	rhi::DeleteResource(m_samplerState);
 }
 //=============================================================================
 void MeshDemo::OnUpdate(double deltaTime)
 {
-	// Update our time
-	static float angle = 0.0f;
-	angle += 20.5f * deltaTime;
+	mesh.Update(deltaTime);
+	perViewData.mat_view_projection = m_camera.GetViewProjection().Transpose();   // CPU: row major, GPU: col major! -> We have to transpose.
 
-	// Update the cbuffer
-	Mat4 mat_world = DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle)) * DirectX::XMMatrixTranslation(.5f, 0.0f, 0.5f);
-	Mat4 mat_wvp = mat_world * m_camera.GetViewProjection();
-	per_object_data_.wvp = mat_wvp.Transpose(); // CPU: row major, GPU: col major! -> We have to transpose.
-	per_object_data_.alpha = 0.25f;
-	UpdateBuffer(m_constantBuffer, &per_object_data_);
+	rhi::UpdateBuffer(m_cbufferPerView, &perViewData);
 }
 //=============================================================================
 void MeshDemo::OnFrame()
@@ -300,13 +305,12 @@ void MeshDemo::OnFrame()
 	rhi::BindShaderProgram(m_shaderProgram);
 	rhi::BindPipelineState(m_pipelineState);
 
-	rhi::BindConstantBuffer(m_constantBuffer, rhi::ShaderType::Vertex, 0);
-	rhi::BindConstantBuffer(m_constantBuffer, rhi::ShaderType::Pixel, 0);
+	rhi::BindConstantBuffer(m_cbufferPerView, rhi::ShaderType::Vertex, 0);
+	rhi::BindConstantBuffer(m_cbufferPerView, rhi::ShaderType::Pixel, 0);
+	
 	rhi::BindSamplerState(m_samplerState, rhi::ShaderType::Pixel, 0);
 	rhi::BindShaderResource(m_texture, rhi::ShaderType::Pixel, 0);
 
-	rhi::BindVertexBuffer(m_vertexBuffer, 0);
-	rhi::BindIndexBuffer(m_indexBuffer);
-	rhi::DrawIndexed(rhi::PrimitiveTopology::TriangleList, _countof(cube_tex_indices_), 0, 0);
+	mesh.Render();
 }
 //=============================================================================

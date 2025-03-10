@@ -1028,9 +1028,13 @@ inline std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShade
 		}
 	}
 
-	UINT d3dFlags = 0;
+	UINT d3dFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#ifndef NDEBUG
+	d3dFlags |= D3DCOMPILE_DEBUG;
+	d3dFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
 	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Debug))     d3dFlags |= D3DCOMPILE_DEBUG;
-	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Strict))    d3dFlags |= D3DCOMPILE_ENABLE_STRICTNESS;
 	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::IEEStrict)) d3dFlags |= D3DCOMPILE_IEEE_STRICTNESS;
 	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Optimize0)) d3dFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL0;
 	if (loadInfo.flags & static_cast<UINT>(ShaderCompileFlags::Optimize1)) d3dFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL1;
@@ -1039,7 +1043,7 @@ inline std::expected<Microsoft::WRL::ComPtr<ID3DBlob>, std::string> CompileShade
 
 	Microsoft::WRL::ComPtr<ID3DBlob> blob;
 	Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
-	HRESULT result = D3DCompileFromFile(loadInfo.file.c_str(), d3dmacros, 0, loadInfo.entryPoint.c_str(), target.c_str(), d3dFlags, 0, &blob, &errorBlob);
+	HRESULT result = D3DCompileFromFile(loadInfo.file.c_str(), d3dmacros, D3D_COMPILE_STANDARD_FILE_INCLUDE, loadInfo.entryPoint.c_str(), target.c_str(), d3dFlags, 0, &blob, &errorBlob);
 	delete[] d3dmacros;
 	if (FAILED(result))
 	{

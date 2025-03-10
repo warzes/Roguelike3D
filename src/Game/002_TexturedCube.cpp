@@ -84,14 +84,6 @@ bool TexturedCube::OnInit()
 {
 	// Create ShaderProgram
 	{
-		const size_t stride1 = 0;                             // Position
-		const size_t stride2 = stride1 + 3 * sizeof(float);   // uv0
-		const size_t stride3 = stride2 + 2 * sizeof(float);   // uv1
-		const size_t stride4 = stride3 + 2 * sizeof(float);   // normal
-		const size_t stride5 = stride4 + 3 * sizeof(float);   // boneIDs
-		const size_t stride6 = stride5 + 4 * sizeof(uint8_t); // boneWeights
-		const size_t stride7 = stride6 + 4 * sizeof(float);   // color
-
 		rhi::ShaderProgramLoadInfo spli{};
 		spli.vertexShader = { L"TexturedCube.hlsl", "vs_main" };
 		spli.pixelShader = { L"TexturedCube.hlsl", "ps_main" };

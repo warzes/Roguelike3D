@@ -16,10 +16,7 @@ private:
 
 
 	rhi::PipelineStatePtr  m_pipelineState{ nullptr };
-	rhi::ConstantBufferPtr m_constantBuffer{ nullptr };
-
-	rhi::BufferPtr         m_vertexBuffer{ nullptr };
-	rhi::BufferPtr         m_indexBuffer{ nullptr };
+	rhi::ConstantBufferPtr m_cbufferPerView{ nullptr };
 
 	Camera                 m_camera;
 	rhi::TexturePtr        m_texture;

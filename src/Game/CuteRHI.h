@@ -198,12 +198,11 @@ namespace rhi
 	{
 		enum : uint64_t {
 			Debug = (1ul << 0),
-			Strict = (1ul << 1),
-			IEEStrict = (1ul << 2),
-			Optimize0 = (1ul << 3),
-			Optimize1 = (1ul << 4),
-			Optimize2 = (1ul << 5),
-			Optimize3 = (1ul << 6)
+			IEEStrict = (1ul << 1),
+			Optimize0 = (1ul << 2),
+			Optimize1 = (1ul << 3),
+			Optimize2 = (1ul << 4),
+			Optimize3 = (1ul << 5)
 		};
 	}
 
