@@ -23,6 +23,7 @@ namespace
 	// слить MeshData в Mesh
 	// Model
 	// возможно мне не нужна сортировка для прозрачности...
+	everyray?
 
 
 	struct MeshData final
