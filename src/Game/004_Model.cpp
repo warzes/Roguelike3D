@@ -20,12 +20,6 @@ namespace
 		Mat4 matWorld;
 	};
 
-	// слить MeshData в Mesh
-	// Model
-	 возможно мне не нужна сортировка для прозрачности...
-	everyray?
-
-
 	struct MeshData final
 	{
 		static std::shared_ptr<MeshData> LoadFromFile(const std::string& asset_path);

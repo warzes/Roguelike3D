@@ -48,6 +48,9 @@
     <ClCompile Include="004_Model.cpp">
       <Filter>Demo</Filter>
     </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>CuteOther</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -104,6 +107,9 @@
     </ClInclude>
     <ClInclude Include="004_Model.h">
       <Filter>Demo</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>CuteOther</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
