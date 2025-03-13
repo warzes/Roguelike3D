@@ -231,14 +231,14 @@ bool MeshDemo::OnInit()
 		tci.memoryData = texData;
 
 		auto resource = rhi::CreateTexture2D(tci);
+		stbi_image_free(texData);
+
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
 			return false;
 		}
 		m_texture = resource.value();
-
-		stbi_image_free(texData);
 	}
 
 	// Create SamplerState

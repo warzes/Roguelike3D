@@ -1594,7 +1594,6 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture2D(const Texture2D
 	}
 
 	DXGI_FORMAT dataFormat = ConvertToD3D11(createInfo.format);
-
 	DXGI_FORMAT textureFormat = dataFormat;
 	DXGI_FORMAT viewFormat = dataFormat;
 
