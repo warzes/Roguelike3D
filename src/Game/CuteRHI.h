@@ -108,6 +108,9 @@ namespace rhi
 		Replace,
 		Increment,
 		Decrement,
+		IncrementSAT,
+		DecrementSAT,
+		Invert
 	};
 
 	enum class FillMode : uint8_t
@@ -265,10 +268,10 @@ namespace rhi
 
 	struct StencilDesc final
 	{
-		StencilFunc stencilFunc = StencilFunc::Always;
-		StencilOp   failOp = StencilOp::Keep;
-		StencilOp   depthFailOp = StencilOp::Keep;
-		StencilOp   passOp = StencilOp::Keep;
+		StencilFunc comparison{ StencilFunc::Always };
+		StencilOp   failOp{ StencilOp::Keep };
+		StencilOp   depthFailOp{ StencilOp::Keep };
+		StencilOp   passOp{ StencilOp::Keep };
 	};
 
 	struct ShaderCompileMacro final
@@ -298,9 +301,16 @@ namespace rhi
 
 	struct RasterizerStateDescriptor final
 	{
-		FillMode fillMode = FillMode::Solid;
-		CullMode cullMode = CullMode::Back;
+		FillMode fillMode{ FillMode::Solid };
+		CullMode cullMode{ CullMode::Back };
 		bool     frontCounterClockwise{ false };
+		int32_t  depthBias{ 0 };
+		float    depthBiasClamp{ 0.0f };
+		float    slopeScaledDepthBias{ 0.0f };
+		bool     enableDepthClip{ true };
+		bool     enableScissor{ false };
+		bool     enableMultisample{ false };
+		bool     enableAntialiasedLine{ false };
 	};
 
 	struct BlendStateDescriptor final
@@ -320,13 +330,12 @@ namespace rhi
 		bool           depthEnabled{ true };
 		DepthWriteMask writeMask{ DepthWriteMask::All };
 		DepthFunc      depthFunc{ DepthFunc::Less };
-
 		bool           stencilEnabled{ false };
-		uint32_t       stencilRef{ 0 };
-		uint8_t        stencilReadMask{ 0xff };
-		uint8_t        stencilWriteMask{ 0xff };
+		uint8_t        stencilReadMask{ 0xFF };
+		uint8_t        stencilWriteMask{ 0xFF };
 		StencilDesc    frontFaceStencilDesc{};
 		StencilDesc    backFaceStencilDesc{};
+		uint32_t       stencilReference{ 0 };
 	};
 
 	struct RenderTargetColorDescriptor final

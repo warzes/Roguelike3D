@@ -261,16 +261,16 @@ bool DemoCube::OnInit()
 		psci.depthStencilState.depthFunc                        = rhi::DepthFunc::Less;
 
 		psci.depthStencilState.stencilEnabled                   = false;
-		psci.depthStencilState.stencilRef                       = 0;
+		psci.depthStencilState.stencilReference                       = 0;
 		psci.depthStencilState.stencilReadMask                  = 0;
 		psci.depthStencilState.stencilWriteMask                 = 0;
 
-		psci.depthStencilState.frontFaceStencilDesc.stencilFunc = rhi::StencilFunc::Always;
+		psci.depthStencilState.frontFaceStencilDesc.comparison = rhi::StencilFunc::Always;
 		psci.depthStencilState.frontFaceStencilDesc.failOp      = rhi::StencilOp::Keep;
 		psci.depthStencilState.frontFaceStencilDesc.depthFailOp = rhi::StencilOp::Keep;
 		psci.depthStencilState.frontFaceStencilDesc.passOp      = rhi::StencilOp::Keep;
 
-		psci.depthStencilState.backFaceStencilDesc.stencilFunc  = rhi::StencilFunc::Always;
+		psci.depthStencilState.backFaceStencilDesc.comparison  = rhi::StencilFunc::Always;
 		psci.depthStencilState.backFaceStencilDesc.failOp       = rhi::StencilOp::Keep;
 		psci.depthStencilState.backFaceStencilDesc.depthFailOp  = rhi::StencilOp::Keep;
 		psci.depthStencilState.backFaceStencilDesc.passOp       = rhi::StencilOp::Keep;

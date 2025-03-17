@@ -178,23 +178,21 @@ inline DXGI_FORMAT ConvertToD3D11(rhi::TexelsFormat format)
 //=============================================================================
 inline D3D11_FILL_MODE ConvertToD3D11(rhi::FillMode fillMode)
 {
-	using namespace rhi;
 	switch (fillMode)
 	{
-	case FillMode::Solid:     return D3D11_FILL_SOLID;
-	case FillMode::Wireframe: return D3D11_FILL_WIREFRAME;
-	default: assert(false);   return D3D11_FILL_SOLID;
+	case rhi::FillMode::Solid:     return D3D11_FILL_SOLID;
+	case rhi::FillMode::Wireframe: return D3D11_FILL_WIREFRAME;
+	default: assert(false);        return D3D11_FILL_SOLID;
 	}
 }
 //=============================================================================
 inline D3D11_CULL_MODE ConvertToD3D11(rhi::CullMode cullMode)
 {
-	using namespace rhi;
 	switch (cullMode)
 	{
-	case CullMode::Back:    return D3D11_CULL_BACK;
-	case CullMode::Front:   return D3D11_CULL_FRONT;
-	case CullMode::None:    return D3D11_CULL_NONE;
+	case rhi::CullMode::Back:    return D3D11_CULL_BACK;
+	case rhi::CullMode::Front:   return D3D11_CULL_FRONT;
+	case rhi::CullMode::None:    return D3D11_CULL_NONE;
 	default: assert(false); return D3D11_CULL_BACK;
 	}
 }
@@ -249,26 +247,27 @@ inline D3D11_COMPARISON_FUNC ConvertToD3D11(rhi::ComparisonFunc func)
 //=============================================================================
 inline D3D11_DEPTH_WRITE_MASK ConvertToD3D11(rhi::DepthWriteMask mask)
 {
-	using namespace rhi;
 	switch (mask)
 	{
-	case DepthWriteMask::Zero: return D3D11_DEPTH_WRITE_MASK_ZERO;
-	case DepthWriteMask::All:  return D3D11_DEPTH_WRITE_MASK_ALL;
-	default: assert(false);    return D3D11_DEPTH_WRITE_MASK_ZERO;
+	case rhi::DepthWriteMask::Zero: return D3D11_DEPTH_WRITE_MASK_ZERO;
+	case rhi::DepthWriteMask::All:  return D3D11_DEPTH_WRITE_MASK_ALL;
+	default: assert(false);         return D3D11_DEPTH_WRITE_MASK_ZERO;
 	}
 }
 //=============================================================================
 inline D3D11_STENCIL_OP ConvertToD3D11(rhi::StencilOp op)
 {
-	using namespace rhi;
 	switch (op)
 	{
-	case StencilOp::Keep:      return D3D11_STENCIL_OP_KEEP;
-	case StencilOp::Zero:      return D3D11_STENCIL_OP_ZERO;
-	case StencilOp::Replace:   return D3D11_STENCIL_OP_REPLACE;
-	case StencilOp::Increment: return D3D11_STENCIL_OP_INCR;
-	case StencilOp::Decrement: return D3D11_STENCIL_OP_DECR;
-	default: assert(false);    return D3D11_STENCIL_OP_KEEP;
+	case rhi::StencilOp::Keep:         return D3D11_STENCIL_OP_KEEP;
+	case rhi::StencilOp::Zero:         return D3D11_STENCIL_OP_ZERO;
+	case rhi::StencilOp::Replace:      return D3D11_STENCIL_OP_REPLACE;
+	case rhi::StencilOp::Increment:    return D3D11_STENCIL_OP_INCR;
+	case rhi::StencilOp::Decrement:    return D3D11_STENCIL_OP_DECR;
+	case rhi::StencilOp::IncrementSAT: return D3D11_STENCIL_OP_INCR_SAT;
+	case rhi::StencilOp::DecrementSAT: return D3D11_STENCIL_OP_DECR_SAT;
+	case rhi::StencilOp::Invert:       return D3D11_STENCIL_OP_INVERT;
+	default: assert(false);            return D3D11_STENCIL_OP_KEEP;
 	}
 }
 //=============================================================================
@@ -383,7 +382,7 @@ struct rhi::PipelineState final
 	Color                                           blendColor;
 	uint32_t                                        blendSampleMask;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
-	uint32_t                                        stencilRef;
+	uint32_t                                        stencilReference;
 };
 //=============================================================================
 struct rhi::SamplerState final
@@ -1251,21 +1250,21 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 	{
 		const auto& state = createInfo.rasterizerState;
 
-		D3D11_RASTERIZER_DESC2 rasterizerDesc{};
-		rasterizerDesc.FillMode              = ConvertToD3D11(state.fillMode);
-		rasterizerDesc.CullMode              = ConvertToD3D11(state.cullMode);
-		rasterizerDesc.FrontCounterClockwise = state.frontCounterClockwise ? TRUE : FALSE;
-		rasterizerDesc.DepthBias             = 0;
-		rasterizerDesc.DepthBiasClamp        = 0.0f;
-		rasterizerDesc.SlopeScaledDepthBias  = 0.0f;
-		rasterizerDesc.DepthClipEnable       = TRUE;
-		rasterizerDesc.ScissorEnable         = FALSE;
-		rasterizerDesc.MultisampleEnable     = FALSE;
-		rasterizerDesc.AntialiasedLineEnable = FALSE;
-		rasterizerDesc.ForcedSampleCount     = 0;
-		rasterizerDesc.ConservativeRaster    = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+		D3D11_RASTERIZER_DESC2 desc{};
+		desc.FillMode              = ConvertToD3D11(state.fillMode);
+		desc.CullMode              = ConvertToD3D11(state.cullMode);
+		desc.FrontCounterClockwise = (state.frontCounterClockwise ? TRUE : FALSE);
+		desc.DepthBias             = state.depthBias;
+		desc.DepthBiasClamp        = state.depthBiasClamp;
+		desc.SlopeScaledDepthBias  = state.slopeScaledDepthBias;
+		desc.DepthClipEnable       = (state.enableDepthClip ? TRUE : FALSE);
+		desc.ScissorEnable         = (state.enableScissor ? TRUE : FALSE);
+		desc.MultisampleEnable     = (state.enableMultisample ? TRUE : FALSE);
+		desc.AntialiasedLineEnable = (state.enableAntialiasedLine ? TRUE : FALSE);
+		desc.ForcedSampleCount     = 0;
+		desc.ConservativeRaster    = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
-		HRESULT result = rhi::d3dDevice->CreateRasterizerState2(&rasterizerDesc, &pipelineState->rasterizerState);
+		HRESULT result = rhi::d3dDevice->CreateRasterizerState2(&desc, &pipelineState->rasterizerState);
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateRasterizerState2() failed: ", result));
 	}
 
@@ -1273,15 +1272,15 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 	{
 		const auto& state = createInfo.blendState;
 
-		D3D11_BLEND_DESC1 blendDesc = { 0 };
-		blendDesc.AlphaToCoverageEnable  = (state.alphaToCoverageEnabled ? TRUE : FALSE);
-		blendDesc.IndependentBlendEnable = (state.independentBlendEnabled ? TRUE : FALSE);
+		D3D11_BLEND_DESC1 desc = { 0 };
+		desc.AlphaToCoverageEnable  = (state.alphaToCoverageEnabled ? TRUE : FALSE);
+		desc.IndependentBlendEnable = (state.independentBlendEnabled ? TRUE : FALSE);
 
 		if (state.independentBlendEnabled)
 		{
 			for (size_t i = 0; i < 8; ++i)
 			{
-				auto& out = blendDesc.RenderTarget[i];
+				auto& out = desc.RenderTarget[i];
 				const auto& in = state.renderTargetBlendDesc[i];
 
 				out.BlendEnable           = (in.enable ? TRUE : FALSE);
@@ -1297,7 +1296,7 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 		}
 		else
 		{
-			auto& out = blendDesc.RenderTarget[0];
+			auto& out = desc.RenderTarget[0];
 			const auto& in = state.blendDesc;
 
 			out.BlendEnable           = (in.enable ? TRUE : FALSE);
@@ -1311,7 +1310,7 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 			// TODO: D3D11_RENDER_TARGET_BLEND_DESC1::LogicOp and D3D11_RENDER_TARGET_BLEND_DESC1::LogicOpEnable
 		}
 
-		HRESULT result = rhi::d3dDevice->CreateBlendState1(&blendDesc, &pipelineState->blendState);
+		HRESULT result = rhi::d3dDevice->CreateBlendState1(&desc, &pipelineState->blendState);
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateBlendState1() failed: ", result));
 	}
 
@@ -1319,26 +1318,28 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 	{
 		const auto& state = createInfo.depthStencilState;
 
-		D3D11_DEPTH_STENCIL_DESC depthStencilDesc = { 0 };
-		depthStencilDesc.DepthEnable                  = state.depthEnabled;
-		depthStencilDesc.DepthWriteMask               = ConvertToD3D11(state.writeMask);
-		depthStencilDesc.DepthFunc                    = ConvertToD3D11(state.depthFunc);
-		depthStencilDesc.StencilEnable                = state.stencilEnabled;
-		depthStencilDesc.StencilReadMask              = state.stencilReadMask;
-		depthStencilDesc.StencilWriteMask             = state.stencilWriteMask;
-		depthStencilDesc.FrontFace.StencilFunc        = ConvertToD3D11(state.frontFaceStencilDesc.stencilFunc);
-		depthStencilDesc.FrontFace.StencilFailOp      = ConvertToD3D11(state.frontFaceStencilDesc.failOp);
-		depthStencilDesc.FrontFace.StencilDepthFailOp = ConvertToD3D11(state.frontFaceStencilDesc.depthFailOp);
-		depthStencilDesc.FrontFace.StencilPassOp      = ConvertToD3D11(state.frontFaceStencilDesc.passOp);
-		depthStencilDesc.BackFace.StencilFunc         = ConvertToD3D11(state.backFaceStencilDesc.stencilFunc);
-		depthStencilDesc.BackFace.StencilFailOp       = ConvertToD3D11(state.backFaceStencilDesc.failOp);
-		depthStencilDesc.BackFace.StencilDepthFailOp  = ConvertToD3D11(state.backFaceStencilDesc.depthFailOp);
-		depthStencilDesc.BackFace.StencilPassOp       = ConvertToD3D11(state.backFaceStencilDesc.passOp);
+		D3D11_DEPTH_STENCIL_DESC desc = { 0 };
+		desc.DepthEnable                  = (state.depthEnabled ? TRUE : FALSE);
+		desc.DepthWriteMask               = ConvertToD3D11(state.writeMask);
+		desc.DepthFunc                    = ConvertToD3D11(state.depthFunc);
+		desc.StencilEnable                = (state.stencilEnabled ? TRUE : FALSE);
+		desc.StencilReadMask              = state.stencilReadMask;
+		desc.StencilWriteMask             = state.stencilWriteMask;
+		const auto& front = state.frontFaceStencilDesc;
+		desc.FrontFace.StencilFunc        = ConvertToD3D11(front.comparison);
+		desc.FrontFace.StencilFailOp      = ConvertToD3D11(front.failOp);
+		desc.FrontFace.StencilDepthFailOp = ConvertToD3D11(front.depthFailOp);
+		desc.FrontFace.StencilPassOp      = ConvertToD3D11(front.passOp);
+		const auto& back = state.backFaceStencilDesc;
+		desc.BackFace.StencilFunc         = ConvertToD3D11(back.comparison);
+		desc.BackFace.StencilFailOp       = ConvertToD3D11(back.failOp);
+		desc.BackFace.StencilDepthFailOp  = ConvertToD3D11(back.depthFailOp);
+		desc.BackFace.StencilPassOp       = ConvertToD3D11(back.passOp);
 
-		HRESULT result = rhi::d3dDevice->CreateDepthStencilState(&depthStencilDesc, &pipelineState->depthStencilState);
+		HRESULT result = rhi::d3dDevice->CreateDepthStencilState(&desc, &pipelineState->depthStencilState);
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateDepthStencilState() failed: ", result));
 
-		pipelineState->stencilRef = state.stencilRef;
+		pipelineState->stencilReference = state.stencilReference;
 	}
 
 	return pipelineState;
@@ -1916,7 +1917,7 @@ void rhi::BindPipelineState(PipelineStatePtr resource)
 {
 	rhi::d3dContext->RSSetState(resource->rasterizerState.Get());
 	rhi::d3dContext->OMSetBlendState(resource->blendState.Get(), resource->blendColor, resource->blendSampleMask);
-	rhi::d3dContext->OMSetDepthStencilState(resource->depthStencilState.Get(), resource->stencilRef);
+	rhi::d3dContext->OMSetDepthStencilState(resource->depthStencilState.Get(), resource->stencilReference);
 }
 //=============================================================================
 void rhi::BindSamplerState(SamplerStatePtr resource, ShaderType shaderType, uint32_t slot)
