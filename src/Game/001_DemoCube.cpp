@@ -247,14 +247,14 @@ bool DemoCube::OnInit()
 		psci.rasterizerState.cullMode                           = rhi::CullMode::Back;
 		psci.rasterizerState.frontCounterClockwise              = true;
 
-		psci.blendState.blendDesc.blendEnabled                  = false;
+		psci.blendState.blendDesc.enable                  = false;
 		psci.blendState.blendDesc.writeMask                     = rhi::ColorWriteMask::All;
-		psci.blendState.blendDesc.srcBlend                      = rhi::BlendFactor::One;
-		psci.blendState.blendDesc.dstBlend                      = rhi::BlendFactor::Zero;
-		psci.blendState.blendDesc.blendOp                       = rhi::BlendOp::Add;
-		psci.blendState.blendDesc.srcBlendAlpha                 = rhi::BlendFactor::One;
-		psci.blendState.blendDesc.dstBlendAlpha                 = rhi::BlendFactor::Zero;
-		psci.blendState.blendDesc.blendOpAlpha                  = rhi::BlendOp::Add;
+		psci.blendState.blendDesc.srcColor                      = rhi::BlendFactor::One;
+		psci.blendState.blendDesc.dstColor                      = rhi::BlendFactor::Zero;
+		psci.blendState.blendDesc.opColor                       = rhi::BlendOp::Add;
+		psci.blendState.blendDesc.srcAlpha                 = rhi::BlendFactor::One;
+		psci.blendState.blendDesc.dstAlpha                 = rhi::BlendFactor::Zero;
+		psci.blendState.blendDesc.opAlpha                  = rhi::BlendOp::Add;
 
 		psci.depthStencilState.depthEnabled                     = true;
 		psci.depthStencilState.writeMask                        = rhi::DepthWriteMask::All;

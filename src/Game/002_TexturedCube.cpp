@@ -110,13 +110,13 @@ bool TexturedCube::OnInit()
 		psci.rasterizerState.cullMode = rhi::CullMode::Back;
 		psci.rasterizerState.frontCounterClockwise = false;
 
-		psci.blendState.blendDesc.blendEnabled = true;
-		psci.blendState.blendDesc.srcBlend = rhi::BlendFactor::SrcAlpha;
-		psci.blendState.blendDesc.dstBlend = rhi::BlendFactor::OneMinusSrcAlpha;
-		psci.blendState.blendDesc.blendOp = rhi::BlendOp::Add;
-		psci.blendState.blendDesc.srcBlendAlpha = rhi::BlendFactor::One;
-		psci.blendState.blendDesc.dstBlendAlpha = rhi::BlendFactor::One;
-		psci.blendState.blendDesc.blendOpAlpha = rhi::BlendOp::Add;
+		psci.blendState.blendDesc.enable = true;
+		psci.blendState.blendDesc.srcColor = rhi::BlendFactor::SrcAlpha;
+		psci.blendState.blendDesc.dstColor = rhi::BlendFactor::InvSrcAlpha;
+		psci.blendState.blendDesc.opColor = rhi::BlendOp::Add;
+		psci.blendState.blendDesc.srcAlpha = rhi::BlendFactor::One;
+		psci.blendState.blendDesc.dstAlpha = rhi::BlendFactor::One;
+		psci.blendState.blendDesc.opAlpha = rhi::BlendOp::Add;
 		psci.blendState.blendDesc.writeMask = rhi::ColorWriteMask::All;
 
 		auto resource = CreatePipelineState(psci);

@@ -17,32 +17,27 @@ int main(
 {
 	//GameApp app;
 
-план:
-https://vk.com/game_darkandlight
-https://github.com/SDraw/roc_engine/tree/master/roc_app
-https://www.youtube.com/@farhananjumrahman3463
-https://github.com/meemknight/gl3d
-3Dev
-
-	- загрузка меша и возможно анимации
-		материалы - (pomdog)
-		источники света из растертек?
-		если эффекты - то книга realtime rendering
-		https ://www.geometrictools.com/
-		
-		
-		
-		
-		
-		
-	
-	в невервинтере мир был разделен на тайлы (тайлсеты). возможно тоже такое использовать. посмотреть редактор
-	
-	Dread Delusion для идей
-
-на скринах из папки	
-
-в pomdog есть материал
+//план:
+//https://vk.com/game_darkandlight
+//https://github.com/SDraw/roc_engine/tree/master/roc_app
+//https://www.youtube.com/@farhananjumrahman3463
+//https://github.com/meemknight/gl3d
+//3Dev
+//
+//	- загрузка меша и возможно анимации
+//		материалы - (pomdog)
+//		источники света из растертек?
+//		если эффекты - то книга realtime rendering
+//		https ://www.geometrictools.com/
+//		
+//	
+//	в невервинтере мир был разделен на тайлы (тайлсеты). возможно тоже такое использовать. посмотреть редактор
+//	
+//	Dread Delusion для идей
+//
+//на скринах из папки	
+//
+//в pomdog есть материал
 
 	// Demo
 	//DemoCube app;

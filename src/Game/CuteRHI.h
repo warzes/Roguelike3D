@@ -13,6 +13,17 @@ namespace rhi
 	void Print(const std::wstring& message);
 	void Fatal(const std::string& error);
 
+	struct Color final
+	{
+		const float* Get() const { return &r; }
+		operator float* () { return &r; }
+
+		float r{ 1.0f };
+		float g{ 1.0f };
+		float b{ 1.0f };
+		float a{ 1.0f };
+	};
+
 	constexpr const auto RenderTargetSlotCount = 8u;
 	constexpr const auto MaxVertexBuffers = 16u;
 	constexpr const auto AppendAlignedElement = 0xffffffff;
@@ -117,13 +128,20 @@ namespace rhi
 		Zero,
 		One,
 		SrcAlpha,
-		DstAlpha,
-		OneMinusSrcAlpha,
-		OneMinusDstAlpha,
+		DestAlpha,
+		InvSrcAlpha,
+		InvDestAlpha,
 		SrcColor,
-		DstColor,
-		OneMinusSrcColor,
-		OneMinusDstColor,
+		DestColor,
+		InvSrcColor,
+		InvDestColor,
+		SrcAlphaSat,
+		Factor,
+		InvFactor,
+		Src1Color,
+		InvSrc1Color,
+		Src1Alpha,
+		InvSrc1Alpha
 	};
 
 	enum class BlendOp : uint8_t
@@ -137,11 +155,11 @@ namespace rhi
 
 	enum class ColorWriteMask : uint8_t
 	{
-		Red = (1u << 0),
+		Red   = (1u << 0),
 		Green = (1u << 1),
-		Blue = (1u << 2),
+		Blue  = (1u << 2),
 		Alpha = (1u << 3),
-		All = Red | Green | Blue | Alpha
+		All   = Red | Green | Blue | Alpha
 	};
 
 	enum class TextureFilter : size_t
@@ -233,16 +251,16 @@ namespace rhi
 		};
 	}
 
-	struct BlendDesc final
+	struct BlendTargetDesc final
 	{
-		bool           blendEnabled = false;
-		ColorWriteMask writeMask = ColorWriteMask::All;
-		BlendFactor    srcBlend = BlendFactor::One;
-		BlendFactor    dstBlend = BlendFactor::Zero;
-		BlendOp        blendOp = BlendOp::Add;
-		BlendFactor    srcBlendAlpha = BlendFactor::One;
-		BlendFactor    dstBlendAlpha = BlendFactor::Zero;
-		BlendOp        blendOpAlpha = BlendOp::Add;
+		bool           enable{ false };
+		ColorWriteMask writeMask{ ColorWriteMask::All };
+		BlendFactor    srcColor{ BlendFactor::One };
+		BlendFactor    dstColor{ BlendFactor::Zero };
+		BlendOp        opColor{ BlendOp::Add };
+		BlendFactor    srcAlpha{ BlendFactor::One };
+		BlendFactor    dstAlpha{ BlendFactor::Zero };
+		BlendOp        opAlpha{ BlendOp::Add };
 	};
 
 	struct StencilDesc final
@@ -287,12 +305,14 @@ namespace rhi
 
 	struct BlendStateDescriptor final
 	{
-		BlendDesc blendDesc;
+		BlendTargetDesc blendDesc{};
 
-		bool      separateBlendEnabled = false;
-		BlendDesc renderTargetBlendDesc[RenderTargetSlotCount];
+		bool            independentBlendEnabled{ false };
+		BlendTargetDesc renderTargetBlendDesc[RenderTargetSlotCount]{};
 
-		bool      alphaToCoverageEnabled = false;
+		bool            alphaToCoverageEnabled{ false };
+		Color           blendColor{ 0.0f, 0.0f, 0.0f, 0.0f };
+		uint32_t        sampleMask{ 0xFFFFFFFFu };
 	};
 
 	struct DepthStencilStateDescriptor final
@@ -406,16 +426,6 @@ namespace rhi
 		TexelsFormat                depthFormat{ TexelsFormat::D32F }; // DepthNone - нет буфера глубины
 		uint32_t                    width{ 0 };
 		uint32_t                    height{ 0 };
-	};
-
-	struct Color final
-	{
-		const float* Get() const { return &r; }
-
-		float r{ 1.0f };
-		float g{ 1.0f };
-		float b{ 1.0f };
-		float a{ 1.0f };
 	};
 
 	struct Viewport final

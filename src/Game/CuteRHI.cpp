@@ -311,34 +311,39 @@ inline D3D11_MAP ConvertToD3D11(rhi::MapType type)
 //=============================================================================
 inline D3D11_BLEND ConvertToD3D11(rhi::BlendFactor type)
 {
-	using namespace rhi;
 	switch (type)
 	{
-	case BlendFactor::Zero:             return D3D11_BLEND_ZERO;
-	case BlendFactor::One:              return D3D11_BLEND_ONE;
-	case BlendFactor::SrcAlpha:         return D3D11_BLEND_SRC_ALPHA;
-	case BlendFactor::DstAlpha:         return D3D11_BLEND_DEST_ALPHA;
-	case BlendFactor::OneMinusSrcAlpha: return D3D11_BLEND_INV_SRC_ALPHA;
-	case BlendFactor::OneMinusDstAlpha: return D3D11_BLEND_INV_DEST_ALPHA;
-	case BlendFactor::SrcColor:         return D3D11_BLEND_SRC_COLOR;
-	case BlendFactor::DstColor:         return D3D11_BLEND_DEST_COLOR;
-	case BlendFactor::OneMinusSrcColor: return D3D11_BLEND_INV_SRC_COLOR;
-	case BlendFactor::OneMinusDstColor: return D3D11_BLEND_INV_DEST_COLOR;
-	default: assert(false);             return D3D11_BLEND_ONE;
+	case rhi::BlendFactor::Zero:         return D3D11_BLEND_ZERO;
+	case rhi::BlendFactor::One:          return D3D11_BLEND_ONE;
+	case rhi::BlendFactor::SrcAlpha:     return D3D11_BLEND_SRC_ALPHA;
+	case rhi::BlendFactor::DestAlpha:    return D3D11_BLEND_DEST_ALPHA;
+	case rhi::BlendFactor::InvSrcAlpha:  return D3D11_BLEND_INV_SRC_ALPHA;
+	case rhi::BlendFactor::InvDestAlpha: return D3D11_BLEND_INV_DEST_ALPHA;
+	case rhi::BlendFactor::SrcColor:     return D3D11_BLEND_SRC_COLOR;
+	case rhi::BlendFactor::DestColor:    return D3D11_BLEND_DEST_COLOR;
+	case rhi::BlendFactor::InvSrcColor:  return D3D11_BLEND_INV_SRC_COLOR;
+	case rhi::BlendFactor::InvDestColor: return D3D11_BLEND_INV_DEST_COLOR;
+	case rhi::BlendFactor::SrcAlphaSat:  return D3D11_BLEND_SRC_ALPHA_SAT;
+	case rhi::BlendFactor::Factor:       return D3D11_BLEND_BLEND_FACTOR;
+	case rhi::BlendFactor::InvFactor:    return D3D11_BLEND_INV_BLEND_FACTOR;
+	case rhi::BlendFactor::Src1Color:    return D3D11_BLEND_SRC1_COLOR;
+	case rhi::BlendFactor::InvSrc1Color: return D3D11_BLEND_INV_SRC1_COLOR;
+	case rhi::BlendFactor::Src1Alpha:    return D3D11_BLEND_SRC1_ALPHA;
+	case rhi::BlendFactor::InvSrc1Alpha: return D3D11_BLEND_INV_SRC1_ALPHA;
+	default: assert(false);              return D3D11_BLEND_ONE;
 	}
 }
 //=============================================================================
 inline D3D11_BLEND_OP ConvertToD3D11(rhi::BlendOp type)
 {
-	using namespace rhi;
 	switch (type)
 	{
-	case BlendOp::Add:         return D3D11_BLEND_OP_ADD;
-	case BlendOp::Subtract:    return D3D11_BLEND_OP_SUBTRACT;
-	case BlendOp::RevSubtract: return D3D11_BLEND_OP_REV_SUBTRACT;
-	case BlendOp::Min:         return D3D11_BLEND_OP_MIN;
-	case BlendOp::Max:         return D3D11_BLEND_OP_MAX;
-	default: assert(false);    return D3D11_BLEND_OP_ADD;
+	case rhi::BlendOp::Add:         return D3D11_BLEND_OP_ADD;
+	case rhi::BlendOp::Subtract:    return D3D11_BLEND_OP_SUBTRACT;
+	case rhi::BlendOp::RevSubtract: return D3D11_BLEND_OP_REV_SUBTRACT;
+	case rhi::BlendOp::Min:         return D3D11_BLEND_OP_MIN;
+	case rhi::BlendOp::Max:         return D3D11_BLEND_OP_MAX;
+	default: assert(false);         return D3D11_BLEND_OP_ADD;
 	}
 }
 //=============================================================================
@@ -375,6 +380,8 @@ struct rhi::PipelineState final
 {
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState2>  rasterizerState;
 	Microsoft::WRL::ComPtr<ID3D11BlendState1>       blendState;
+	Color                                           blendColor;
+	uint32_t                                        blendSampleMask;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
 	uint32_t                                        stencilRef;
 };
@@ -1267,35 +1274,41 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 		const auto& state = createInfo.blendState;
 
 		D3D11_BLEND_DESC1 blendDesc = { 0 };
-		blendDesc.AlphaToCoverageEnable  = state.alphaToCoverageEnabled;
-		blendDesc.IndependentBlendEnable = state.separateBlendEnabled;
+		blendDesc.AlphaToCoverageEnable  = (state.alphaToCoverageEnabled ? TRUE : FALSE);
+		blendDesc.IndependentBlendEnable = (state.independentBlendEnabled ? TRUE : FALSE);
 
-		//if (state.blendDesc.blendEnabled) {
-		blendDesc.RenderTarget[0].BlendEnable           = state.blendDesc.blendEnabled;
-		blendDesc.RenderTarget[0].RenderTargetWriteMask = static_cast<UINT8>(state.renderTargetBlendDesc[0].writeMask);
-		blendDesc.RenderTarget[0].SrcBlend              = ConvertToD3D11(state.blendDesc.srcBlend);
-		blendDesc.RenderTarget[0].DestBlend             = ConvertToD3D11(state.blendDesc.dstBlend);
-		blendDesc.RenderTarget[0].BlendOp               = ConvertToD3D11(state.blendDesc.blendOp);
-		blendDesc.RenderTarget[0].SrcBlendAlpha         = ConvertToD3D11(state.blendDesc.srcBlendAlpha);
-		blendDesc.RenderTarget[0].DestBlendAlpha        = ConvertToD3D11(state.blendDesc.dstBlendAlpha);
-		blendDesc.RenderTarget[0].BlendOpAlpha          = ConvertToD3D11(state.blendDesc.blendOpAlpha);
-		//}
-		// TODO: D3D11_RENDER_TARGET_BLEND_DESC1::LogicOp and D3D11_RENDER_TARGET_BLEND_DESC1::LogicOpEnable
-
-		if (state.separateBlendEnabled)
+		if (state.independentBlendEnabled)
 		{
 			for (size_t i = 0; i < 8; ++i)
 			{
-				blendDesc.RenderTarget[i].BlendEnable           = state.renderTargetBlendDesc[i].blendEnabled;
-				blendDesc.RenderTarget[i].RenderTargetWriteMask = static_cast<UINT8>(state.renderTargetBlendDesc[i].writeMask);
-				blendDesc.RenderTarget[i].SrcBlend              = ConvertToD3D11(state.renderTargetBlendDesc[i].srcBlend);
-				blendDesc.RenderTarget[i].DestBlend             = ConvertToD3D11(state.renderTargetBlendDesc[i].dstBlend);
-				blendDesc.RenderTarget[i].BlendOp               = ConvertToD3D11(state.renderTargetBlendDesc[i].blendOp);
-				blendDesc.RenderTarget[i].SrcBlendAlpha         = ConvertToD3D11(state.renderTargetBlendDesc[i].srcBlendAlpha);
-				blendDesc.RenderTarget[i].DestBlendAlpha        = ConvertToD3D11(state.renderTargetBlendDesc[i].dstBlendAlpha);
-				blendDesc.RenderTarget[i].BlendOpAlpha          = ConvertToD3D11(state.renderTargetBlendDesc[i].blendOpAlpha);
+				auto& out = blendDesc.RenderTarget[i];
+				const auto& in = state.renderTargetBlendDesc[i];
+
+				out.BlendEnable           = (in.enable ? TRUE : FALSE);
+				out.RenderTargetWriteMask = static_cast<UINT8>(in.writeMask);
+				out.SrcBlend              = ConvertToD3D11(in.srcColor);
+				out.DestBlend             = ConvertToD3D11(in.dstColor);
+				out.BlendOp               = ConvertToD3D11(in.opColor);
+				out.SrcBlendAlpha         = ConvertToD3D11(in.srcAlpha);
+				out.DestBlendAlpha        = ConvertToD3D11(in.dstAlpha);
+				out.BlendOpAlpha          = ConvertToD3D11(in.opAlpha);
 				// TODO: D3D11_RENDER_TARGET_BLEND_DESC1::LogicOp and D3D11_RENDER_TARGET_BLEND_DESC1::LogicOpEnable
 			}
+		}
+		else
+		{
+			auto& out = blendDesc.RenderTarget[0];
+			const auto& in = state.blendDesc;
+
+			out.BlendEnable           = (in.enable ? TRUE : FALSE);
+			out.RenderTargetWriteMask = static_cast<UINT8>(in.writeMask);
+			out.SrcBlend              = ConvertToD3D11(in.srcColor);
+			out.DestBlend             = ConvertToD3D11(in.dstColor);
+			out.BlendOp               = ConvertToD3D11(in.opColor);
+			out.SrcBlendAlpha         = ConvertToD3D11(in.srcAlpha);
+			out.DestBlendAlpha        = ConvertToD3D11(in.dstAlpha);
+			out.BlendOpAlpha          = ConvertToD3D11(in.opAlpha);
+			// TODO: D3D11_RENDER_TARGET_BLEND_DESC1::LogicOp and D3D11_RENDER_TARGET_BLEND_DESC1::LogicOpEnable
 		}
 
 		HRESULT result = rhi::d3dDevice->CreateBlendState1(&blendDesc, &pipelineState->blendState);
@@ -1902,7 +1915,7 @@ void rhi::BindShaderProgram(ShaderProgramPtr resource)
 void rhi::BindPipelineState(PipelineStatePtr resource)
 {
 	rhi::d3dContext->RSSetState(resource->rasterizerState.Get());
-	rhi::d3dContext->OMSetBlendState(resource->blendState.Get(), nullptr, 0xffffffff);
+	rhi::d3dContext->OMSetBlendState(resource->blendState.Get(), resource->blendColor, resource->blendSampleMask);
 	rhi::d3dContext->OMSetDepthStencilState(resource->depthStencilState.Get(), resource->stencilRef);
 }
 //=============================================================================
