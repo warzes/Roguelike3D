@@ -48,6 +48,9 @@
     <ClCompile Include="Model.cpp">
       <Filter>CuteOther</Filter>
     </ClCompile>
+    <ClCompile Include="CuteGraphics.cpp">
+      <Filter>CuteEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -104,6 +107,9 @@
     </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>CuteOther</Filter>
+    </ClInclude>
+    <ClInclude Include="CuteGraphics.h">
+      <Filter>CuteEngine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -113,6 +113,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="CuteGraphics.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="CuteUtility.cpp" />
     <ClCompile Include="HighResolutionTimer.cpp" />
     <ClCompile Include="Image.cpp" />
@@ -136,6 +140,7 @@
     <ClInclude Include="CuteEngine.h" />
     <ClInclude Include="CuteEngineMath.h" />
     <ClInclude Include="CutePrivate\CuteEngine_Window.h" />
+    <ClInclude Include="CuteGraphics.h" />
     <ClInclude Include="CuteUtility.h" />
     <ClInclude Include="Hash.h" />
     <ClInclude Include="HighResolutionTimer.h" />

@@ -39,10 +39,10 @@ int main(
 //в pomdog есть материал
 
 	// Demo
-	DemoCube app;
+	//DemoCube app;
 	//TexturedCube app;
 	//MeshDemo app;
-	//ModelDemo app;
+	ModelDemo app;
 	app.Run();
 }
 //=============================================================================
