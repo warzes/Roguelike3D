@@ -9,9 +9,6 @@
       <Filter>CuteEngine\AdvanceModule</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="GameApp.cpp">
-      <Filter>Game</Filter>
-    </ClCompile>
     <ClCompile Include="CuteUtility.cpp">
       <Filter>CuteOther</Filter>
     </ClCompile>
@@ -59,9 +56,6 @@
     </ClInclude>
     <ClInclude Include="CuteEngineMath.h">
       <Filter>CuteEngine\AdvanceModule</Filter>
-    </ClInclude>
-    <ClInclude Include="GameApp.h">
-      <Filter>Game</Filter>
     </ClInclude>
     <ClInclude Include="CutePrivate\CuteEngine_Window.h">
       <Filter>CuteEngine\CutePrivate</Filter>

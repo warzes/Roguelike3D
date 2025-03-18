@@ -101,9 +101,9 @@ namespace
 
 		rhi::BufferCreateInfo vbci{};
 		vbci.flags = rhi::BufferFlags::VertexBuffer;
-		vbci.size = sizeof(VertexPosUVNormals) * vertexData.size();
+		vbci.elementSize = sizeof(VertexPosUVNormals);
+		vbci.numElements = vertexData.size();
 		vbci.memoryData = vertexData.data();
-		vbci.stride = sizeof(VertexPosUVNormals);
 
 		auto resourcevb = rhi::CreateBuffer(vbci);
 		if (!resourcevb.has_value())
@@ -115,9 +115,9 @@ namespace
 
 		rhi::BufferCreateInfo ibci{};
 		ibci.flags = rhi::BufferFlags::IndexBuffer;
-		ibci.size = sizeof(uint32_t) * indices.size();
+		ibci.elementSize = sizeof(uint32_t);
+		ibci.numElements = indices.size();
 		ibci.memoryData = indices.data();
-		ibci.stride = sizeof(uint32_t);
 
 		auto resourceib = rhi::CreateBuffer(ibci);
 		if (!resourceib.has_value())
@@ -187,7 +187,7 @@ bool ModelDemo::OnInit()
 		spli.pixelShader = { L"shaders/meshDemo_ps.hlsl", "Main" };
 		spli.inputLayout = VertexPosUVNormals::Layout;
 
-		auto resource = LoadShaderProgram(spli);
+		auto resource = CreateShaderProgramFromFiles(spli);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -244,7 +244,7 @@ bool ModelDemo::OnInit()
 	// Create SamplerState
 	{
 		rhi::SamplerStateCreateInfo ssci{};
-		ssci.filter = rhi::TextureFilter::MinMagMip_Linear;
+		ssci.filter = rhi::SamplerFilter::MinMagMip_Linear;
 		ssci.addressU = rhi::AddressMode::Wrap;
 		ssci.addressV = rhi::AddressMode::Wrap;
 		ssci.addressW = rhi::AddressMode::Wrap;

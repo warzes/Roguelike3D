@@ -89,7 +89,7 @@ bool TexturedCube::OnInit()
 		spli.pixelShader = { L"TexturedCube.hlsl", "ps_main" };
 		spli.inputLayout = VertexPosUV::Layout;
 
-		auto resource = LoadShaderProgram(spli);
+		auto resource = CreateShaderProgramFromFiles(spli);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -147,9 +147,9 @@ bool TexturedCube::OnInit()
 	{
 		rhi::BufferCreateInfo vbci{};
 		vbci.flags = rhi::BufferFlags::VertexBuffer;
-		vbci.size = sizeof(VertexPosUV) * _countof(cube_textured_vertices_);
+		vbci.elementSize = sizeof(VertexPosUV);
+		vbci.numElements = _countof(cube_textured_vertices_);
 		vbci.memoryData = cube_textured_vertices_;
-		vbci.stride = sizeof(VertexPosUV);
 
 		auto resource = rhi::CreateBuffer(vbci);
 		if (!resource.has_value())
@@ -164,9 +164,9 @@ bool TexturedCube::OnInit()
 	{
 		rhi::BufferCreateInfo ibci{};
 		ibci.flags = rhi::BufferFlags::IndexBuffer;
-		ibci.size = sizeof(uint32_t) * _countof(cube_tex_indices_);
+		ibci.elementSize = sizeof(uint32_t);
+		ibci.numElements = _countof(cube_tex_indices_);
 		ibci.memoryData = cube_tex_indices_;
-		ibci.stride = sizeof(uint32_t);
 
 		auto resource = rhi::CreateBuffer(ibci);
 		if (!resource.has_value())
@@ -203,7 +203,7 @@ bool TexturedCube::OnInit()
 	// Create SamplerState
 	{
 		rhi::SamplerStateCreateInfo ssci{};
-		ssci.filter = rhi::TextureFilter::MinMagMip_Linear;
+		ssci.filter = rhi::SamplerFilter::MinMagMip_Linear;
 		ssci.addressU = rhi::AddressMode::Clamp;
 		ssci.addressV = rhi::AddressMode::Clamp;
 		ssci.addressW = rhi::AddressMode::Clamp;

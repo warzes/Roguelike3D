@@ -1,5 +1,4 @@
 ﻿#include "stdafx.h"
-#include "GameApp.h"
 // Demo
 #include "001_DemoCube.h"
 #include "002_TexturedCube.h"
@@ -40,10 +39,10 @@ int main(
 //в pomdog есть материал
 
 	// Demo
-	//DemoCube app;
+	DemoCube app;
 	//TexturedCube app;
 	//MeshDemo app;
-	ModelDemo app;
+	//ModelDemo app;
 	app.Run();
 }
 //=============================================================================

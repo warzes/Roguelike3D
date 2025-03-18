@@ -197,34 +197,42 @@ inline D3D11_CULL_MODE ConvertToD3D11(rhi::CullMode cullMode)
 	}
 }
 //=============================================================================
-inline D3D11_FILTER ConvertToD3D11(rhi::TextureFilter filter)
+inline D3D11_FILTER ConvertToD3D11(rhi::SamplerFilter filter)
 {
-	using namespace rhi;
 	switch (filter)
 	{
-	case TextureFilter::MinMagMip_Point:                 return D3D11_FILTER_MIN_MAG_MIP_POINT;
-	case TextureFilter::MinMag_Point_Mip_Linear:         return D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR;
-	case TextureFilter::Min_Point_Mag_Linear_Mip_Point:  return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
-	case TextureFilter::Min_Point_MagMip_Linear:         return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
-	case TextureFilter::Min_Linear_MagMip_Point:         return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
-	case TextureFilter::Min_Linear_Mag_Point_Mip_Linear: return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
-	case TextureFilter::MinMag_Linear_Mip_Point:         return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-	case TextureFilter::MinMagMip_Linear:                return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	case TextureFilter::Anisotropic:                     return D3D11_FILTER_ANISOTROPIC;
-	default: assert(false);                              return D3D11_FILTER_MIN_MAG_MIP_POINT;
+	case rhi::SamplerFilter::MinMagMip_Point:                            return D3D11_FILTER_MIN_MAG_MIP_POINT;
+	case rhi::SamplerFilter::MinMag_Point_Mip_Linear:                    return D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+	case rhi::SamplerFilter::Min_Point_Mag_Linear_Mip_Point:             return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+	case rhi::SamplerFilter::Min_Point_MagMip_Linear:                    return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+	case rhi::SamplerFilter::Min_Linear_MagMip_Point:                    return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+	case rhi::SamplerFilter::Min_Linear_Mag_Point_Mip_Linear:            return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+	case rhi::SamplerFilter::MinMag_Linear_Mip_Point:                    return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	case rhi::SamplerFilter::MinMagMip_Linear:                           return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	case rhi::SamplerFilter::Anisotropic:                                return D3D11_FILTER_ANISOTROPIC;
+	case rhi::SamplerFilter::Comparison_MinMagMip_Point:                 return D3D11_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
+	case rhi::SamplerFilter::Comparison_MinMag_Point_Mip_Linear:         return D3D11_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR;
+	case rhi::SamplerFilter::Comparison_Min_Point_Mag_Linear_Mip_Point:  return D3D11_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT;
+	case rhi::SamplerFilter::Comparison_Min_Point_MagMip_Linear:         return D3D11_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR;
+	case rhi::SamplerFilter::Comparison_Min_Linear_MagMip_Point:         return D3D11_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT;
+	case rhi::SamplerFilter::Comparison_Min_Linear_Mag_Point_Mip_Linear: return D3D11_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+	case rhi::SamplerFilter::Comparison_MinMag_Linear_Mip_Point:         return D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	case rhi::SamplerFilter::Comparison_MinMagMip_Linear:                return D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	case rhi::SamplerFilter::Comparison_Anisotropic:                     return D3D11_FILTER_COMPARISON_ANISOTROPIC;
+	default: assert(false);                                              return D3D11_FILTER_MIN_MAG_MIP_POINT;
 	}
 }
 //=============================================================================
 inline D3D11_TEXTURE_ADDRESS_MODE ConvertToD3D11(rhi::AddressMode mode)
 {
-	using namespace rhi;
 	switch (mode)
 	{
-	case AddressMode::Wrap:   return D3D11_TEXTURE_ADDRESS_WRAP;
-	case AddressMode::Mirror: return D3D11_TEXTURE_ADDRESS_MIRROR;
-	case AddressMode::Clamp:  return D3D11_TEXTURE_ADDRESS_CLAMP;
-	case AddressMode::Border: return D3D11_TEXTURE_ADDRESS_BORDER;
-	default: assert(false);   return D3D11_TEXTURE_ADDRESS_WRAP;
+	case rhi::AddressMode::Wrap:       return D3D11_TEXTURE_ADDRESS_WRAP;
+	case rhi::AddressMode::Mirror:     return D3D11_TEXTURE_ADDRESS_MIRROR;
+	case rhi::AddressMode::Clamp:      return D3D11_TEXTURE_ADDRESS_CLAMP;
+	case rhi::AddressMode::Border:     return D3D11_TEXTURE_ADDRESS_BORDER;
+	case rhi::AddressMode::MirrorOnce: return D3D11_TEXTURE_ADDRESS_MIRROR_ONCE;
+	default: assert(false);            return D3D11_TEXTURE_ADDRESS_WRAP;
 	}
 }
 //=============================================================================
@@ -392,13 +400,13 @@ struct rhi::SamplerState final
 //=============================================================================
 struct rhi::Buffer final
 {
+	UINT                                               bindFlags;
 	Microsoft::WRL::ComPtr<ID3D11Buffer>               buffer;
+	uint32_t                                           numElements;
+	size_t                                             elementSize;
 	Microsoft::WRL::ComPtr<ID3D11Buffer>               indirectBuffer;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>   dataView;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView1> dataUAV;
-	UINT                                               bindFlags;
-	UINT                                               dataBufferSize;
-	UINT                                               dataBufferStride;
 };
 //=============================================================================
 struct rhi::ConstantBuffer final
@@ -431,6 +439,8 @@ struct rhi::RenderTarget final
 namespace rhi
 {
 	using Microsoft::WRL::ComPtr;
+
+	const char*                       lastErrorText{ nullptr };
 
 	ComPtr<ID3D11Device5>             d3dDevice;
 	ComPtr<ID3D11DeviceContext4>      d3dContext;
@@ -819,6 +829,11 @@ void rhi::Fatal(const std::string& error)
 	shouldClose = true;
 }
 //=============================================================================
+const char* rhi::GetLastErrorText()
+{
+	return lastErrorText;
+}
+//=============================================================================
 bool rhi::Setup(void* hwnd, uint32_t frameWidth, uint32_t frameHeight, bool vSync, bool enableImGui)
 {
 	rhi::enableImGui = enableImGui;
@@ -1130,7 +1145,7 @@ inline void SetShaderResource(ID3D11ShaderResourceView* const* resource, rhi::Sh
 	}
 }
 //=============================================================================
-std::expected<rhi::ShaderProgramPtr, std::string> rhi::LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo)
+std::expected<rhi::ShaderProgramPtr, std::string> rhi::CreateShaderProgramFromFiles(const ShaderProgramLoadInfo& loadInfo)
 {
 	ShaderProgramPtr program = std::make_shared<ShaderProgram>();
 
@@ -1261,8 +1276,8 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 		desc.ScissorEnable         = (state.enableScissor ? TRUE : FALSE);
 		desc.MultisampleEnable     = (state.enableMultisample ? TRUE : FALSE);
 		desc.AntialiasedLineEnable = (state.enableAntialiasedLine ? TRUE : FALSE);
-		desc.ForcedSampleCount     = 0;
-		desc.ConservativeRaster    = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+		desc.ForcedSampleCount     = 0; // TODO:
+		desc.ConservativeRaster    = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF; // TODO:
 
 		HRESULT result = rhi::d3dDevice->CreateRasterizerState2(&desc, &pipelineState->rasterizerState);
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateRasterizerState2() failed: ", result));
@@ -1312,6 +1327,9 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 
 		HRESULT result = rhi::d3dDevice->CreateBlendState1(&desc, &pipelineState->blendState);
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateBlendState1() failed: ", result));
+
+		pipelineState->blendColor = state.blendColor;
+		pipelineState->blendSampleMask = state.sampleMask;
 	}
 
 	// create depth stencil state
@@ -1350,19 +1368,19 @@ std::expected<rhi::SamplerStatePtr, std::string> rhi::CreateSamplerState(const S
 	SamplerStatePtr samplerState = std::make_shared<SamplerState>();
 
 	D3D11_SAMPLER_DESC samplerDesc{};
-	samplerDesc.Filter = ConvertToD3D11(createInfo.filter);
-	samplerDesc.AddressU = ConvertToD3D11(createInfo.addressU);
-	samplerDesc.AddressV = ConvertToD3D11(createInfo.addressV);
-	samplerDesc.AddressW = ConvertToD3D11(createInfo.addressW);
-	samplerDesc.MipLODBias = createInfo.lodBias;
-	samplerDesc.MaxAnisotropy = createInfo.maxAnisotropy;
+	samplerDesc.Filter         = ConvertToD3D11(createInfo.filter);
+	samplerDesc.AddressU       = ConvertToD3D11(createInfo.addressU);
+	samplerDesc.AddressV       = ConvertToD3D11(createInfo.addressV);
+	samplerDesc.AddressW       = ConvertToD3D11(createInfo.addressW);
+	samplerDesc.MipLODBias     = createInfo.mipLodBias;
+	samplerDesc.MaxAnisotropy  = createInfo.maxAnisotropy;
 	samplerDesc.ComparisonFunc = ConvertToD3D11(createInfo.comparisonFunc);
-	samplerDesc.BorderColor[0] = static_cast<float>((createInfo.borderColor >> 0) & 0xFF) / 255.0f;
-	samplerDesc.BorderColor[1] = static_cast<float>((createInfo.borderColor >> 8) & 0xFF) / 255.0f;
-	samplerDesc.BorderColor[2] = static_cast<float>((createInfo.borderColor >> 16) & 0xFF) / 255.0f;
-	samplerDesc.BorderColor[3] = static_cast<float>((createInfo.borderColor >> 24) & 0xFF) / 255.0f;
-	samplerDesc.MinLOD = createInfo.minLod;
-	samplerDesc.MaxLOD = createInfo.maxLod;
+	samplerDesc.BorderColor[0] = createInfo.borderColor.r;
+	samplerDesc.BorderColor[1] = createInfo.borderColor.g;
+	samplerDesc.BorderColor[2] = createInfo.borderColor.b;
+	samplerDesc.BorderColor[3] = createInfo.borderColor.a;
+	samplerDesc.MinLOD         = createInfo.minLod;
+	samplerDesc.MaxLOD         = createInfo.maxLod;
 
 	HRESULT result = rhi::d3dDevice->CreateSamplerState(&samplerDesc, &samplerState->state);
 	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateSamplerState() failed: ", result));
@@ -1372,6 +1390,12 @@ std::expected<rhi::SamplerStatePtr, std::string> rhi::CreateSamplerState(const S
 //=============================================================================
 std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateInfo& createInfo)
 {
+	if (createInfo.flags == 0 || createInfo.elementSize == 0 || createInfo.numElements == 0) [[unlikely]]
+	{
+		return std::unexpected("BufferCreateInfo not valid!!!");
+	}
+
+	const UINT  byteSize = static_cast<UINT>(createInfo.elementSize * createInfo.numElements);
 	D3D11_USAGE bufferUsage = D3D11_USAGE_IMMUTABLE;
 	UINT        bufferCPUFlags = 0;
 	UINT        bufferBindFlag = 0;
@@ -1383,11 +1407,8 @@ std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateI
 	bool isAppend = false;
 	bool isIndirect = false;
 
-	if (createInfo.flags & BufferFlags::VertexBuffer)
-		bufferBindFlag = D3D11_BIND_VERTEX_BUFFER;
-	if (createInfo.flags & BufferFlags::IndexBuffer)
-		bufferBindFlag = D3D11_BIND_INDEX_BUFFER;
-
+	if (createInfo.flags & BufferFlags::VertexBuffer) bufferBindFlag = D3D11_BIND_VERTEX_BUFFER;
+	if (createInfo.flags & BufferFlags::IndexBuffer)  bufferBindFlag = D3D11_BIND_INDEX_BUFFER;
 	if (createInfo.flags & BufferFlags::StructuredBuffer)
 	{
 		bufferBindFlag = D3D11_BIND_SHADER_RESOURCE;
@@ -1422,13 +1443,13 @@ std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateI
 	if (createInfo.flags & BufferFlags::IndirectArgs)
 		isIndirect = true;
 
-	D3D11_BUFFER_DESC bufferDesc = { 0 };
-	bufferDesc.ByteWidth           = static_cast<UINT>(createInfo.size);
+	D3D11_BUFFER_DESC bufferDesc   = { 0 };
+	bufferDesc.ByteWidth           = byteSize;
 	bufferDesc.Usage               = bufferUsage;
 	bufferDesc.BindFlags           = bufferBindFlag;
 	bufferDesc.CPUAccessFlags      = bufferCPUFlags;
 	bufferDesc.MiscFlags           = bufferMiscFlag;
-	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.stride);
+	bufferDesc.StructureByteStride = static_cast<UINT>(createInfo.elementSize);
 
 	D3D11_SUBRESOURCE_DATA bufferData = { 0 };
 	bufferData.pSysMem = createInfo.memoryData;
@@ -1438,17 +1459,15 @@ std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateI
 	if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateBuffer() failed: ", result));
 
 	buffer->bindFlags = bufferBindFlag;
-	buffer->dataBufferSize = static_cast<UINT>(createInfo.size);
-	buffer->dataBufferStride = static_cast<UINT>(createInfo.stride);
-
-	const size_t numElements = createInfo.size / createInfo.stride;
+	buffer->elementSize = createInfo.elementSize;
+	buffer->numElements = createInfo.numElements;
 
 	if (isIndirect)
 	{
 		D3D11_BUFFER_DESC bufferDesc = { 0 };
 		bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 		bufferDesc.StructureByteStride = 0;
-		bufferDesc.ByteWidth = static_cast<UINT>(createInfo.stride);
+		bufferDesc.ByteWidth = buffer->elementSize;
 		bufferDesc.CPUAccessFlags = 0;
 		bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
 		bufferDesc.BindFlags = 0;
@@ -1461,7 +1480,7 @@ std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateI
 		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
 		viewDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 		viewDesc.Format = DXGI_FORMAT_UNKNOWN;
-		viewDesc.Buffer.ElementWidth = static_cast<UINT>(numElements);
+		viewDesc.Buffer.ElementWidth = buffer->numElements;
 
 		result = rhi::d3dDevice->CreateShaderResourceView(buffer->buffer.Get(), &viewDesc, &buffer->dataView);
 		if (FAILED(result)) return std::unexpected(DX_ERR_STR("ID3D11Device5::CreateShaderResourceView() failed: ", result));
@@ -1472,7 +1491,7 @@ std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateI
 		D3D11_UNORDERED_ACCESS_VIEW_DESC1 uavDesc{};
 		uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 		uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-		uavDesc.Buffer.NumElements = static_cast<UINT>(numElements);
+		uavDesc.Buffer.NumElements = buffer->numElements;
 
 		if (isCounter) uavDesc.Buffer.Flags |= D3D11_BUFFER_UAV_FLAG_COUNTER;
 		if (isAppend)  uavDesc.Buffer.Flags |= D3D11_BUFFER_UAV_FLAG_APPEND;
@@ -1990,7 +2009,7 @@ void rhi::BindVertexBuffer(BufferPtr resource, uint32_t slot)
 
 	id = slot;
 	stateCache::vertexBuffer[id] = resource->buffer.Get();
-	stateCache::vertexBufferStride[id] = resource->dataBufferStride;
+	stateCache::vertexBufferStride[id] = resource->elementSize;
 	stateCache::vertexBufferOffset[id] = 0;
 
 	rhi::d3dContext->IASetVertexBuffers(
@@ -2008,7 +2027,7 @@ void rhi::BindVertexBuffers(const std::vector<BufferPtr>& resources)
 	for (size_t i = 0; i < resources.size(); i++)
 	{
 		stateCache::vertexBuffer[id] = resources[i]->buffer.Get();
-		stateCache::vertexBufferStride[id] = resources[i]->dataBufferStride;
+		stateCache::vertexBufferStride[id] = resources[i]->elementSize;
 		stateCache::vertexBufferOffset[id] = 0;
 
 		id++;

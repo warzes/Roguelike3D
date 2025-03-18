@@ -231,7 +231,7 @@ bool DemoCube::OnInit()
 			{ "VCOLOR",      0, rhi::DataFormat::R32U,    0, stride7 },
 		};
 
-		auto resource = LoadShaderProgram(spli);
+		auto resource = CreateShaderProgramFromFiles(spli);
 		if (!resource.has_value())
 		{
 			Fatal(resource.error());
@@ -303,10 +303,10 @@ bool DemoCube::OnInit()
 	// Create VertexBuffer
 	{
 		rhi::BufferCreateInfo vbci{};
-		vbci.flags      = rhi::BufferFlags::VertexBuffer;
-		vbci.size       = sizeof(CommonVertex) * verticesSize;
-		vbci.memoryData = cubeVertices;
-		vbci.stride     = sizeof(CommonVertex);
+		vbci.flags       = rhi::BufferFlags::VertexBuffer;
+		vbci.elementSize = sizeof(CommonVertex);
+		vbci.numElements = verticesSize;
+		vbci.memoryData  = cubeVertices;
 
 		auto resource = rhi::CreateBuffer(vbci);
 		if (!resource.has_value())
@@ -321,9 +321,9 @@ bool DemoCube::OnInit()
 	{
 		rhi::BufferCreateInfo ibci{};
 		ibci.flags      = rhi::BufferFlags::IndexBuffer;
-		ibci.size       = sizeof(uint32_t) * indicesSize;
+		ibci.elementSize = sizeof(uint32_t);
+		ibci.numElements = indicesSize;
 		ibci.memoryData = cubeIndices;
-		ibci.stride     = sizeof(uint32_t);
 
 		auto resource = rhi::CreateBuffer(ibci);
 		if (!resource.has_value())
@@ -370,13 +370,13 @@ void DemoCube::OnUpdate(double deltaTime)
 //=============================================================================
 void DemoCube::OnFrame()
 {
-	rhi::SetRenderTarget(m_rtv, rhi::Color{ 0.9f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
-	rhi::BindShaderProgram(m_shaderProgram);
-	rhi::BindPipelineState(m_pipelineState);
-	rhi::BindConstantBuffer(m_constantBuffer, rhi::ShaderType::Vertex, 0);
-	rhi::BindVertexBuffer(m_vertexBuffer, 0);
-	rhi::BindIndexBuffer(m_indexBuffer);
-	rhi::DrawIndexed(rhi::PrimitiveTopology::TriangleList, 36, 0, 0);
+	//rhi::SetRenderTarget(m_rtv, rhi::Color{ 0.9f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
+	//rhi::BindShaderProgram(m_shaderProgram);
+	//rhi::BindPipelineState(m_pipelineState);
+	//rhi::BindConstantBuffer(m_constantBuffer, rhi::ShaderType::Vertex, 0);
+	//rhi::BindVertexBuffer(m_vertexBuffer, 0);
+	//rhi::BindIndexBuffer(m_indexBuffer);
+	//rhi::DrawIndexed(rhi::PrimitiveTopology::TriangleList, 36, 0, 0);
 
 
 	rhi::SetMainFrame(rhi::Color{ 0.392156899f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);

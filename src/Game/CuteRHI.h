@@ -13,6 +13,8 @@ namespace rhi
 	void Print(const std::wstring& message);
 	void Fatal(const std::string& error);
 
+	const char* GetLastErrorText();
+
 	struct Color final
 	{
 		const float* Get() const { return &r; }
@@ -165,7 +167,7 @@ namespace rhi
 		All   = Red | Green | Blue | Alpha
 	};
 
-	enum class TextureFilter : size_t
+	enum class SamplerFilter : uint8_t
 	{
 		MinMagMip_Point,
 		MinMag_Point_Mip_Linear,
@@ -176,14 +178,24 @@ namespace rhi
 		MinMag_Linear_Mip_Point,
 		MinMagMip_Linear,
 		Anisotropic,
+		Comparison_MinMagMip_Point,
+		Comparison_MinMag_Point_Mip_Linear,
+		Comparison_Min_Point_Mag_Linear_Mip_Point,
+		Comparison_Min_Point_MagMip_Linear,
+		Comparison_Min_Linear_MagMip_Point,
+		Comparison_Min_Linear_Mag_Point_Mip_Linear,
+		Comparison_MinMag_Linear_Mip_Point,
+		Comparison_MinMagMip_Linear,
+		Comparison_Anisotropic,
 	};
 
-	enum class AddressMode : uint8_t // ??? TextureSamplerWrap
+	enum class AddressMode : uint8_t
 	{
 		Wrap,
 		Mirror,
 		Clamp,
 		Border,
+		MirrorOnce
 	};
 
 	enum BufferUsage : uint8_t
@@ -241,16 +253,16 @@ namespace rhi
 	namespace BufferFlags
 	{
 		enum : uint32_t {
-			VertexBuffer = (1u << 0), // can be set as a vertex buffer
-			IndexBuffer = (1u << 1), // can be set as an index buffer
+			VertexBuffer     = (1u << 0), // can be set as a vertex buffer
+			IndexBuffer      = (1u << 1), // can be set as an index buffer
 			StructuredBuffer = (1u << 2), // can be set as a structured buffer
-			CPURead = (1u << 3), // can be mapped to be read by the CPU
-			CPUWrite = (1u << 4), // can be mapped to be written by the CPU
-			GPUWrite = (1u << 5), // can be written by the GPU
-			GPUCounter = (1u << 6), // can be written by the GPU with atomic counter usage
-			GPUAppend = (1u << 7), // can be appended by the GPU
-			StreamOutput = (1u << 8), // can be used as a stream output buffer
-			IndirectArgs = (1u << 9), // can be used as a drawIndirect args buffer
+			CPURead          = (1u << 3), // can be mapped to be read by the CPU
+			CPUWrite         = (1u << 4), // can be mapped to be written by the CPU
+			GPUWrite         = (1u << 5), // can be written by the GPU
+			GPUCounter       = (1u << 6), // can be written by the GPU with atomic counter usage
+			GPUAppend        = (1u << 7), // can be appended by the GPU
+			StreamOutput     = (1u << 8), // can be used as a stream output buffer
+			IndirectArgs     = (1u << 9), // can be used as a drawIndirect args buffer
 		};
 	}
 
@@ -366,31 +378,31 @@ namespace rhi
 
 	struct SamplerStateCreateInfo final
 	{
-		TextureFilter  filter = TextureFilter::MinMagMip_Linear;
-		AddressMode    addressU = AddressMode::Clamp;
-		AddressMode    addressV = AddressMode::Clamp;
-		AddressMode    addressW = AddressMode::Clamp;
-		float          lodBias = 0.0F;
-		uint32_t       maxAnisotropy = 1;
-		ComparisonFunc comparisonFunc = ComparisonFunc::Never;
-		uint32_t       borderColor = 0xFFFFFFFF;
-		float          minLod = -FLT_MAX;
-		float          maxLod = FLT_MAX;
+		SamplerFilter filter{ SamplerFilter::MinMagMip_Linear };
+		AddressMode   addressU{ AddressMode::Clamp };
+		AddressMode   addressV{ AddressMode::Clamp };
+		AddressMode   addressW{ AddressMode::Clamp };
+		float         mipLodBias{ 0.0f };
+		uint32_t      maxAnisotropy{ 1 };
+		SamplerFunc   comparisonFunc{ SamplerFunc::Never };
+		Color         borderColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+		float         minLod{ -FLT_MAX };
+		float         maxLod{ +FLT_MAX };
 	};
 
 	struct BufferCreateInfo final
 	{
 		uint32_t flags{ 0 };
+		uint32_t numElements{ 0 };
+		size_t   elementSize{ 0 };
 		void*    memoryData{ nullptr };
-		size_t   size{ 0 };
-		size_t   stride{ 0 };
 	};
 
 	struct ConstantBufferCreateInfo final
 	{
 		BufferUsage    usage{ BufferUsage::Default };
 		CPUAccessFlags cpuAccessFlags{ CPUAccessFlags::None };
-		void* memoryData{ nullptr };
+		void*          memoryData{ nullptr };
 		size_t         size{ 0 };
 	};
 
@@ -495,7 +507,9 @@ namespace rhi
 	void Flush();
 
 	// RHI Resources Create
-	std::expected<ShaderProgramPtr, std::string>  LoadShaderProgram(const ShaderProgramLoadInfo& loadInfo);
+	std::expected<ShaderProgramPtr, std::string>  CreateShaderProgramFromFiles(const ShaderProgramLoadInfo& loadInfo);
+	std::expected<ShaderProgramPtr, std::string>  CreateShaderProgramFromSources(const ShaderProgramCreateInfo& loadInfo);
+
 	std::expected<PipelineStatePtr, std::string>  CreatePipelineState(const PipelineStateCreateInfo& createInfo);
 	std::expected<SamplerStatePtr, std::string>   CreateSamplerState(const SamplerStateCreateInfo& createInfo);
 	std::expected<BufferPtr, std::string>         CreateBuffer(const BufferCreateInfo& createInfo);

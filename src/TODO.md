@@ -10,6 +10,9 @@ RHI:
 - при создании SwapChain нужно сделать возможность указывать формат RTV (там есть например SRGB)
 - в BufferCreateInfo есть size и stride - это бесмысленно. нужно вместо size сделать count и size вычислять внутри как count * stride.
 - в буферах хранить буфер, размер и количество
+- в RasterizerStateDescriptor добавить ConservativeRaster и ForcedSampleCount
+- в BlendStateDescriptor добавить LogicOp и LogicOpEnable
+- доделать lastErrorText
 
 ===============================================================================
 TODO:
