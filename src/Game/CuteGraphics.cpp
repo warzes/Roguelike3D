@@ -1,3 +1,4 @@
-#include "CuteGraphics.h"
+п»ї#include "CuteGraphics.h"
 
-поправить буферы. без флагов.
+//РїРѕРїСЂР°РІРёС‚СЊ Р±СѓС„РµСЂС‹. Р±РµР· С„Р»Р°РіРѕРІ.
+https://github.com/yagero/glsl-demo/tree/master/Spline3D
