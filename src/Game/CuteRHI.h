@@ -9,6 +9,9 @@
 
 namespace rhi
 {
+//=============================================================================
+#pragma region [ Core ]
+
 	void Print(const std::string& message);
 	void Print(const std::wstring& message);
 	void Fatal(const std::string& error);
@@ -26,9 +29,17 @@ namespace rhi
 		float a{ 1.0f };
 	};
 
+#pragma endregion
+//=============================================================================
+#pragma region [ Constants ]
+
 	constexpr const auto RenderTargetSlotCount = 8u;
-	constexpr const auto MaxVertexBuffers = 16u;
-	constexpr const auto AppendAlignedElement = 0xffffffff;
+	constexpr const auto MaxVertexBuffers      = 16u;
+	constexpr const auto AppendAlignedElement  = 0xffffffff;
+
+#pragma endregion
+//=============================================================================
+#pragma region [ RHI Enums ]
 
 	enum class DataFormat : uint8_t
 	{
@@ -160,11 +171,11 @@ namespace rhi
 
 	enum class ColorWriteMask : uint8_t
 	{
-		Red   = (1u << 0),
+		Red = (1u << 0),
 		Green = (1u << 1),
-		Blue  = (1u << 2),
+		Blue = (1u << 2),
 		Alpha = (1u << 3),
-		All   = Red | Green | Blue | Alpha
+		All = Red | Green | Blue | Alpha
 	};
 
 	enum class SamplerFilter : uint8_t
@@ -253,19 +264,22 @@ namespace rhi
 	namespace BufferFlags
 	{
 		enum : uint32_t {
-			VertexBuffer     = (1u << 0), // can be set as a vertex buffer
-			IndexBuffer      = (1u << 1), // can be set as an index buffer
+			VertexBuffer = (1u << 0), // can be set as a vertex buffer
+			IndexBuffer = (1u << 1), // can be set as an index buffer
 			StructuredBuffer = (1u << 2), // can be set as a structured buffer
-			CPURead          = (1u << 3), // can be mapped to be read by the CPU
-			CPUWrite         = (1u << 4), // can be mapped to be written by the CPU
-			GPUWrite         = (1u << 5), // can be written by the GPU
-			GPUCounter       = (1u << 6), // can be written by the GPU with atomic counter usage
-			GPUAppend        = (1u << 7), // can be appended by the GPU
-			StreamOutput     = (1u << 8), // can be used as a stream output buffer
-			IndirectArgs     = (1u << 9), // can be used as a drawIndirect args buffer
+			CPURead = (1u << 3), // can be mapped to be read by the CPU
+			CPUWrite = (1u << 4), // can be mapped to be written by the CPU
+			GPUWrite = (1u << 5), // can be written by the GPU
+			GPUCounter = (1u << 6), // can be written by the GPU with atomic counter usage
+			GPUAppend = (1u << 7), // can be appended by the GPU
+			StreamOutput = (1u << 8), // can be used as a stream output buffer
+			IndirectArgs = (1u << 9), // can be used as a drawIndirect args buffer
 		};
 	}
 
+#pragma endregion
+//=============================================================================
+#pragma region [ Core Desc ]
 	struct BlendTargetDesc final
 	{
 		bool           enable{ false };
@@ -395,14 +409,14 @@ namespace rhi
 		uint32_t flags{ 0 };
 		uint32_t numElements{ 0 };
 		size_t   elementSize{ 0 };
-		void*    memoryData{ nullptr };
+		void* memoryData{ nullptr };
 	};
 
 	struct ConstantBufferCreateInfo final
 	{
 		BufferUsage    usage{ BufferUsage::Default };
 		CPUAccessFlags cpuAccessFlags{ CPUAccessFlags::None };
-		void*          memoryData{ nullptr };
+		void* memoryData{ nullptr };
 		size_t         size{ 0 };
 	};
 
@@ -412,7 +426,7 @@ namespace rhi
 		uint32_t     mipCount{ 1 };
 		TexelsFormat format{ TexelsFormat::RGBA8 };
 		uint32_t     flags{ 0 };
-		void*        memoryData{ nullptr };
+		void* memoryData{ nullptr };
 	};
 
 	struct Texture2DCreateInfo final
@@ -422,7 +436,7 @@ namespace rhi
 		uint32_t     mipCount{ 1 };
 		TexelsFormat format{ TexelsFormat::RGBA8 };
 		uint32_t     flags{ 0 };
-		void*        memoryData{ nullptr };
+		void* memoryData{ nullptr };
 	};
 
 	struct Texture3DCreateInfo final
@@ -433,7 +447,7 @@ namespace rhi
 		uint32_t     mipCount{ 1 };
 		TexelsFormat format{ TexelsFormat::RGBA8 };
 		uint32_t     flags{ 0 };
-		void*        memoryData{ nullptr };
+		void* memoryData{ nullptr };
 	};
 
 	struct TextureArrayCreateInfo final
@@ -458,27 +472,40 @@ namespace rhi
 		float MinDepth{ 0.0f };
 		float MaxDepth{ 1.0f };
 	};
-
+#pragma endregion
+//=============================================================================
+#pragma region [ RHI Resources Type ]
 	struct ShaderProgram;
 	using ShaderProgramPtr = std::shared_ptr<ShaderProgram>;
+	using ShaderProgramResult = std::expected<ShaderProgramPtr, std::string>;
 
 	struct PipelineState;
 	using PipelineStatePtr = std::shared_ptr<PipelineState>;
+	using PipelineStateResult = std::expected<PipelineStatePtr, std::string>;
 
 	struct SamplerState;
 	using SamplerStatePtr = std::shared_ptr<SamplerState>;
+	using SamplerStateResult = std::expected<SamplerStatePtr, std::string>;
 
 	struct Buffer;
 	using BufferPtr = std::shared_ptr<Buffer>;
+	using BufferResult = std::expected<BufferPtr, std::string>;
 
-	struct ConstantBuffer;
+	struct ConstantBuffer; // TODO: слить в Buffer
 	using ConstantBufferPtr = std::shared_ptr<ConstantBuffer>;
+	using ConstantBufferResult = std::expected<ConstantBufferPtr, std::string>;
 
 	struct Texture;
 	using TexturePtr = std::shared_ptr<Texture>;
+	using TextureResult = std::expected<TexturePtr, std::string>;
 
 	struct RenderTarget;
 	using RenderTargetPtr = std::shared_ptr<RenderTarget>;
+	using RenderTargetResult = std::expected<RenderTargetPtr, std::string>;
+
+	struct RenderTargetGroup; // TODO: массив RT - например для GBUffer - возможность одной командой сразу рендерить в несколько
+#pragma endregion
+//=============================================================================
 
 	inline bool IsCompressedFormat(TexelsFormat format) { return format < TexelsFormat::UnknownCompressed; }
 	inline bool IsDepthFormat(TexelsFormat format) { return format > TexelsFormat::UnknownDepth; }
@@ -500,24 +527,24 @@ namespace rhi
 	void DrawIndexed(PrimitiveTopology topology, uint32_t indexCount, uint32_t startIndexLocation, uint32_t baseVertexLocation);
 	void DrawInstanced(PrimitiveTopology topology, uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation);
 	void DrawIndexedInstanced(PrimitiveTopology topology, uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, uint32_t baseVertexLocation = 0, uint32_t startInstanceLocation = 0);
-
 	void DrawInstancedIndirect(PrimitiveTopology topology, BufferPtr indirectArgs, size_t argsOffset);
 	void DrawIndexedInstancedIndirect(PrimitiveTopology topology, BufferPtr indirectArgs, size_t argsOffset);
 
 	void Flush();
 
 	// RHI Resources Create
-	std::expected<ShaderProgramPtr, std::string>  CreateShaderProgramFromFiles(const ShaderProgramLoadInfo& loadInfo);
-	std::expected<ShaderProgramPtr, std::string>  CreateShaderProgramFromSources(const ShaderProgramCreateInfo& loadInfo);
-
-	std::expected<PipelineStatePtr, std::string>  CreatePipelineState(const PipelineStateCreateInfo& createInfo);
-	std::expected<SamplerStatePtr, std::string>   CreateSamplerState(const SamplerStateCreateInfo& createInfo);
-	std::expected<BufferPtr, std::string>         CreateBuffer(const BufferCreateInfo& createInfo);
-	std::expected<ConstantBufferPtr, std::string> CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo);
-	std::expected<TexturePtr, std::string>        CreateTexture1D(const Texture1DCreateInfo& createInfo);
-	std::expected<TexturePtr, std::string>        CreateTexture2D(const Texture2DCreateInfo& createInfo);
-	std::expected<TexturePtr, std::string>        CreateTexture3D(const Texture3DCreateInfo& createInfo);
-	std::expected<RenderTargetPtr, std::string>   CreateRenderTarget(const RenderTargetCreateInfo& createInfo);
+	ShaderProgramResult  CreateShaderProgramFromFiles(const ShaderProgramLoadInfo& loadInfo);
+	ShaderProgramResult  CreateShaderProgramFromSources(const ShaderProgramCreateInfo& loadInfo);
+	PipelineStateResult  CreatePipelineState(const PipelineStateCreateInfo& createInfo);
+	SamplerStateResult   CreateSamplerState(const SamplerStateCreateInfo& createInfo);
+	BufferResult         CreateBuffer(const BufferCreateInfo& createInfo);
+	BufferResult         CreateVertexBuffer(const BufferCreateInfo& createInfo);
+	BufferResult         CreateIndexBuffer(const BufferCreateInfo& createInfo);
+	ConstantBufferResult CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo);
+	TextureResult        CreateTexture1D(const Texture1DCreateInfo& createInfo);
+	TextureResult        CreateTexture2D(const Texture2DCreateInfo& createInfo);
+	TextureResult        CreateTexture3D(const Texture3DCreateInfo& createInfo);
+	RenderTargetResult   CreateRenderTarget(const RenderTargetCreateInfo& createInfo);
 
 	// RHI Resources Delete
 	template<typename T>

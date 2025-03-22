@@ -1,4 +1,8 @@
-﻿https://github.com/effekseer/Effekseer
+﻿https://www.youtube.com/@RegularStudio/videos - интересные механики анимаций с окружающим миром (типа руками опирается на стену и т..
+
+https://github.com/ACskyline/IKsolver - inverse kinematic
+
+https://github.com/effekseer/Effekseer
 
 https://github.com/syoyo/tinygltf
 https://github.com/okhmanyuk-ev/skygfx/blob/master/src/skygfx/other.h

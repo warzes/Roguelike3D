@@ -187,13 +187,15 @@ bool ModelDemo::OnInit()
 		spli.pixelShader = { L"shaders/meshDemo_ps.hlsl", "Main" };
 		spli.inputLayout = VertexPosUVNormals::Layout;
 
-		auto resource = CreateShaderProgramFromFiles(spli);
-		if (!resource.has_value())
+		if (auto result = CreateShaderProgramFromFiles(spli); result.has_value())
 		{
-			Fatal(resource.error());
+			m_shaderProgram = result.value();
+		}
+		else
+		{
+			Fatal(result.error());
 			return false;
 		}
-		m_shaderProgram = resource.value();
 	}
 
 	// Create PipelineState

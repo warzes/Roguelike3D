@@ -1145,7 +1145,7 @@ inline void SetShaderResource(ID3D11ShaderResourceView* const* resource, rhi::Sh
 	}
 }
 //=============================================================================
-std::expected<rhi::ShaderProgramPtr, std::string> rhi::CreateShaderProgramFromFiles(const ShaderProgramLoadInfo& loadInfo)
+rhi::ShaderProgramResult rhi::CreateShaderProgramFromFiles(const ShaderProgramLoadInfo& loadInfo)
 {
 	ShaderProgramPtr program = std::make_shared<ShaderProgram>();
 
@@ -1257,7 +1257,7 @@ std::expected<rhi::ShaderProgramPtr, std::string> rhi::CreateShaderProgramFromFi
 	return program;
 }
 //=============================================================================
-std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const PipelineStateCreateInfo& createInfo)
+rhi::PipelineStateResult rhi::CreatePipelineState(const PipelineStateCreateInfo& createInfo)
 {
 	PipelineStatePtr pipelineState = std::make_shared<PipelineState>();
 
@@ -1363,7 +1363,7 @@ std::expected<rhi::PipelineStatePtr, std::string> rhi::CreatePipelineState(const
 	return pipelineState;
 }
 //=============================================================================
-std::expected<rhi::SamplerStatePtr, std::string> rhi::CreateSamplerState(const SamplerStateCreateInfo& createInfo)
+rhi::SamplerStateResult rhi::CreateSamplerState(const SamplerStateCreateInfo& createInfo)
 {
 	SamplerStatePtr samplerState = std::make_shared<SamplerState>();
 
@@ -1388,7 +1388,7 @@ std::expected<rhi::SamplerStatePtr, std::string> rhi::CreateSamplerState(const S
 	return samplerState;
 }
 //=============================================================================
-std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateInfo& createInfo)
+rhi::BufferResult rhi::CreateBuffer(const BufferCreateInfo& createInfo)
 {
 	if (createInfo.flags == 0 || createInfo.elementSize == 0 || createInfo.numElements == 0) [[unlikely]]
 	{
@@ -1503,7 +1503,7 @@ std::expected<rhi::BufferPtr, std::string> rhi::CreateBuffer(const BufferCreateI
 	return buffer;
 }
 //=============================================================================
-std::expected<rhi::ConstantBufferPtr, std::string> rhi::CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo)
+rhi::ConstantBufferResult rhi::CreateConstantBuffer(const ConstantBufferCreateInfo& createInfo)
 {
 	ConstantBufferPtr buffer = std::make_shared<ConstantBuffer>();
 
@@ -1524,7 +1524,7 @@ std::expected<rhi::ConstantBufferPtr, std::string> rhi::CreateConstantBuffer(con
 	return buffer;
 }
 //=============================================================================
-std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture1D(const Texture1DCreateInfo& createInfo)
+rhi::TextureResult rhi::CreateTexture1D(const Texture1DCreateInfo& createInfo)
 {
 	TexturePtr texture = std::make_shared<Texture>();
 	texture->type = TextureType::Texture1D;
@@ -1596,7 +1596,7 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture1D(const Texture1D
 	return texture;
 }
 //=============================================================================
-std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture2D(const Texture2DCreateInfo& createInfo)
+rhi::TextureResult rhi::CreateTexture2D(const Texture2DCreateInfo& createInfo)
 {
 	TexturePtr texture = std::make_shared<Texture>();
 	texture->type = TextureType::Texture2D;
@@ -1696,7 +1696,7 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture2D(const Texture2D
 	return texture;
 }
 //=============================================================================
-std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture3D(const Texture3DCreateInfo& createInfo)
+rhi::TextureResult rhi::CreateTexture3D(const Texture3DCreateInfo& createInfo)
 {
 	TexturePtr texture = std::make_shared<Texture>();
 	texture->type = TextureType::Texture1D;
@@ -1768,7 +1768,7 @@ std::expected<rhi::TexturePtr, std::string> rhi::CreateTexture3D(const Texture3D
 	return texture;
 }
 //=============================================================================
-std::expected<rhi::RenderTargetPtr, std::string> rhi::CreateRenderTarget(const RenderTargetCreateInfo& createInfo)
+rhi::RenderTargetResult rhi::CreateRenderTarget(const RenderTargetCreateInfo& createInfo)
 {
 	// TODO: проверка на валидацию данных в createInfo
 
