@@ -97,7 +97,7 @@
   <ItemGroup>
     <ClCompile Include="002_TexturedCube.cpp" />
     <ClCompile Include="003_Mesh.cpp" />
-    <ClCompile Include="004_Model.cpp" />
+    <ClCompile Include="004_Light.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CuteMath.cpp" />
     <ClCompile Include="CuteRHI.cpp">
@@ -132,7 +132,7 @@
   <ItemGroup>
     <ClInclude Include="002_TexturedCube.h" />
     <ClInclude Include="003_Mesh.h" />
-    <ClInclude Include="004_Model.h" />
+    <ClInclude Include="004_Light.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CuteMath.h" />
     <ClInclude Include="CuteRHI.h" />

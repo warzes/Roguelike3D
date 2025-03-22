@@ -1,5 +1,5 @@
 ﻿#include "stdafx.h"
-#include "004_Model.h"
+#include "004_Light.h"
 #include "Vertex.h"
 #include "Transform.h"
 #include <stb/stb_image.h>
@@ -178,7 +178,7 @@ namespace
 	}
 }
 //=============================================================================
-bool ModelDemo::OnInit()
+bool LightDemo::OnInit()
 {
 	// Create ShaderProgram
 	{
@@ -277,13 +277,13 @@ bool ModelDemo::OnInit()
 	mesh.meshData = MeshData::LoadFromFile("meshes/BOSS_model_final.fbx");
 	mesh.transform.SetWorldTranslation({ 0.0f, -1.0f, 0.0f });
 
-	m_camera = Camera(Vec3(0.0f, 5.0f, -10.0f), GetWindowAspect(), MathUtils::DegToRad(45.0f), .1f, 1000.0f);
+	m_camera = Camera(Vec3(0.0f, 5.0f, -20.0f), GetWindowAspect(), MathUtils::DegToRad(45.0f), .1f, 1000.0f);
 	m_camera.LookAt(Vec3(0.0f, 0.0f, 0.0f) + Vec3(0.0f, 2.0f, 0.0f));
 
 	return true;
 }
 //=============================================================================
-void ModelDemo::OnClose()
+void LightDemo::OnClose()
 {
 	rhi::DeleteResource(m_shaderProgram);
 	rhi::DeleteResource(m_pipelineState);
@@ -292,8 +292,10 @@ void ModelDemo::OnClose()
 	rhi::DeleteResource(m_samplerState);
 }
 //=============================================================================
-void ModelDemo::OnUpdate(double deltaTime)
+void LightDemo::OnUpdate(double deltaTime)
 {
+	m_camera.Update(this);
+
 	mesh.Update(deltaTime);
 
 	// Update per-view cbuffer
@@ -306,7 +308,7 @@ void ModelDemo::OnUpdate(double deltaTime)
 	rhi::UpdateBuffer(m_cbufferPerView, &perViewData);
 }
 //=============================================================================
-void ModelDemo::OnFrame()
+void LightDemo::OnFrame()
 {
 	rhi::SetMainFrame(rhi::Color{ 0.392156899f, 0.584313750f, 0.929411829f, 1.f }, 1.0f, 0);
 	rhi::BindShaderProgram(m_shaderProgram);

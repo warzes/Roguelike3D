@@ -365,8 +365,8 @@ public:
 	void SetMouseMode(Input::MouseMode mode) const; // Sets mouse mode (defaults to absolute)
 	Input::MouseMode GetMouseMode() const;
 
-	bool IsMouseVisible() const;
-	void SetMouseVisible(bool visible) const;
+	//bool IsMouseVisible() const;
+	//void SetMouseVisible(bool visible) const;
 
 	bool IsMouseUp(Input::MouseButton button) const;
 	bool IsMouseDown(Input::MouseButton button) const;

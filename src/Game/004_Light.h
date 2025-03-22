@@ -2,7 +2,7 @@
 
 #include "Camera.h"
 
-class ModelDemo final : public CuteEngineApp
+class LightDemo final : public CuteEngineApp
 {
 public:
 	bool OnInit() final;

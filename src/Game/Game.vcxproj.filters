@@ -42,7 +42,7 @@
     <ClCompile Include="003_Mesh.cpp">
       <Filter>Demo</Filter>
     </ClCompile>
-    <ClCompile Include="004_Model.cpp">
+    <ClCompile Include="004_Light.cpp">
       <Filter>Demo</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
@@ -102,7 +102,7 @@
     <ClInclude Include="003_Mesh.h">
       <Filter>Demo</Filter>
     </ClInclude>
-    <ClInclude Include="004_Model.h">
+    <ClInclude Include="004_Light.h">
       <Filter>Demo</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">

@@ -111,20 +111,16 @@ void Camera::UpdateMatrices()
 
 void Camera::Update(CuteEngineApp* app)
 {
-	// TODO: вместо SetVisible испоользовать вариант SetMouseMode
-
 	if (app->IsMouseUp(Input::MouseButton::Right))
 	{
 		app->SetMouseMode(Input::MouseMode::Absolute);
-		//app->SetMouseVisible(true);
 		UpdateMatrices();
 		return;
 	}
 	app->SetMouseMode(Input::MouseMode::Relative);
-	//app->SetMouseVisible(false);
 
 	// Update rotation
-	constexpr float rotation_velocity = 0.005f;
+	constexpr float rotation_velocity = 0.01f;
 	auto mouse_delta = app->GetMousePosition();
 	if (mouse_delta.x != 0.0f || mouse_delta.y != 0.0f)
 	{
@@ -141,7 +137,7 @@ void Camera::Update(CuteEngineApp* app)
 	}
 
 	// Update translation
-	constexpr float max_translation_velocity = 2.0f;
+	constexpr float max_translation_velocity = 30.0f;
 	Vec3 movement_dir = Vec3::ZERO;
 	if (app->IsKeyDown(Input::W))
 	{

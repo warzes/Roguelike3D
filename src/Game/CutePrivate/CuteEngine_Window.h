@@ -1155,8 +1155,15 @@ int CuteEngineApp::GetScrollWheelValue() const
 //=============================================================================
 void CuteEngineApp::SetMouseMode(Input::MouseMode mode) const
 {
-	if (mouseData::mode == mode)
-		return;
+	if (mouseData::mode == mode) return;
+
+	mouseData::mode = mode;
+
+	ImGuiIO& imguiIO = ImGui::GetIO();
+	if (mode == Input::MouseMode::Relative)
+		imguiIO.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+	else
+		imguiIO.ConfigFlags &= ~ImGuiConfigFlags_NoMouseCursorChange;
 
 	SetEvent((mode == Input::MouseMode::Absolute) ? mouseData::absoluteMode.get() : mouseData::relativeMode.get());
 
@@ -1170,6 +1177,9 @@ void CuteEngineApp::SetMouseMode(Input::MouseMode mode) const
 	{
 		Fatal("TrackMouseEvent");
 	}
+
+	if (mode == Input::MouseMode::Relative) // ошибка, координаты не меняются сразу по факту действия, так как обработка будет в основном цикле событий WinAPI. Пока так
+		mouseData::currentState.x = mouseData::currentState.y = 0;
 }
 //=============================================================================
 Input::MouseMode CuteEngineApp::GetMouseMode() const
@@ -1177,36 +1187,36 @@ Input::MouseMode CuteEngineApp::GetMouseMode() const
 	return mouseData::currentState.positionMode;
 }
 //=============================================================================
-bool CuteEngineApp::IsMouseVisible() const
-{
-	if (mouseData::mode == Input::MouseMode::Relative)
-		return false;
-
-	CURSORINFO info = { sizeof(CURSORINFO), 0, nullptr, {} };
-	if (!GetCursorInfo(&info))
-		return false;
-
-	return (info.flags & CURSOR_SHOWING) != 0;
-}
-//=============================================================================
-void CuteEngineApp::SetMouseVisible(bool visible) const
-{
-	if (mouseData::mode == Input::MouseMode::Relative)
-		return;
-
-	CURSORINFO info = { sizeof(CURSORINFO), 0, nullptr, {} };
-	if (!GetCursorInfo(&info))
-	{
-		Fatal("GetCursorInfo");
-		return;
-	}
-
-	const bool isvisible = (info.flags & CURSOR_SHOWING) != 0;
-	if (isvisible != visible)
-	{
-		::ShowCursor(visible);
-	}
-}
+//bool CuteEngineApp::IsMouseVisible() const
+//{
+//	if (mouseData::mode == Input::MouseMode::Relative)
+//		return false;
+//
+//	CURSORINFO info = { sizeof(CURSORINFO), 0, nullptr, {} };
+//	if (!GetCursorInfo(&info))
+//		return false;
+//
+//	return (info.flags & CURSOR_SHOWING) != 0;
+//}
+////=============================================================================
+//void CuteEngineApp::SetMouseVisible(bool visible) const
+//{
+//	if (mouseData::mode == Input::MouseMode::Relative)
+//		return;
+//
+//	CURSORINFO info = { sizeof(CURSORINFO), 0, nullptr, {} };
+//	if (!GetCursorInfo(&info))
+//	{
+//		Fatal("GetCursorInfo");
+//		return;
+//	}
+//
+//	const bool isvisible = (info.flags & CURSOR_SHOWING) != 0;
+//	if (isvisible != visible)
+//	{
+//		::ShowCursor(visible);
+//	}
+//}
 //=============================================================================
 ButtonState isMouseState(Input::MouseButton button)
 {
