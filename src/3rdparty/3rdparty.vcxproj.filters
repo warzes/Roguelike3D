@@ -28,6 +28,7 @@
     <ClCompile Include="tinyexr.cc" />
     <ClCompile Include="miniz.c" />
     <ClCompile Include="DXError.cpp" />
+    <ClCompile Include="tiny_obj_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
@@ -77,6 +78,7 @@
     <ClInclude Include="tinyexr.h" />
     <ClInclude Include="miniz.h" />
     <ClInclude Include="DXError.h" />
+    <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assimp-vc143-mt.exp" />

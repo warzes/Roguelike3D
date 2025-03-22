@@ -11,20 +11,10 @@ public:
 	void OnFrame() final;
 
 private:
-	rhi::ConstantBufferPtr m_cbufferPerView{ nullptr };
-
-
-
-
-
-
-
-
+	rhi::ConstantBufferPtr m_cbufferMVP{ nullptr };
+	rhi::ConstantBufferPtr m_cbufferLight{ nullptr };
 	rhi::ShaderProgramPtr  m_shaderProgram{ nullptr };
-
 	rhi::PipelineStatePtr  m_pipelineState{ nullptr };
-
 	Camera                 m_camera;
-	rhi::TexturePtr        m_texture;
 	rhi::SamplerStatePtr   m_samplerState{ nullptr };
 };

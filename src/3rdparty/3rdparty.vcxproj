@@ -100,6 +100,7 @@
     <ClCompile Include="miniz.c" />
     <ClCompile Include="stb\stb.cpp" />
     <ClCompile Include="tinyexr.cc" />
+    <ClCompile Include="tiny_obj_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXError.h" />
@@ -117,6 +118,7 @@
     <ClInclude Include="stb\stb_image_write.h" />
     <ClInclude Include="stb\stb_truetype.h" />
     <ClInclude Include="tinyexr.h" />
+    <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assimp-vc143-mt.exp" />

@@ -120,7 +120,7 @@ void Camera::Update(CuteEngineApp* app)
 	app->SetMouseMode(Input::MouseMode::Relative);
 
 	// Update rotation
-	constexpr float rotation_velocity = 0.01f;
+	constexpr float rotation_velocity = 0.005f;
 	auto mouse_delta = app->GetMousePosition();
 	if (mouse_delta.x != 0.0f || mouse_delta.y != 0.0f)
 	{
@@ -137,7 +137,7 @@ void Camera::Update(CuteEngineApp* app)
 	}
 
 	// Update translation
-	constexpr float max_translation_velocity = 30.0f;
+	constexpr float max_translation_velocity = 10.0f;
 	Vec3 movement_dir = Vec3::ZERO;
 	if (app->IsKeyDown(Input::W))
 	{
